@@ -669,6 +669,73 @@ Escenario: PA-13-03 · Denuncia no válida
 
 ---
 
+### HU-44 · Crear mi ranking personal de un álbum
+
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
+| --- | --- | --- | --- |
+| HU-44 | 3 puntos | Could | HU-02, HU-04 |
+
+> **Como** usuario registrado  
+> **quiero** ordenar mis canciones favoritas de un álbum en un top personal  
+> **para** mostrar con más detalle qué me parece el álbum.
+
+**Clasificación:** RF · RI-02, RI-20 · RN-08, RN-09, RN-25
+
+**Reglas de negocio asociadas**
+- RN-08 · El ranking solo lo ve quien tiene permiso según su nivel de privacidad.
+- RN-09 · Si no se elige nivel, se aplica el nivel por defecto.
+- RN-25 · Como mínimo 3 canciones y como máximo todas las del álbum, sin repetir, un único ranking por álbum y sin efecto en la valoración media ni en el ranking semanal.
+
+```gherkin
+@RF @RN-09
+Escenario: PA-44-01 · Creación de un ranking personal
+  Dado que estoy en la ficha de un álbum
+  Cuando elijo varias de sus canciones, las ordeno y guardo sin cambiar el nivel de privacidad
+  Entonces mi ranking aparece en la ficha del álbum y en la pestaña Reseñas de mi perfil
+  Y se aplica el nivel por defecto de mi configuración
+
+@RN-25
+Escenario: PA-44-02 · Ranking con el mínimo de canciones
+  Dado que he elegido exactamente 3 canciones del álbum
+  Cuando guardo el ranking
+  Entonces se guarda correctamente
+
+@RN-25
+Escenario: PA-44-03 · Por debajo del mínimo
+  Dado que solo he elegido 2 canciones del álbum
+  Cuando intento guardar el ranking
+  Entonces el sistema me pide elegir al menos 3 canciones
+
+@RN-25
+Escenario: PA-44-04 · Ranking con todas las canciones del álbum
+  Dado que un álbum tiene 11 canciones
+  Cuando añado las 11 a mi ranking y lo guardo
+  Entonces se guarda correctamente
+  Y ya no se me ofrecen más canciones para añadir
+
+@RN-25
+Escenario: PA-44-05 · El ranking no afecta a las valoraciones
+  Dado que guardo o modifico mi ranking de un álbum
+  Cuando se consulta la ficha del álbum
+  Entonces su valoración media no cambia
+  Y el ranking semanal tampoco
+
+@RN-08
+Escenario: PA-44-06 · Ranking privado
+  Dado que mi ranking de un álbum es privado
+  Cuando otro usuario consulta la ficha del álbum o mi perfil
+  Entonces no ve mi ranking
+
+@RF @RN-25
+Escenario: PA-44-07 · Edición y eliminación del ranking
+  Dado que ya tengo un ranking de ese álbum
+  Cuando cambio el orden, quito una canción o lo elimino
+  Entonces se muestra la versión actualizada o deja de aparecer
+  Y no se crea un segundo ranking para el mismo álbum
+```
+
+---
+
 ## Épica 4 · Perfil y red social
 
 Perfil, privacidad general y relaciones entre usuarios.

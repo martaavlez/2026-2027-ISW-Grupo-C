@@ -18,6 +18,7 @@ Los requisitos de información describen los datos que el sistema debe almacenar
 | Álbum | Canción | 1 a muchos |
 | Canción | Artista | muchos a muchos |
 | Canción / Álbum | Reseña | 1 a muchos |
+| Usuario | Ranking personal (de un álbum) | 1 a muchos |
 | Tablero | Canción / Álbum | muchos a muchos |
 | Comunidad | Publicación | 1 a muchos |
 | Reseña / Publicación | Denuncia | 1 a muchos |
@@ -450,3 +451,25 @@ La pareja denunciante–contenido es única.
 **Relaciones:** cada posición se refiere a una canción o un álbum (RI-07, RI-08) · muchos a 1.
 
 **Gestión:** lo calcula el sistema automáticamente una vez al día, según la regla RN-19, y guarda el resultado del último cálculo.
+
+---
+
+## RI-20 · Ranking personal de un álbum
+
+**Descripción:** top que un usuario hace con sus canciones favoritas de un álbum, ordenadas de la que más le gusta a la que menos. Es solo una opinión personal y no interviene en la valoración media ni en el ranking semanal.
+
+**Atributos:**
+
+| Atributo | Tipo | Restricciones |
+| --- | --- | --- |
+| Identificador | Identificador | Único |
+| Autor | Referencia a Usuario | Obligatoria |
+| Álbum | Referencia a Álbum | Obligatoria; un único ranking por usuario y álbum |
+| Canciones ordenadas | Lista ordenada de referencias a Canción | Mínimo 3 canciones y máximo todas las del álbum; solo canciones de ese álbum y sin repetir |
+| Nivel de privacidad | Enumerado: público, solo amigos, privado | Obligatorio; por defecto, el de la configuración del autor |
+| Fecha de creación | Fecha y hora | Obligatoria, la asigna el sistema |
+| Fecha de modificación | Fecha y hora | La asigna el sistema al editarlo |
+
+**Relaciones:** pertenece a un usuario (RI-01) · muchos a 1. Se refiere a un álbum (RI-07) · muchos a 1. Contiene canciones de ese álbum (RI-08) · muchos a muchos.
+
+**Gestión:** lo crea cualquier usuario registrado desde la ficha del álbum, y solo su autor puede modificarlo, cambiar su privacidad o eliminarlo. Se elimina automáticamente si se elimina la cuenta del autor o el álbum (RN-23).

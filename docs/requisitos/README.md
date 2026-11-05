@@ -26,21 +26,21 @@ Cada ficha incluye:
 | --- | --- | --- |
 | 1 · Acceso y cuentas | HU-01, HU-02, HU-17, HU-18, HU-19, HU-37 | 25 |
 | 2 · Catálogo y búsqueda | HU-03, HU-04, HU-20, HU-21, HU-22, HU-40 | 39 |
-| 3 · Reseñas y valoraciones | HU-05, HU-23, HU-08, HU-36, HU-13 | 19 |
+| 3 · Reseñas y valoraciones | HU-05, HU-23, HU-08, HU-36, HU-13, HU-44 | 22 |
 | 4 · Perfil y red social | HU-06, HU-24, HU-43, HU-10, HU-41, HU-42, HU-35 | 28 |
 | 5 · Organización de la música | HU-07, HU-09, HU-25, HU-26, HU-34, HU-27 | 18 |
 | 6 · Descubrimiento | HU-11, HU-12, HU-15, HU-28 | 26 |
 | 7 · Comunidades | HU-14, HU-29, HU-30, HU-31, HU-32, HU-33, HU-38, HU-39 | 34 |
-| **Total** | **42 historias dentro del alcance** | **189** |
+| **Total** | **43 historias dentro del alcance** | **192** |
 
 | Prioridad | Historias | Puntos |
 | --- | --- | --- |
 | Must | 11 | 50 |
 | Should | 19 | 84 |
-| Could | 12 | 55 |
+| Could | 13 | 58 |
 | Won't | 1 (HU-16, funciones premium) | – |
 
-En total hay 19 requisitos de información, 24 reglas de negocio, 10 requisitos no funcionales y 124 pruebas de aceptación.
+En total hay 20 requisitos de información, 25 reglas de negocio, 10 requisitos no funcionales y 131 pruebas de aceptación.
 
 ## Definición de Hecho
 

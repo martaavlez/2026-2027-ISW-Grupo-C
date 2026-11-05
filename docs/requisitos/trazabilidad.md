@@ -25,6 +25,7 @@ Las pruebas de aceptación (PA) son los escenarios Gherkin de cada ficha. Por ej
 | [HU-08](fichas-hu.md#hu-08--editar-y-eliminar-mis-reseñas) | Editar y eliminar mis reseñas | Should | RI-10 | RN-07, RN-13 | – | PA-08-01 a 03 | *pendiente* | *pendiente* |
 | [HU-36](fichas-hu.md#hu-36--denunciar-una-reseña) | Denunciar una reseña | Should | RI-15 | RN-18 | – | PA-36-01 a 02 | *pendiente* | *pendiente* |
 | [HU-13](fichas-hu.md#hu-13--revisar-denuncias-de-reseñas) | Revisar denuncias de reseñas | Should | RI-10, RI-15, RI-17 | RN-07, RN-18 | RNF-02 | PA-13-01 a 03 | *pendiente* | *pendiente* |
+| [HU-44](fichas-hu.md#hu-44--crear-mi-ranking-personal-de-un-álbum) | Crear mi ranking personal de un álbum | Could | RI-02, RI-20 | RN-08, RN-09, RN-25 | – | PA-44-01 a 07 | *pendiente* | *pendiente* |
 | [HU-06](fichas-hu.md#hu-06--gestionar-mi-perfil) | Gestionar mi perfil | Must | RI-01, RI-10, RI-11, RI-12 | – | – | PA-06-01 a 02 | *pendiente* | *pendiente* |
 | [HU-24](fichas-hu.md#hu-24--consultar-el-perfil-de-otro-usuario) | Consultar el perfil de otro usuario | Must | RI-01, RI-02, RI-04, RI-05 | RN-08, RN-12 | RNF-02 | PA-24-01 a 03 | *pendiente* | *pendiente* |
 | [HU-43](fichas-hu.md#hu-43--configurar-la-privacidad-de-mi-cuenta) | Configurar la privacidad de mi cuenta | Should | RI-02 | RN-08, RN-09 | RNF-02 | PA-43-01 a 03 | *pendiente* | *pendiente* |
