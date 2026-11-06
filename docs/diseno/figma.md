@@ -3,7 +3,6 @@
 Prototipo navegable de alta fidelidad del Sprint 1 (tareas 4, 5, 6 y 7): **97 pantallas** (86 de móvil y 11 de web) que cubren las 7 épicas, enlazadas entre sí y organizadas según los **17 flujos** del diagrama de flujos del equipo ([Sprint1-Flujos](https://www.figma.com/board/Zh8AiOEErog5zY3qfiWGdg/Sprint1-Flujos)).
 
 - **Archivo de Figma:** [https://www.figma.com/design/mr9G2Ya7jlbMevLRHoR4aL](https://www.figma.com/design/mr9G2Ya7jlbMevLRHoR4aL) (equipo «2026-2027 ISW»)
-- **Responsable:** Silvia Núñez
 - **Nombre de la app:** «Repeat» es provisional.
 
 ## Cómo usar el prototipo
