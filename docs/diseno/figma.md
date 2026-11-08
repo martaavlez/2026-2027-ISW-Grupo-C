@@ -1,6 +1,6 @@
 # Diseño de interfaz · Figma
 
-Prototipo navegable de alta fidelidad del Sprint 1 (tareas 4, 5, 6 y 7): **97 pantallas** (86 de móvil y 11 de web) que cubren las 7 épicas, enlazadas entre sí y organizadas según los **17 flujos** del diagrama de flujos del equipo ([Sprint1-Flujos](https://www.figma.com/board/Zh8AiOEErog5zY3qfiWGdg/Sprint1-Flujos)).
+Prototipo navegable de alta fidelidad del Sprint 1 (tareas 4, 5, 6 y 7): **102 pantallas** (91 de móvil y 11 de web) que cubren las 7 épicas, enlazadas entre sí y organizadas según los **17 flujos** del diagrama de flujos del equipo ([Sprint1-Flujos](https://www.figma.com/board/Zh8AiOEErog5zY3qfiWGdg/Sprint1-Flujos)).
 
 - **Archivo de Figma:** [https://www.figma.com/design/mr9G2Ya7jlbMevLRHoR4aL](https://www.figma.com/design/mr9G2Ya7jlbMevLRHoR4aL) (equipo «2026-2027 ISW»)
 - **Nombre de la app:** «Repeat» es provisional.
@@ -28,9 +28,9 @@ Prototipo navegable de alta fidelidad del Sprint 1 (tareas 4, 5, 6 y 7): **97 pa
 ## Organización del archivo
 
 - **Prototipo:** todas las pantallas en una sola página, porque Figma solo enlaza pantallas de la misma página. Está dividida en tres secciones, una por tarea:
-  - **Tarea 4 · épicas 1 y 4** · 31 pantallas
+  - **Tarea 4 · épicas 1 y 4** · 33 pantallas
   - **Tarea 5 · épicas 2, 3 y 6** · 35 pantallas
-  - **Tarea 6 · épicas 5 y 7** · 31 pantallas
+  - **Tarea 6 · épicas 5 y 7** · 34 pantallas
 - **Componentes:** biblioteca de iconos (`icon/000`–`icon/144`) que usan todas las pantallas.
 
 ## Convenciones
@@ -54,14 +54,14 @@ Siguen la numeración y el contenido del diagrama de flujos del equipo.
 | Flujo 6 | Valorar y reseñar | M06 | M06 → M09 → M07 · M06 → M11 → M06 · M12 (sin puntuación) · M06 → M13 → M11 (editar) / M06 (eliminar) · visitante: M22 → M10 | HU-05, HU-23, HU-08 |
 | Flujo 7 | Denunciar una reseña | M07 | M07 ⚑ → M14 → M15 (enviada / ya denunciada) · revisión del administrador en W04 | HU-36, HU-13 |
 | Flujo 8 | Mi perfil y privacidad | P01 | P01 ↔ P10 ↔ P11 (favoritos: canciones, álbumes, artistas) · P12 ↔ P15 (reseñas y rankings) · T02 (tableros) · P02 (editar) · P03 (privacidad) · perfil ajeno P04 ↔ P14 | HU-06, HU-43, HU-24 |
-| Flujo 9 | Seguir, amistad y bloqueo | P04 | P04 → P05 (siguiendo / solicitud enviada) → P04 · P06 (eliminar amistad) · P04 ⋯ → P07 → P08 (desbloquear) · P13 (solicitudes recibidas) · P09 (perfil no disponible) | HU-10, HU-41, HU-42, HU-35, HU-24 |
+| Flujo 9 | Seguir, amistad y bloqueo | P04 | P04 → P16 (Seguir: siguiendo) → P05 (además, solicitud enviada) · P04 → P17 (solo solicitud enviada) · P06 (eliminar amistad) · P04 ⋯ → P07 → P08 (desbloquear) · P13 (solicitudes recibidas) · P09 (perfil no disponible) | HU-10, HU-41, HU-42, HU-35, HU-24 |
 | Flujo 10 | Marcar y desmarcar favoritos | T01 | M07 ⋯ → T01 (marcada) → P01 (aparece en Favoritos) · «Deshacer» → M07 (desmarcada) | HU-07 |
 | Flujo 11 | Tableros | T02 | T02 → T03 (T04 sin nombre) → T05 → T09 (añadir música) / T07 (privacidad) / T10 (editar) → T11 (eliminar) · T06 (elemento repetido) · T08 (seguir tablero ajeno) | HU-09, HU-25, HU-26, HU-27, HU-34 |
 | Flujo 12 | Página principal: recomendaciones, ranking y actividad | M01 | M01 ↔ M23 (ranking de canciones / álbumes) → M03 ↔ M24 · M01 → M20 (actividad) · M02 (sin datos) · M22 (visitante) | HU-12, HU-15, HU-28 |
 | Flujo 13 | Notificaciones | M16 | M16 → P13 (solicitud de amistad) · P04 (nuevo seguidor) · C04 / C06 (invitación a comunidad) · M15 · C14 | HU-11, HU-41, HU-31 |
 | Flujo 14 | Crear y administrar comunidades | C01 | C01 → C02 (C03 nombre repetido) → C06 → ⚙ C12 → C13 (único administrador) / C15 (eliminar) · C06 → C09 (miembros, expulsar) → C14 · C09 → C10 / C17 | HU-14, HU-29, HU-32 |
-| Flujo 15 | Unirse, abandonar y gestionar accesos | C04 | C04 → C06 (unirse) · C05 (comunidad privada, solicitar acceso) · C16 (abandonar) · C10 (aceptar o rechazar solicitudes) · C17 (invitar) · M16 (responder invitación) | HU-30, HU-31, HU-32 |
-| Flujo 16 | Publicar, denunciar y moderar en comunidades | C06 | C06 → C07 → C18 (eliminar mi publicación) · C06 ⋯ → C08 (denunciar) → C11 (moderación de los administradores) → C14 (aviso al autor) | HU-33, HU-38, HU-39 |
+| Flujo 15 | Unirse, abandonar y gestionar accesos | C04 | C04 → C20 (unirse) · C01 → C19 (comunidad de la que soy miembro) → ⋯ C16 (abandonar) · C05 (comunidad privada, solicitar acceso) · C10 (aceptar o rechazar solicitudes) · C17 (invitar) · M16 (responder invitación) | HU-30, HU-31, HU-32 |
+| Flujo 16 | Publicar, denunciar y moderar en comunidades | C06 | C06 → C07 → C21 (publicación publicada) → ⋯ C18 (eliminar mi publicación) · C06 ⋯ → C08 (denunciar) → C06 · ⚙ C12 → «Denuncias pendientes» → C11 (moderación de los administradores) → C14 (aviso al autor) | HU-33, HU-38, HU-39 |
 | Flujo 17 | Ranking personal de un álbum | M19 | M06 → M19 → M17 (M18 menos de 3 canciones) → M19 · M19 → M21 (eliminar) · P15 (mis rankings en el perfil) | HU-44 |
 
 ## Trazabilidad HU → pantallas
@@ -77,7 +77,7 @@ Siguen la numeración y el contenido del diagrama de flujos del equipo.
 | HU-07 | Marcar y desmarcar favoritos | 5 | P10, P11, T01 |
 | HU-08 | Editar y eliminar mis reseñas | 3 | P12, M13 |
 | HU-09 | Crear un tablero | 5 | T02, T03, T04 |
-| HU-10 | Seguir y dejar de seguir a otros usuarios | 4 | P04, P05, P06 |
+| HU-10 | Seguir y dejar de seguir a otros usuarios | 4 | P04, P05, P06, P16 |
 | HU-11 | Recibir notificaciones | 6 | M16, C14 |
 | HU-12 | Ver recomendaciones personalizadas | 6 | M01, M02, M22, M23, W01 |
 | HU-13 | Revisar denuncias de reseñas | 3 | W04 |
@@ -97,10 +97,10 @@ Siguen la numeración y el contenido del diagrama de flujos del equipo.
 | HU-27 | Seguir un tablero público | 5 | T02, T08, C14 |
 | HU-28 | Consultar la actividad de mis seguidos y amigos | 6 | M01, M20, M22, M23, W01 |
 | HU-29 | Editar y eliminar una comunidad | 7 | C12, C15, W07 |
-| HU-30 | Unirse y abandonar una comunidad | 7 | C01, C04, C05, C16 |
+| HU-30 | Unirse y abandonar una comunidad | 7 | C01, C04, C05, C16, C19, C20 |
 | HU-31 | Gestionar invitaciones y solicitudes | 7 | M16, C10, C17 |
 | HU-32 | Gestionar miembros y administradores | 7 | C09, C10, C13, C14, W07 |
-| HU-33 | Publicar en una comunidad | 7 | C05, C06, C07, C18, W07 |
+| HU-33 | Publicar en una comunidad | 7 | C05, C06, C07, C18, C21, W07 |
 | HU-34 | Cambiar la privacidad de un tablero | 5 | T07, W08 |
 | HU-35 | Bloquear y desbloquear usuarios | 4 | P07, P08, P09 |
 | HU-36 | Denunciar una reseña | 3 | M14, M15 |
@@ -108,7 +108,7 @@ Siguen la numeración y el contenido del diagrama de flujos del equipo.
 | HU-38 | Denunciar una publicación | 7 | C08 |
 | HU-39 | Moderar las publicaciones de una comunidad | 7 | C11, C14 |
 | HU-40 | Corregir o eliminar contenido del catálogo | 2 | W03, W09, W10 |
-| HU-41 | Enviar y responder solicitudes de amistad | 4 | P04, P05, P13, M16 |
+| HU-41 | Enviar y responder solicitudes de amistad | 4 | P04, P05, P13, P17, M16 |
 | HU-42 | Eliminar una amistad | 4 | P06 |
 | HU-43 | Configurar la privacidad de mi cuenta | 4 | P03, P14, W05 |
 | HU-44 | Crear mi ranking personal de un álbum | 3 | P15, M17, M18, M19, M21 |
@@ -145,6 +145,8 @@ Siguen la numeración y el contenido del diagrama de flujos del equipo.
 | P13 | Solicitudes de amistad recibidas | HU-41 (PA-41-02, PA-41-03) · Flujos 9 y 13 | Tarea 4 · épicas 1 y 4 |
 | P14 | Perfil de otro usuario · favoritos | HU-24 (PA-24-01) · HU-43 · Flujo 8 | Tarea 4 · épicas 1 y 4 |
 | P15 | Mi perfil · mis rankings de álbumes | HU-44 (PA-44-06) · HU-06 · Flujos 8 y 17 | Tarea 4 · épicas 1 y 4 |
+| P16 | Perfil de otro usuario · siguiendo | HU-10 (PA-10-01) · Flujo 9 | Tarea 4 · épicas 1 y 4 |
+| P17 | Perfil de otro usuario · solicitud pendiente | HU-41 (PA-41-01) · Flujo 9 | Tarea 4 · épicas 1 y 4 |
 | M01 | Inicio | HU-12 · HU-15 · HU-28 | Tarea 5 · épicas 2, 3 y 6 |
 | M02 | Inicio · usuario sin datos | HU-12 (PA-12-03) · HU-15 | Tarea 5 · épicas 2, 3 y 6 |
 | M03 | Ranking semanal | HU-15 | Tarea 5 · épicas 2, 3 y 6 |
@@ -203,6 +205,9 @@ Siguen la numeración y el contenido del diagrama de flujos del equipo.
 | C16 | Abandonar una comunidad (miembro) | HU-30 (PA-30-03) · Flujo 15 | Tarea 6 · épicas 5 y 7 |
 | C17 | Invitar a un usuario · invitaciones enviadas | HU-31 (PA-31-01) · Flujo 15 | Tarea 6 · épicas 5 y 7 |
 | C18 | Eliminar mi publicación | HU-33 (PA-33-02) · Flujo 16 | Tarea 6 · épicas 5 y 7 |
+| C19 | Comunidad · Vinilos y directos (miembro) | HU-30 · Flujo 15 | Tarea 6 · épicas 5 y 7 |
+| C20 | Comunidad pública · recién unido | HU-30 (PA-30-01) · Flujo 15 | Tarea 6 · épicas 5 y 7 |
+| C21 | Comunidad · mi publicación publicada | HU-33 (PA-33-01) · Flujo 16 | Tarea 6 · épicas 5 y 7 |
 | W01 | Inicio (web) | HU-12 · HU-15 · HU-28 | Tarea 5 · épicas 2, 3 y 6 |
 | W02 | Ficha de álbum (web) | HU-04 · HU-05 · HU-23 | Tarea 5 · épicas 2, 3 y 6 |
 | W03 | Admin · incidencias del catálogo | HU-21 · HU-22 · HU-40 | Tarea 5 · épicas 2, 3 y 6 |
@@ -214,6 +219,19 @@ Siguen la numeración y el contenido del diagrama de flujos del equipo.
 | W09 | Admin · catálogo · editar elemento | HU-40 (PA-40-01) · Flujo 5 | Tarea 5 · épicas 2, 3 y 6 |
 | W10 | Admin · eliminar elemento del catálogo | HU-40 (PA-40-02, PA-40-03) · Flujo 5 | Tarea 5 · épicas 2, 3 y 6 |
 | W11 | Admin · levantar suspensión | HU-37 (PA-37-02) · Flujo 3 | Tarea 4 · épicas 1 y 4 |
+
+## Cambios tras la prueba de usabilidad
+
+Después de la prueba de usabilidad ([usabilidad.md](usabilidad.md)) se aplicaron estos cambios en el prototipo:
+
+| Problema | Cambio aplicado | Pantallas |
+|---|---|---|
+| 1 · «Seguir» llevaba a una pantalla con la solicitud de amistad enviada | Seguir y enviar una solicitud de amistad son ahora acciones separadas: «Seguir» solo cambia el botón a «Siguiendo», y «Enviar solicitud» solo marca la solicitud como enviada. Si se hacen las dos, se llega a P05. | P04, P05, P06, P14, P16 (nueva), P17 (nueva) |
+| 2 · Enlaces a perfiles y del feed de comunidades que llevaban a pantallas inesperadas | Cada usuario enlaza a su propio perfil (el resultado de búsqueda que abría otro perfil es ahora el mismo usuario). En comunidades, «Unirme» abre la comunidad a la que te unes, «Vinilos y directos» abre su comunidad y no el aviso de abandonar, «Publicar» muestra tu publicación en el feed y enviar una denuncia vuelve al feed; la moderación se abre desde Ajustes → «Denuncias pendientes». | M04, M16, M28, C01, C04, C07, C08, C12, C16, C18, C19 (nueva), C20 (nueva), C21 (nueva) |
+| 3 · No se entendía qué es un tablero | Texto de ayuda bajo las pestañas: «Crea tableros personalizados para organizar y guardar tus canciones y álbumes favoritos». | T02 |
+| 4 · No quedaba claro quién crea las comunidades | Subtítulo en Comunidades: «Únete a las comunidades existentes o crea la tuya propia para compartir música». | C01 |
+
+Además, todos los usuarios del prototipo tienen nombres ficticios: no aparece el nombre de ninguna integrante del equipo.
 
 ## Limitaciones conocidas
 
