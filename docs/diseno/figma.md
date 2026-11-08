@@ -46,7 +46,7 @@ Siguen la numeración y el contenido del diagrama de flujos del equipo.
 
 | Flujo | Nombre | Empieza en | Recorrido en el prototipo | HU |
 |---|---|---|---|---|
-| Flujo 1 | Registro, inicio de sesión, recuperar contraseña y cerrar sesión | A01 | A01 → A02 → A03 (usuario repetido / contraseña insegura) → M01 · A01 → A04 → M01 · A04 → A05 (credenciales incorrectas) / A06 (cuenta suspendida) · A04 → A07 → A08 → A13 → M01 · A09 (enlace caducado o usado) · M01 → Perfil → ⚙ A10 → M22 (visitante) | HU-01, HU-02, HU-17, HU-18 |
+| Flujo 1 | Registro, inicio de sesión, recuperar contraseña y cerrar sesión | A01 | A01 → A02 → A03 (usuario repetido / contraseña insegura) → M02 (inicio de un usuario nuevo, sin datos) · A01 → A04 → M01 · A04 → A05 (credenciales incorrectas) / A06 (cuenta suspendida) · A04 → A07 → A08 → A13 → M01 · A09 (enlace caducado o usado) · M01 → Perfil → ⚙ A10 → M22 (visitante) | HU-01, HU-02, HU-17, HU-18 |
 | Flujo 2 | Eliminar mi cuenta | A10 | A10 → A11 → A12 (único administrador) → C09 (nombrar otro administrador) o M22 (eliminar comunidad y cuenta) | HU-19 |
 | Flujo 3 | Suspender y readmitir usuarios (admin, web) | W06 | W06 → W11 (suspendidos) → «Levantar suspensión» → W06 | HU-37 |
 | Flujo 4 | Buscar y consultar fichas | M04 | M04 → filtros M25–M29 (canciones, álbumes, artistas, usuarios, comunidades) → M06 / M07 / M08 / P04 / C04 · M05 (sin resultados) | HU-03, HU-04 |
@@ -54,10 +54,10 @@ Siguen la numeración y el contenido del diagrama de flujos del equipo.
 | Flujo 6 | Valorar y reseñar | M06 | M06 → M09 → M07 · M06 → M11 → M06 · M12 (sin puntuación) · M06 → M13 → M11 (editar) / M06 (eliminar) · visitante: M22 → M10 | HU-05, HU-23, HU-08 |
 | Flujo 7 | Denunciar una reseña | M07 | M07 ⚑ → M14 → M15 (enviada / ya denunciada) · revisión del administrador en W04 | HU-36, HU-13 |
 | Flujo 8 | Mi perfil y privacidad | P01 | P01 ↔ P10 ↔ P11 (favoritos: canciones, álbumes, artistas) · P12 ↔ P15 (reseñas y rankings) · T02 (tableros) · P02 (editar) · P03 (privacidad) · perfil ajeno P04 ↔ P14 | HU-06, HU-43, HU-24 |
-| Flujo 9 | Seguir, amistad y bloqueo | P04 | P04 → P16 (Seguir: siguiendo) → P05 (además, solicitud enviada) · P04 → P17 (solo solicitud enviada) · P06 (eliminar amistad) · P04 ⋯ → P07 → P08 (desbloquear) · P13 (solicitudes recibidas) · P09 (perfil no disponible) | HU-10, HU-41, HU-42, HU-35, HU-24 |
+| Flujo 9 | Seguir, amistad y bloqueo | P04 | P04 → P16 (Seguir: siguiendo) → P05 (además, solicitud enviada) · P04 → P17 (solo solicitud enviada) · P06 (eliminar amistad) · P04 ⋯ → P07 → P08 (desbloquear) · P13 (solicitudes recibidas) · P09 (perfil no disponible, desde la búsqueda de usuarios M28) | HU-10, HU-41, HU-42, HU-35, HU-24 |
 | Flujo 10 | Marcar y desmarcar favoritos | T01 | M07 ⋯ → T01 (marcada) → P01 (aparece en Favoritos) · «Deshacer» → M07 (desmarcada) | HU-07 |
 | Flujo 11 | Tableros | T02 | T02 → T03 (T04 sin nombre) → T05 → T09 (añadir música) / T07 (privacidad) / T10 (editar) → T11 (eliminar) · T06 (elemento repetido) · T08 (seguir tablero ajeno) | HU-09, HU-25, HU-26, HU-27, HU-34 |
-| Flujo 12 | Página principal: recomendaciones, ranking y actividad | M01 | M01 ↔ M23 (ranking de canciones / álbumes) → M03 ↔ M24 · M01 → M20 (actividad) · M02 (sin datos) · M22 (visitante) | HU-12, HU-15, HU-28 |
+| Flujo 12 | Página principal: recomendaciones, ranking y actividad | M01 | M01 ↔ M23 (ranking de canciones / álbumes) → M03 ↔ M24 · M01 → M20 (actividad) · M02 (sin datos, tras registrarse) · M22 (visitante) | HU-12, HU-15, HU-28 |
 | Flujo 13 | Notificaciones | M16 | M16 → P13 (solicitud de amistad) · P04 (nuevo seguidor) · C04 / C06 (invitación a comunidad) · M15 · C14 | HU-11, HU-41, HU-31 |
 | Flujo 14 | Crear y administrar comunidades | C01 | C01 → C02 (C03 nombre repetido) → C06 → ⚙ C12 → C13 (único administrador) / C15 (eliminar) · C06 → C09 (miembros, expulsar) → C14 · C09 → C10 / C17 | HU-14, HU-29, HU-32 |
 | Flujo 15 | Unirse, abandonar y gestionar accesos | C04 | C04 → C20 (unirse) · C01 → C19 (comunidad de la que soy miembro) → ⋯ C16 (abandonar) · C05 (comunidad privada, solicitar acceso) · C10 (aceptar o rechazar solicitudes) · C17 (invitar) · M16 (responder invitación) | HU-30, HU-31, HU-32 |
@@ -106,7 +106,7 @@ Siguen la numeración y el contenido del diagrama de flujos del equipo.
 | HU-36 | Denunciar una reseña | 3 | M14, M15 |
 | HU-37 | Suspender a un usuario | 1 | A06, W06, W11 |
 | HU-38 | Denunciar una publicación | 7 | C08 |
-| HU-39 | Moderar las publicaciones de una comunidad | 7 | C11, C14 |
+| HU-39 | Moderar las publicaciones de una comunidad | 7 | C11, C12, C14 |
 | HU-40 | Corregir o eliminar contenido del catálogo | 2 | W03, W09, W10 |
 | HU-41 | Enviar y responder solicitudes de amistad | 4 | P04, P05, P13, P17, M16 |
 | HU-42 | Eliminar una amistad | 4 | P06 |
