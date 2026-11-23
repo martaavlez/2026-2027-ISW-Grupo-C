@@ -1,10 +1,10 @@
-# Requisitos de información (RI)
+# Requisitos de información
 
 Los requisitos de información describen los datos que el sistema debe almacenar y gestionar a lo largo del tiempo: las entidades del dominio, sus atributos con su tipo y restricciones, y las relaciones entre ellas. Siguen el formato del Tema 3: descripción, atributos y relaciones. Además, para cada entidad se indica quién puede crearla, modificarla o eliminarla.
 
 **Tipos de datos utilizados:** Identificador (único, generado por el sistema) · Texto (con longitud máxima) · Número entero · Número decimal · Fecha y hora · Sí/No · Enumerado (lista cerrada de valores) · Imagen (archivo o enlace) · Referencia (enlace a otra entidad).
 
-> Las longitudes máximas y otros valores numéricos de las restricciones son propuestas del equipo y pueden ajustarse durante el desarrollo.
+> Las longitudes máximas y otros valores numéricos de las restricciones son propuestas del equipo y pueden ajustarse durante el desarrollo.  
 
 ## Resumen de entidades y relaciones
 
@@ -13,8 +13,8 @@ Los requisitos de información describen los datos que el sistema debe almacenar
 | Usuario | Configuración de privacidad | 1 a 1 |
 | Usuario | Reseña, Favorito, Tablero | 1 a muchos |
 | Usuario | Usuario (seguimiento, amistad, bloqueo) | muchos a muchos |
-| Usuario | Comunidad (como miembro o administrador) | muchos a muchos |
-| Artista | Álbum | 1 a muchos |
+| Usuario | Comunidad, a través de la membresía (RI-21) | muchos a muchos |
+| Álbum | Artista | muchos a muchos |
 | Álbum | Canción | 1 a muchos |
 | Canción | Artista | muchos a muchos |
 | Canción / Álbum | Reseña | 1 a muchos |
@@ -22,8 +22,6 @@ Los requisitos de información describen los datos que el sistema debe almacenar
 | Tablero | Canción / Álbum | muchos a muchos |
 | Comunidad | Publicación | 1 a muchos |
 | Reseña / Publicación | Denuncia | 1 a muchos |
-
----
 
 ## RI-01 · Usuario
 
@@ -46,16 +44,14 @@ Los requisitos de información describen los datos que el sistema debe almacenar
 | Fecha de registro | Fecha y hora | Obligatoria, la asigna el sistema |
 
 **Relaciones:**
+
 - Tiene una configuración de privacidad (RI-02) · 1 a 1.
 - Escribe reseñas (RI-10), marca favoritos (RI-11) y crea tableros (RI-12) · 1 a muchos.
 - Sigue, es amigo de y bloquea a otros usuarios (RI-03, RI-04, RI-05) · muchos a muchos.
-- Es miembro o administrador de comunidades (RI-13) · muchos a muchos.
-
+- Es miembro o administrador de comunidades (RI-13) a través de sus membresías (RI-21) · 1 a muchos.
 **Gestión:** lo crea el propio usuario al registrarse. Puede modificar sus datos y eliminar su cuenta. El administrador de la plataforma puede suspenderlo.
 
 **Observaciones:** el perfil se organiza en tres pestañas: Favoritos (dividida en canciones, álbumes y artistas), Reseñas y Tableros. El nombre, la foto y la biografía son siempre visibles; el contenido de cada pestaña se muestra según su nivel de privacidad.
-
----
 
 ## RI-02 · Configuración de privacidad
 
@@ -75,8 +71,6 @@ Los requisitos de información describen los datos que el sistema debe almacenar
 
 **Observaciones:** los tres niveles de privacidad son comunes a reseñas, tableros y favoritos. **Público:** lo ve cualquier persona, incluidos visitantes y seguidores. **Solo amigos:** lo ven únicamente los usuarios con amistad aceptada. **Privado:** solo lo ve su propietario.
 
----
-
 ## RI-03 · Seguimiento
 
 **Descripción:** relación por la que un usuario sigue a otro para estar al tanto de su actividad pública. No requiere aprobación y no es recíproca.
@@ -94,8 +88,6 @@ La pareja seguidor–seguido es única.
 **Relaciones:** relaciona dos usuarios (RI-01) · muchos a muchos.
 
 **Gestión:** la crea y la elimina el seguidor.
-
----
 
 ## RI-04 · Amistad
 
@@ -115,8 +107,6 @@ La pareja seguidor–seguido es única.
 
 **Gestión:** la solicitud la crea cualquier usuario registrado, que puede cancelarla mientras esté pendiente; la acepta o la rechaza el destinatario. Cualquiera de los dos puede eliminar la amistad después.
 
----
-
 ## RI-05 · Bloqueo
 
 **Descripción:** restricción que un usuario aplica a otro para que no pueda seguirle, enviarle solicitudes de amistad, ver su perfil ni interactuar con su contenido.
@@ -134,8 +124,6 @@ La pareja de usuarios es única.
 **Relaciones:** relaciona dos usuarios (RI-01) · muchos a muchos.
 
 **Gestión:** lo crea y lo elimina el usuario que bloquea.
-
----
 
 ## RI-06 · Artista
 
@@ -157,11 +145,9 @@ La pareja de usuarios es única.
 
 **Gestión:** se importa de la base de datos musical externa. El agente de IA lo revisa y el administrador de la plataforma puede corregirlo o eliminarlo. Los usuarios solo pueden consultarlo.
 
----
-
 ## RI-07 · Álbum
 
-**Descripción:** conjunto de canciones publicadas juntas por un artista.
+**Descripción:** conjunto de canciones publicadas juntas por uno o varios artistas.
 
 **Atributos:**
 
@@ -169,7 +155,7 @@ La pareja de usuarios es única.
 | --- | --- | --- |
 | Identificador | Identificador | Único |
 | Título | Texto (máx. 200) | Obligatorio |
-| Artista | Referencia a Artista | Obligatoria |
+| Artistas | Lista de referencias a Artista | Al menos uno |
 | Portada | Imagen | Opcional |
 | Género | Texto (máx. 50) | Opcional |
 | Tipo | Enumerado: álbum, EP, single | Obligatorio |
@@ -178,11 +164,9 @@ La pareja de usuarios es única.
 | Identificador externo | Texto | Obligatorio, único |
 | Excluido de la importación | Sí/No | Obligatorio; por defecto, no |
 
-**Relaciones:** pertenece a un artista (RI-06) · muchos a 1. Contiene canciones (RI-08) · 1 a muchos. Recibe reseñas (RI-10) · 1 a muchos.
+**Relaciones:** tiene uno o varios artistas (RI-06) · muchos a muchos. Contiene canciones (RI-08) · 1 a muchos. Recibe reseñas (RI-10) · 1 a muchos.
 
 **Gestión:** igual que el artista: se importa, lo revisa el agente de IA y el administrador puede corregirlo o eliminarlo.
-
----
 
 ## RI-08 · Canción
 
@@ -195,6 +179,7 @@ La pareja de usuarios es única.
 | Identificador | Identificador | Único |
 | Título | Texto (máx. 200) | Obligatorio |
 | Álbum | Referencia a Álbum | Obligatoria |
+| Artistas | Lista de referencias a Artista | Al menos uno |
 | Duración | Número entero (segundos) | Obligatoria; mayor que 0 |
 | Género | Texto (máx. 50) | Opcional |
 | Valoración media | Número decimal (1,0–5,0) | Calculada por el sistema; vacía si no tiene valoraciones |
@@ -204,8 +189,6 @@ La pareja de usuarios es única.
 **Relaciones:** pertenece a un álbum (RI-07) · muchos a 1. Tiene uno o varios artistas (RI-06) · muchos a muchos. Recibe reseñas (RI-10) · 1 a muchos.
 
 **Gestión:** igual que el artista: se importa, la revisa el agente de IA y el administrador puede corregirla o eliminarla.
-
----
 
 ## RI-09 · Incidencia del catálogo
 
@@ -222,14 +205,13 @@ La pareja de usuarios es única.
 | Estado | Enumerado: pendiente, resuelta, descartada | Obligatorio; por defecto, pendiente |
 | Fecha de detección | Fecha y hora | Obligatoria, la asigna el sistema |
 | Fecha de resolución | Fecha y hora | Obligatoria si el estado es resuelta o descartada |
+| Resuelta por | Referencia a Usuario (administrador de la plataforma) | Obligatoria si el estado es resuelta o descartada |
 
-**Relaciones:** se refiere a un elemento del catálogo (RI-06, RI-07 o RI-08) · muchos a 1.
+**Relaciones:** se refiere a un elemento del catálogo (RI-06, RI-07 o RI-08) · muchos a 1. La resuelve un administrador de la plataforma (RI-01) · muchos a 1.
 
 **Gestión:** la crea automáticamente el agente de IA. La resuelve el administrador de la plataforma.
 
 **Observaciones:** las correcciones automáticas del agente no generan incidencia, pero quedan registradas.
-
----
 
 ## RI-10 · Reseña
 
@@ -255,8 +237,6 @@ La pareja autor–elemento reseñado es única.
 
 **Gestión:** la crea, modifica y elimina su autor. El administrador de la plataforma puede retirarla si incumple las normas.
 
----
-
 ## RI-11 · Favorito
 
 **Descripción:** marca que un usuario asigna a una canción, un álbum o un artista para tenerlo a mano en su perfil. No es un tablero: no se puede nombrar ni organizar.
@@ -275,8 +255,6 @@ La pareja usuario–elemento es única.
 **Relaciones:** pertenece a un usuario (RI-01) · muchos a 1. Se refiere a un elemento del catálogo (RI-06, RI-07 o RI-08) · muchos a 1.
 
 **Gestión:** lo añade y lo quita el propio usuario. Su visibilidad la decide la configuración de privacidad (RI-02).
-
----
 
 ## RI-12 · Tablero
 
@@ -299,8 +277,6 @@ La pareja usuario–elemento es única.
 
 **Gestión:** lo crea cualquier usuario registrado, que es el único que puede modificarlo, cambiar su privacidad, añadir o quitar contenido y eliminarlo.
 
----
-
 ## RI-13 · Comunidad
 
 **Descripción:** grupo de usuarios con intereses musicales comunes que comparten música y opiniones en un espacio propio.
@@ -316,17 +292,14 @@ La pareja usuario–elemento es única.
 | Normas | Texto (máx. 2.000) | Opcional |
 | Tipo de acceso | Enumerado: pública, privada | Obligatorio |
 | Creador | Referencia a Usuario | Obligatoria |
-| Miembros | Lista de referencias a Usuario, con rol (miembro, administrador o administrador principal) | Exactamente un administrador principal; al principio, el creador |
 | Expulsiones | Lista de usuario, fecha, motivo y número de veces expulsado | El usuario con dos expulsiones no puede volver a solicitar el acceso |
 | Fecha de creación | Fecha y hora | Obligatoria, la asigna el sistema |
 
-**Relaciones:** tiene miembros y administradores (RI-01) · muchos a muchos. Contiene publicaciones (RI-14) · 1 a muchos.
+**Relaciones:** tiene miembros y administradores a través de las membresías (RI-21) · 1 a muchos. Contiene publicaciones (RI-14) · 1 a muchos.
 
 **Gestión:** la crea cualquier usuario registrado, que pasa a ser su administrador principal. Los administradores de la comunidad pueden modificarla, eliminarla, gestionar sus miembros, nombrar a otros administradores y moderar sus publicaciones, pero no pueden expulsar al administrador principal ni quitarle el rol. Si el administrador principal se va, pasa a serlo el administrador más antiguo.
 
 **Observaciones:** las invitaciones y solicitudes de acceso se registran con el usuario, el tipo (invitación o solicitud), el estado (pendiente, aceptada o rechazada) y la fecha.
-
----
 
 ## RI-14 · Publicación en comunidad
 
@@ -347,8 +320,6 @@ La pareja usuario–elemento es única.
 
 **Gestión:** la crea cualquier miembro de la comunidad. La pueden eliminar su autor o un administrador de la comunidad.
 
----
-
 ## RI-15 · Denuncia
 
 **Descripción:** aviso de un usuario sobre una reseña o una publicación de una comunidad que considera inapropiada.
@@ -364,14 +335,14 @@ La pareja usuario–elemento es única.
 | Comentario | Texto (máx. 300) | Obligatorio si el motivo es "otro" |
 | Estado | Enumerado: pendiente, aceptada, rechazada | Obligatorio; por defecto, pendiente |
 | Fecha | Fecha y hora | Obligatoria, la asigna el sistema |
+| Fecha de resolución | Fecha y hora | Obligatoria si el estado es aceptada o rechazada |
+| Resuelta por | Referencia a Usuario | Obligatoria si el estado es aceptada o rechazada: el administrador de la plataforma o un administrador de la comunidad |
 
 La pareja denunciante–contenido es única.
 
-**Relaciones:** la presenta un usuario (RI-01) · muchos a 1. Se refiere a una reseña o una publicación (RI-10, RI-14) · muchos a 1.
+**Relaciones:** la presenta un usuario (RI-01) · muchos a 1. Se refiere a una reseña o una publicación (RI-10, RI-14) · muchos a 1. La resuelve un usuario con permiso (RI-01) · muchos a 1.
 
 **Gestión:** la crea cualquier usuario registrado. Las denuncias de reseñas las resuelve el administrador de la plataforma; las de publicaciones, los administradores de la comunidad correspondiente.
-
----
 
 ## RI-16 · Actividad
 
@@ -394,11 +365,9 @@ La pareja denunciante–contenido es única.
 
 **Observaciones:** se muestra en la página principal de quienes siguen al usuario o son sus amigos, filtrada según su nivel de privacidad.
 
----
-
 ## RI-17 · Notificación
 
-**Descripción:** aviso que el sistema envía a un usuario cuando se produce algo que le afecta directamente.
+**Descripción:** aviso que el sistema envía por correo electrónico a un usuario, a la dirección con la que se registró, cuando se produce algo que le afecta directamente.
 
 **Atributos:**
 
@@ -408,14 +377,12 @@ La pareja denunciante–contenido es única.
 | Destinatario | Referencia a Usuario | Obligatoria |
 | Tipo | Enumerado: nuevo seguidor, solicitud de amistad, amistad aceptada, invitación a comunidad, solicitud de acceso, respuesta de acceso, comunidad eliminada, expulsión de comunidad, tablero actualizado, nueva denuncia en comunidad, denuncia resuelta | Obligatorio |
 | Elemento relacionado | Referencia | Obligatoria |
-| Estado | Enumerado: no leída, leída | Obligatorio; por defecto, no leída |
+| Fecha de envío del correo | Fecha y hora | La asigna el sistema al enviar el correo |
 | Fecha | Fecha y hora | Obligatoria, la asigna el sistema |
 
 **Relaciones:** pertenece a un usuario (RI-01) · muchos a 1.
 
-**Gestión:** la genera automáticamente el sistema. El destinatario puede marcarla como leída.
-
----
+**Gestión:** la genera automáticamente el sistema y la envía al correo con el que se registró el destinatario.
 
 ## RI-18 · Recomendación
 
@@ -430,8 +397,6 @@ La pareja denunciante–contenido es única.
 | Género y artista de cada elemento | RI-06, RI-07, RI-08 |
 
 **Gestión:** la calcula el sistema automáticamente, según la regla RN-20.
-
----
 
 ## RI-19 · Ranking semanal
 
@@ -452,8 +417,6 @@ La pareja denunciante–contenido es única.
 
 **Gestión:** lo calcula el sistema automáticamente una vez al día, según la regla RN-19, y guarda el resultado del último cálculo.
 
----
-
 ## RI-20 · Ranking personal de un álbum
 
 **Descripción:** top que un usuario hace con sus canciones favoritas de un álbum, ordenadas de la que más le gusta a la que menos. Es solo una opinión personal y no interviene en la valoración media ni en el ranking semanal.
@@ -473,3 +436,22 @@ La pareja denunciante–contenido es única.
 **Relaciones:** pertenece a un usuario (RI-01) · muchos a 1. Se refiere a un álbum (RI-07) · muchos a 1. Contiene canciones de ese álbum (RI-08) · muchos a muchos.
 
 **Gestión:** lo crea cualquier usuario registrado desde la ficha del álbum, y solo su autor puede modificarlo, cambiar su privacidad o eliminarlo. Se elimina automáticamente si se elimina la cuenta del autor o el álbum (RN-23).
+
+## RI-21 · Membresía en una comunidad
+
+**Descripción:** pertenencia de un usuario a una comunidad, con el rol que tiene en ella.
+
+**Atributos:**
+
+| Atributo | Tipo | Restricciones |
+| --- | --- | --- |
+| Usuario | Referencia a Usuario | Obligatoria |
+| Comunidad | Referencia a Comunidad | Obligatoria |
+| Rol | Enumerado: miembro, administrador, administrador principal | Obligatorio; por defecto, miembro. Cada comunidad tiene exactamente un administrador principal |
+| Fecha de entrada | Fecha y hora | Obligatoria, la asigna el sistema |
+
+La pareja usuario–comunidad es única.
+
+**Relaciones:** pertenece a un usuario (RI-01) · muchos a 1. Pertenece a una comunidad (RI-13) · muchos a 1.
+
+**Gestión:** se crea al crear la comunidad (el creador es su administrador principal), al unirse a una comunidad pública o al aceptarse una invitación o una solicitud de acceso. Se elimina cuando el usuario abandona la comunidad o lo expulsan. Los administradores de la comunidad pueden cambiar el rol de los miembros, salvo el del administrador principal.

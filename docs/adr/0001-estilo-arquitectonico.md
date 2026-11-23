@@ -1,6 +1,6 @@
 # ADR-0001. ARQUITECTURA CON API COMÚN PARA WEB Y MÓVIL
 
-**Estado:** Aceptado  
+**Estado:** Sustituido por [ADR-0004](0004-solo-web-y-sesion-jwt.md) el 23/11/2026  
 **Fecha:** 06/11/2026  
 **Requisitos relacionados:** RNF-01, RNF-02
 

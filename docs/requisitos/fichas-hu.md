@@ -1,6 +1,8 @@
-# Fichas de historias de usuario clasificadas
+# Fichas de historias de usuario
 
-Cada ficha incluye el identificador, el título, la estimación, la prioridad MoSCoW, las dependencias, la historia, su clasificación (RI, RN y RNF) y las pruebas de aceptación en Gherkin. Cada escenario tiene un identificador (PA-número de historia-número de escenario) y una etiqueta que indica qué verifica: `@RF` para la funcionalidad, o `@RN-xx` / `@RNF-xx` para una regla de negocio o un requisito no funcional concreto.
+Cada historia de usuario es un requisito funcional (RF). Cada ficha incluye el identificador, la estimación, la prioridad MoSCoW, las dependencias, la clasificación, la historia y sus pruebas de aceptación en Gherkin. Cada escenario tiene un identificador (PA-número de historia-número de escenario) y una etiqueta que indica qué verifica: `@RF` para la funcionalidad, o `@RN-xx` / `@RNF-xx` para una regla de negocio o un requisito no funcional concreto. La relación de cada historia con los requisitos de información, las reglas de negocio y los requisitos no funcionales está en la [matriz de trazabilidad](trazabilidad.md).
+
+Las historias HU-45 a HU-59 salen de dividir historias que agrupaban varias funcionalidades independientes; cada ficha indica de qué historia sale.
 
 ## Índice
 
@@ -11,6 +13,7 @@ Cada ficha incluye el identificador, el título, la estimación, la prioridad Mo
 - [Épica 5 · Organización de la música](#épica-5--organización-de-la-música)
 - [Épica 6 · Descubrimiento](#épica-6--descubrimiento)
 - [Épica 7 · Comunidades](#épica-7--comunidades)
+- [Fuera del alcance](#fuera-del-alcance)
 
 ---
 
@@ -18,22 +21,15 @@ Cada ficha incluye el identificador, el título, la estimación, la prioridad Mo
 
 Entrada al sistema y gestión de las cuentas de usuario.
 
----
-
 ### HU-01 · Registrarse
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-01 | 5 puntos | Must | – |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-01 | 5 puntos | Must | – | RF |
 
 > **Como** visitante  
 > **quiero** registrarme en la aplicación  
 > **para** poder reseñar, guardar y compartir música.
-
-**Clasificación:** RF · RI-01, RI-02 · RN-01 · RNF-03, RNF-04
-
-**Reglas de negocio asociadas**
-- RN-01 · El nombre de usuario y el correo electrónico son únicos.
 
 ```gherkin
 @RF
@@ -57,22 +53,15 @@ Escenario: PA-01-03 · Contraseña insegura
   Entonces el sistema me indica qué requisitos debe cumplir
 ```
 
----
-
 ### HU-02 · Iniciar sesión
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-02 | 3 puntos | Must | HU-01 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-02 | 3 puntos | Must | HU-01 | RF |
 
 > **Como** usuario registrado  
 > **quiero** iniciar sesión  
 > **para** acceder a mi cuenta y a mi contenido.
-
-**Clasificación:** RF · RI-01 · RN-02 · RNF-03
-
-**Reglas de negocio asociadas**
-- RN-02 · Un usuario suspendido no puede iniciar sesión.
 
 ```gherkin
 @RF
@@ -93,21 +82,24 @@ Escenario: PA-02-03 · Cuenta suspendida
   Cuando intento iniciar sesión
   Entonces el sistema me informa de la suspensión
   Y no me permite acceder
-```
 
----
+@RNF-11
+Escenario: PA-02-04 · Sesión con token caducado o manipulado
+  Dado que mi token de sesión ha caducado o ha sido modificado
+  Cuando hago una petición
+  Entonces el servidor la rechaza
+  Y me pide iniciar sesión de nuevo
+```
 
 ### HU-17 · Cerrar sesión
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-17 | 2 puntos | Must | HU-02 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-17 | 2 puntos | Must | HU-02 | RF |
 
 > **Como** usuario registrado  
 > **quiero** cerrar sesión  
 > **para** que nadie pueda usar mi cuenta desde el mismo dispositivo.
-
-**Clasificación:** RF · RI-01
 
 ```gherkin
 @RF
@@ -117,22 +109,15 @@ Escenario: PA-17-01 · Cierre de sesión
   Entonces vuelvo a acceder como visitante
 ```
 
----
-
 ### HU-18 · Recuperar la contraseña
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-18 | 5 puntos | Should | HU-01 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-18 | 5 puntos | Should | HU-01 | RF |
 
 > **Como** usuario registrado  
 > **quiero** recuperar mi contraseña  
 > **para** poder acceder a mi cuenta si la olvido.
-
-**Clasificación:** RF · RI-01 · RN-03 · RNF-03, RNF-10
-
-**Reglas de negocio asociadas**
-- RN-03 · El enlace de recuperación caduca a las 24 horas y solo puede usarse una vez.
 
 ```gherkin
 @RF
@@ -166,30 +151,22 @@ Escenario: PA-18-05 · Correo no registrado
   Entonces el sistema muestra el mismo mensaje de confirmación sin revelar si el correo existe
 ```
 
----
-
 ### HU-19 · Eliminar mi cuenta
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-19 | 5 puntos | Should | HU-02 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-19 | 5 puntos | Should | HU-02 | RF |
 
 > **Como** usuario registrado  
 > **quiero** eliminar mi cuenta  
-> **para** dejar de usar la plataforma y que se borren mis datos.
-
-**Clasificación:** RF · RI-01, RI-13 · RN-04, RN-23 · RNF-04
-
-**Reglas de negocio asociadas**
-- RN-04 · Una comunidad siempre tiene al menos un administrador.
-- RN-23 · Al eliminar una cuenta se borran sus reseñas, tableros, favoritos y relaciones.
+> **para** dejar de usar la plataforma y que se borren todos mis datos.
 
 ```gherkin
 @RF @RN-23
-Escenario: PA-19-01 · Eliminación de la cuenta
+Escenario: PA-19-01 · Eliminación completa de la cuenta
   Dado que he iniciado sesión
   Cuando elimino mi cuenta y confirmo la acción
-  Entonces se borran mi perfil, mis reseñas, mis tableros, mis favoritos y mis relaciones con otros usuarios
+  Entonces se borran de forma definitiva mi perfil, mis reseñas, mis rankings, mis tableros, mis favoritos, mis membresías y mis relaciones con otros usuarios
   Y se cierra mi sesión
 
 @RN-04
@@ -199,22 +176,15 @@ Escenario: PA-19-02 · Único administrador de una comunidad
   Entonces el sistema me pide nombrar antes a otro administrador o eliminar la comunidad
 ```
 
----
-
 ### HU-37 · Suspender a un usuario
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-37 | 5 puntos | Should | HU-02 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-37 | 5 puntos | Should | HU-02 | RF |
 
 > **Como** administrador de la plataforma  
 > **quiero** suspender a los usuarios que incumplen las normas de forma reiterada  
 > **para** proteger al resto de usuarios.
-
-**Clasificación:** RF · RI-01 · RN-02 · RNF-02
-
-**Reglas de negocio asociadas**
-- RN-02 · Un usuario suspendido no puede iniciar sesión y su contenido deja de ser visible.
 
 ```gherkin
 @RF @RN-02
@@ -238,22 +208,15 @@ Escenario: PA-37-02 · Fin de la suspensión
 
 Importación, revisión, búsqueda y consulta del contenido musical.
 
----
-
 ### HU-03 · Buscar contenido
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-03 | 8 puntos | Must | HU-20 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-03 | 8 puntos | Must | HU-20 | RF |
 
 > **Como** usuario  
 > **quiero** buscar canciones, álbumes, artistas, usuarios y comunidades  
 > **para** encontrar el contenido que me interesa.
-
-**Clasificación:** RF · RI-01, RI-06, RI-07, RI-08, RI-13 · RN-12 · RNF-05, RNF-09
-
-**Reglas de negocio asociadas**
-- RN-12 · Un usuario bloqueado no puede encontrar en la búsqueda a quien le ha bloqueado.
 
 ```gherkin
 @RF
@@ -275,23 +238,15 @@ Escenario: PA-03-03 · Usuario que me ha bloqueado
   Entonces no aparece en los resultados
 ```
 
----
+### HU-04 · Consultar una canción o un álbum
 
-### HU-04 · Consultar una canción, álbum o artista
-
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-04 | 5 puntos | Must | HU-03 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-04 | 3 puntos | Must | HU-03 | RF |
 
 > **Como** usuario  
-> **quiero** consultar la información de una canción, álbum o artista  
+> **quiero** consultar la información de una canción o un álbum  
 > **para** conocerlo y ver las opiniones de otros usuarios.
-
-**Clasificación:** RF · RI-06, RI-07, RI-08, RI-10 · RN-07, RN-08 · RNF-02, RNF-05
-
-**Reglas de negocio asociadas**
-- RN-07 · La valoración media incluye todas las valoraciones de forma anónima.
-- RN-08 · Solo se muestran las reseñas que el usuario tiene permiso para ver.
 
 ```gherkin
 @RF @RN-07 @RN-08
@@ -300,36 +255,43 @@ Escenario: PA-04-01 · Ficha de una canción o un álbum
   Cuando accedo a su ficha
   Entonces veo su información y su valoración media
   Y veo las reseñas que tengo permiso para ver
+```
 
+### HU-59 · Consultar un artista
+
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-59 | 2 puntos | Must | HU-03 | RF |
+
+> **Como** usuario  
+> **quiero** consultar la información de un artista  
+> **para** conocer su música.
+
+*Sale de la división de la historia HU-04.*
+
+```gherkin
 @RF
-Escenario: PA-04-02 · Ficha de un artista
+Escenario: PA-59-01 · Ficha de un artista
   Dado que selecciono un artista
   Cuando accedo a su ficha
   Entonces veo su información y sus álbumes
 ```
 
----
-
 ### HU-20 · Importar el catálogo
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-20 | 8 puntos | Must | – |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-20 | 8 puntos | Must | – | RF |
 
 > **Como** administrador de la plataforma  
-> **quiero** que el catálogo se importe automáticamente desde una base de datos musical externa  
+> **quiero** que el catálogo se importe cada día desde MusicBrainz  
 > **para** que los usuarios dispongan de un catálogo amplio sin tener que darlo de alta a mano.
-
-**Clasificación:** RF · RI-06, RI-07, RI-08 · RN-21 · RNF-05, RNF-06, RNF-10
-
-**Reglas de negocio asociadas**
-- RN-21 · La importación no crea duplicados.
 
 ```gherkin
 @RF
-Escenario: PA-20-01 · Importación de contenido nuevo
-  Dado que la fuente externa contiene canciones, álbumes o artistas nuevos
-  Cuando se ejecuta la importación periódica
+Escenario: PA-20-01 · Importación diaria de contenido nuevo
+  Dado que MusicBrainz contiene canciones, álbumes o artistas nuevos
+  Cuando se ejecuta la importación diaria
   Entonces se añaden al catálogo
 
 @RN-21
@@ -339,60 +301,60 @@ Escenario: PA-20-02 · Elemento ya importado
   Entonces se actualizan sus datos sin crear un duplicado
 
 @RNF-05
-Escenario: PA-20-03 · Fuente externa no disponible
-  Dado que la fuente externa no responde
+Escenario: PA-20-03 · MusicBrainz no disponible
+  Dado que MusicBrainz no responde
   Cuando se intenta la importación
-  Entonces la aplicación sigue funcionando con el contenido existente
-  Y la importación se reintenta más tarde
-```
+  Entonces los usuarios siguen buscando y consultando fichas con el contenido existente, sin ver ningún error
+  Y el administrador ve en su panel la fecha de la última importación correcta
+  Y la importación se reintenta cada hora
 
----
+@RNF-10
+Escenario: PA-20-04 · Importación en las pruebas
+  Dado que se ejecutan las pruebas automáticas o el pipeline
+  Cuando se prueba la importación
+  Entonces se usa la versión simulada de MusicBrainz y no la real
+```
 
 ### HU-21 · Revisar automáticamente el contenido importado
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-21 | 8 puntos | Should | HU-20 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-21 | 8 puntos | Should | HU-20 | RF |
 
 > **Como** administrador de la plataforma  
-> **quiero** que un agente de IA revise el contenido importado  
+> **quiero** que un agente de IA revise cada día el contenido recién importado  
 > **para** detectar errores sin tener que revisarlo todo manualmente.
-
-**Clasificación:** RF · RI-06, RI-07, RI-08, RI-09 · RN-22 · RNF-07
-
-**Reglas de negocio asociadas**
-- RN-22 · El agente solo corrige automáticamente los problemas seguros; el resto genera una incidencia.
 
 ```gherkin
 @RF @RN-22
 Escenario: PA-21-01 · Detección de un posible problema
-  Dado que se ha importado contenido nuevo
+  Dado que la importación diaria ha traído contenido nuevo
   Cuando el agente detecta un posible duplicado o datos incompletos
-  Entonces crea una incidencia pendiente de revisión
+  Entonces no modifica el elemento
+  Y crea una incidencia pendiente de revisión
 
 @RN-22 @RNF-07
 Escenario: PA-21-02 · Corrección automática segura
   Dado que el agente detecta un problema que puede corregir con seguridad
   Cuando lo corrige
   Entonces deja constancia del cambio realizado
-```
 
----
+@RN-22
+Escenario: PA-21-03 · Contenido ya existente
+  Dado que un elemento se importó en días anteriores
+  Cuando el agente hace la revisión diaria
+  Entonces no lo vuelve a revisar
+```
 
 ### HU-22 · Resolver las incidencias del catálogo
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-22 | 5 puntos | Should | HU-21 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-22 | 5 puntos | Should | HU-21 | RF |
 
 > **Como** administrador de la plataforma  
 > **quiero** revisar las incidencias detectadas por el agente de IA  
 > **para** decidir qué hacer con el contenido dudoso.
-
-**Clasificación:** RF · RI-09 · RN-22 · RNF-02, RNF-07
-
-**Reglas de negocio asociadas**
-- RN-22 · Las incidencias que el agente no puede resolver las resuelve el administrador.
 
 ```gherkin
 @RF
@@ -406,6 +368,7 @@ Escenario: PA-22-02 · Incidencia correcta
   Dado que una incidencia señala un problema real
   Cuando corrijo o elimino el elemento afectado
   Entonces la incidencia se marca como resuelta
+  Y queda registrado qué administrador la resolvió
 
 @RF
 Escenario: PA-22-03 · Incidencia descartada
@@ -414,23 +377,15 @@ Escenario: PA-22-03 · Incidencia descartada
   Entonces el elemento se mantiene sin cambios
 ```
 
----
+### HU-40 · Corregir contenido del catálogo
 
-### HU-40 · Corregir o eliminar contenido del catálogo
-
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-40 | 5 puntos | Should | HU-20 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-40 | 3 puntos | Should | HU-20 | RF |
 
 > **Como** administrador de la plataforma  
-> **quiero** modificar o eliminar cualquier canción, álbum o artista  
+> **quiero** modificar los datos de cualquier canción, álbum o artista  
 > **para** corregir errores que el agente de IA no haya detectado.
-
-**Clasificación:** RF · RI-06, RI-07, RI-08 · RN-21, RN-23 · RNF-02
-
-**Reglas de negocio asociadas**
-- RN-21 · Un elemento eliminado por el administrador no se vuelve a importar.
-- RN-23 · Al eliminar un elemento se borran sus reseñas y su presencia en favoritos y tableros.
 
 ```gherkin
 @RF
@@ -438,16 +393,30 @@ Escenario: PA-40-01 · Corrección de datos
   Dado que estoy en la ficha de una canción
   Cuando modifico sus datos y guardo los cambios
   Entonces la ficha muestra la información actualizada
+```
 
+### HU-57 · Eliminar contenido del catálogo
+
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-57 | 2 puntos | Should | HU-20 | RF |
+
+> **Como** administrador de la plataforma  
+> **quiero** eliminar canciones, álbumes o artistas  
+> **para** quitar contenido erróneo o inapropiado.
+
+*Sale de la división de la historia HU-40.*
+
+```gherkin
 @RF @RN-23
-Escenario: PA-40-02 · Eliminación de un elemento
+Escenario: PA-57-01 · Eliminación de un elemento
   Dado que estoy en la ficha de un álbum
   Cuando lo elimino y confirmo la acción
   Entonces desaparece del catálogo junto con sus reseñas
   Y desaparece de los favoritos y tableros que lo contenían
 
 @RN-21
-Escenario: PA-40-03 · Elemento eliminado en una nueva importación
+Escenario: PA-57-02 · Elemento eliminado en una nueva importación
   Dado que he eliminado un elemento del catálogo
   Cuando se ejecuta la siguiente importación
   Entonces el elemento no se vuelve a añadir
@@ -459,25 +428,15 @@ Escenario: PA-40-03 · Elemento eliminado en una nueva importación
 
 Expresión y moderación de opiniones sobre la música.
 
----
-
 ### HU-05 · Valorar una canción o un álbum
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-05 | 3 puntos | Must | HU-02, HU-04 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-05 | 3 puntos | Must | HU-02, HU-04 | RF |
 
 > **Como** usuario registrado  
 > **quiero** puntuar una canción o un álbum de 1 a 5 sin necesidad de escribir texto  
 > **para** dar mi opinión de forma rápida.
-
-**Clasificación:** RF · RI-02, RI-10 · RN-05, RN-06, RN-07, RN-09
-
-**Reglas de negocio asociadas**
-- RN-05 · Una sola reseña por usuario y elemento.
-- RN-06 · La valoración es obligatoria y va de 1 a 5.
-- RN-07 · La media se recalcula al valorar.
-- RN-09 · Se aplica el nivel de privacidad por defecto.
 
 ```gherkin
 @RF @RN-06 @RN-07 @RN-09
@@ -507,25 +466,15 @@ Escenario: PA-05-04 · Visitante intenta valorar
   Entonces el sistema me pide registrarme o iniciar sesión
 ```
 
----
-
 ### HU-23 · Escribir una reseña
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-23 | 5 puntos | Must | HU-02, HU-04 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-23 | 5 puntos | Must | HU-02, HU-04 | RF |
 
 > **Como** usuario registrado  
 > **quiero** escribir una reseña con texto sobre una canción o un álbum y elegir quién puede verla  
 > **para** explicar mi opinión a quien yo decida.
-
-**Clasificación:** RF · RI-02, RI-10 · RN-06, RN-07, RN-08, RN-09
-
-**Reglas de negocio asociadas**
-- RN-06 · La valoración es obligatoria y el texto opcional.
-- RN-07 · La media se recalcula al publicar la reseña.
-- RN-08 · La reseña solo la ve quien tiene permiso según su nivel de privacidad.
-- RN-09 · Si no se elige nivel, se aplica el nivel por defecto.
 
 ```gherkin
 @RF @RN-07
@@ -555,23 +504,15 @@ Escenario: PA-23-04 · Reseña sin valoración
   Entonces el sistema me pide seleccionar una puntuación
 ```
 
----
+### HU-08 · Editar una reseña
 
-### HU-08 · Editar y eliminar mis reseñas
-
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-08 | 3 puntos | Should | HU-23 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-08 | 2 puntos | Should | HU-23 | RF |
 
 > **Como** usuario registrado  
-> **quiero** editar y eliminar mis reseñas  
-> **para** corregir o retirar mis opiniones.
-
-**Clasificación:** RF · RI-10 · RN-07, RN-13
-
-**Reglas de negocio asociadas**
-- RN-07 · La media se recalcula al modificar o eliminar una reseña.
-- RN-13 · Solo el autor puede modificar o eliminar su reseña.
+> **quiero** editar mis reseñas  
+> **para** corregir o actualizar mi opinión.
 
 ```gherkin
 @RF @RN-07
@@ -581,36 +522,43 @@ Escenario: PA-08-01 · Edición de una reseña
   Entonces se muestra la versión actualizada
   Y se recalcula la valoración media
 
-@RF @RN-07
-Escenario: PA-08-02 · Eliminación de una reseña
-  Dado que tengo una reseña publicada
-  Cuando la elimino
-  Entonces deja de aparecer en la ficha y en mi perfil
-  Y se recalcula la valoración media
-
 @RN-13
-Escenario: PA-08-03 · Reseña de otro usuario
+Escenario: PA-08-02 · Reseña de otro usuario
   Dado que una reseña es de otro usuario
   Cuando la consulto
   Entonces no tengo la opción de editarla ni eliminarla
 ```
 
----
+### HU-47 · Eliminar una reseña
+
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-47 | 1 punto | Should | HU-23 | RF |
+
+> **Como** usuario registrado  
+> **quiero** eliminar mis reseñas  
+> **para** retirar una opinión que ya no quiero mostrar.
+
+*Sale de la división de la historia HU-08.*
+
+```gherkin
+@RF @RN-07
+Escenario: PA-47-01 · Eliminación de una reseña
+  Dado que tengo una reseña publicada
+  Cuando la elimino
+  Entonces deja de aparecer en la ficha y en mi perfil
+  Y se recalcula la valoración media
+```
 
 ### HU-36 · Denunciar una reseña
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-36 | 3 puntos | Should | HU-23 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-36 | 3 puntos | Should | HU-23 | RF |
 
 > **Como** usuario registrado  
 > **quiero** denunciar una reseña inapropiada  
 > **para** que el administrador de la plataforma la revise.
-
-**Clasificación:** RF · RI-15 · RN-18
-
-**Reglas de negocio asociadas**
-- RN-18 · No se puede denunciar dos veces el mismo contenido.
 
 ```gherkin
 @RF
@@ -626,23 +574,15 @@ Escenario: PA-36-02 · Denuncia repetida
   Entonces el sistema me indica que ya está en revisión
 ```
 
----
-
 ### HU-13 · Revisar denuncias de reseñas
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-13 | 5 puntos | Should | HU-36 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-13 | 5 puntos | Should | HU-36 | RF |
 
 > **Como** administrador de la plataforma  
 > **quiero** revisar las denuncias de reseñas y retirar las inapropiadas  
 > **para** mantener un ambiente respetuoso.
-
-**Clasificación:** RF · RI-10, RI-15, RI-17 · RN-07, RN-18 · RNF-02
-
-**Reglas de negocio asociadas**
-- RN-07 · La media se recalcula al retirar una reseña.
-- RN-18 · Las denuncias de reseñas las resuelve el administrador de la plataforma.
 
 ```gherkin
 @RF @RN-18
@@ -664,27 +604,18 @@ Escenario: PA-13-03 · Denuncia no válida
   Dado que una denuncia no es válida
   Cuando la rechazo
   Entonces la reseña se mantiene
-  Y la denuncia se marca como resuelta
+  Y la denuncia se marca como resuelta con el administrador que la resolvió
 ```
-
----
 
 ### HU-44 · Crear mi ranking personal de un álbum
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-44 | 3 puntos | Could | HU-02, HU-04 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-44 | 3 puntos | Could | HU-02, HU-04 | RF |
 
 > **Como** usuario registrado  
 > **quiero** ordenar mis canciones favoritas de un álbum en un top personal  
 > **para** mostrar con más detalle qué me parece el álbum.
-
-**Clasificación:** RF · RI-02, RI-20 · RN-08, RN-09, RN-25
-
-**Reglas de negocio asociadas**
-- RN-08 · El ranking solo lo ve quien tiene permiso según su nivel de privacidad.
-- RN-09 · Si no se elige nivel, se aplica el nivel por defecto.
-- RN-25 · Como mínimo 3 canciones y como máximo todas las del álbum, sin repetir, un único ranking por álbum y sin efecto en la valoración media ni en el ranking semanal.
 
 ```gherkin
 @RF @RN-09
@@ -740,19 +671,15 @@ Escenario: PA-44-07 · Edición y eliminación del ranking
 
 Perfil, privacidad general y relaciones entre usuarios.
 
----
+### HU-06 · Consultar mi perfil
 
-### HU-06 · Gestionar mi perfil
-
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-06 | 5 puntos | Must | HU-02 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-06 | 3 puntos | Must | HU-02 | RF |
 
 > **Como** usuario registrado  
-> **quiero** consultar y editar mi perfil  
-> **para** mostrar a otros usuarios mis gustos musicales.
-
-**Clasificación:** RF · RI-01, RI-10, RI-11, RI-12
+> **quiero** consultar mi perfil  
+> **para** ver de un vistazo mi información y mi contenido.
 
 ```gherkin
 @RF
@@ -761,31 +688,37 @@ Escenario: PA-06-01 · Consulta de mi perfil
   Cuando accedo a mi perfil
   Entonces veo mi información
   Y veo las pestañas Favoritos (con canciones, álbumes y artistas), Reseñas y Tableros con todo mi contenido
+```
 
+### HU-45 · Editar mi perfil
+
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-45 | 2 puntos | Must | HU-06 | RF |
+
+> **Como** usuario registrado  
+> **quiero** editar mi foto, mi nombre y mi biografía  
+> **para** mostrar a otros usuarios quién soy.
+
+*Sale de la división de la historia HU-06.*
+
+```gherkin
 @RF
-Escenario: PA-06-02 · Edición del perfil
+Escenario: PA-45-01 · Edición del perfil
   Dado que edito mi foto o mi biografía
   Cuando guardo los cambios
   Entonces el perfil se actualiza
 ```
 
----
-
 ### HU-24 · Consultar el perfil de otro usuario
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-24 | 3 puntos | Must | HU-06 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-24 | 3 puntos | Must | HU-06 | RF |
 
 > **Como** usuario  
 > **quiero** consultar el perfil de otro usuario  
 > **para** conocer sus gustos musicales.
-
-**Clasificación:** RF · RI-01, RI-02, RI-04, RI-05 · RN-08, RN-12 · RNF-02
-
-**Reglas de negocio asociadas**
-- RN-08 · Cada usuario solo ve el contenido que su relación le permite.
-- RN-12 · Un usuario bloqueado no puede ver el perfil de quien le bloqueó.
 
 ```gherkin
 @RF @RN-08
@@ -808,23 +741,15 @@ Escenario: PA-24-03 · Usuario que me ha bloqueado
   Entonces el sistema no me lo muestra
 ```
 
----
-
 ### HU-43 · Configurar la privacidad de mi cuenta
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-43 | 5 puntos | Should | HU-06 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-43 | 5 puntos | Should | HU-06 | RF |
 
 > **Como** usuario registrado  
 > **quiero** configurar desde mi perfil la privacidad general de mi cuenta  
 > **para** controlar en un solo lugar quién ve mi contenido.
-
-**Clasificación:** RF · RI-02 · RN-08, RN-09 · RNF-02
-
-**Reglas de negocio asociadas**
-- RN-08 · Visibilidad según el nivel de privacidad.
-- RN-09 · El nivel por defecto se aplica al contenido nuevo y no modifica el existente.
 
 ```gherkin
 @RF @RN-09
@@ -846,22 +771,15 @@ Escenario: PA-43-03 · Contenido existente
   Entonces mantienen el nivel que tenían
 ```
 
----
+### HU-10 · Seguir a un usuario
 
-### HU-10 · Seguir y dejar de seguir a otros usuarios
-
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-10 | 3 puntos | Should | HU-24 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-10 | 2 puntos | Should | HU-24 | RF |
 
 > **Como** usuario registrado  
 > **quiero** seguir a otros usuarios  
 > **para** estar al tanto de su actividad pública.
-
-**Clasificación:** RF · RI-03 · RN-10
-
-**Reglas de negocio asociadas**
-- RN-10 · Seguir no requiere aprobación y solo da acceso al contenido público.
 
 ```gherkin
 @RF @RN-10
@@ -876,30 +794,37 @@ Escenario: PA-10-02 · Contenido visible para un seguidor
   Dado que sigo a un usuario que no es mi amigo
   Cuando consulto su contenido
   Entonces solo veo el contenido público
+```
 
+### HU-48 · Dejar de seguir a un usuario
+
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-48 | 1 punto | Should | HU-10 | RF |
+
+> **Como** usuario registrado  
+> **quiero** dejar de seguir a otro usuario  
+> **para** no ver más su actividad.
+
+*Sale de la división de la historia HU-10.*
+
+```gherkin
 @RF
-Escenario: PA-10-03 · Dejar de seguir
+Escenario: PA-48-01 · Dejar de seguir
   Dado que ya sigo a un usuario
   Cuando dejo de seguirlo
   Entonces desaparece de mi lista de seguidos
 ```
 
----
+### HU-41 · Enviar una solicitud de amistad
 
-### HU-41 · Enviar y responder solicitudes de amistad
-
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-41 | 5 puntos | Should | HU-24 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-41 | 3 puntos | Should | HU-24 | RF |
 
 > **Como** usuario registrado  
-> **quiero** enviar solicitudes de amistad, cancelarlas si me equivoco y responder a las que recibo  
+> **quiero** enviar solicitudes de amistad  
 > **para** compartir con mis amigos el contenido que no es público.
-
-**Clasificación:** RF · RI-04, RI-17 · RN-11
-
-**Reglas de negocio asociadas**
-- RN-11 · La amistad requiere una solicitud aceptada. No puede haber dos solicitudes pendientes entre los mismos usuarios: si se vuelve a pulsar el botón mientras la solicitud está pendiente, se cancela.
 
 ```gherkin
 @RF
@@ -909,21 +834,8 @@ Escenario: PA-41-01 · Envío de una solicitud
   Entonces recibe una notificación
   Y la solicitud queda pendiente
 
-@RF @RN-11
-Escenario: PA-41-02 · Solicitud aceptada
-  Dado que he recibido una solicitud de amistad
-  Cuando la acepto
-  Entonces ambos pasamos a ser amigos
-  Y podemos ver el contenido solo amigos del otro
-
-@RF
-Escenario: PA-41-03 · Solicitud rechazada
-  Dado que he recibido una solicitud de amistad
-  Cuando la rechazo
-  Entonces no se crea la amistad
-
 @RN-11
-Escenario: PA-41-04 · Cancelar una solicitud enviada
+Escenario: PA-41-02 · Cancelar una solicitud enviada
   Dado que he enviado una solicitud de amistad que sigue pendiente
   Cuando vuelvo a pulsar el botón de solicitud de amistad
   Entonces la solicitud se cancela
@@ -931,22 +843,42 @@ Escenario: PA-41-04 · Cancelar una solicitud enviada
   Y el botón vuelve a mostrar la opción de enviar la solicitud
 ```
 
----
+### HU-58 · Responder una solicitud de amistad
+
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-58 | 2 puntos | Should | HU-41 | RF |
+
+> **Como** usuario registrado  
+> **quiero** aceptar o rechazar las solicitudes de amistad que recibo  
+> **para** decidir quién es mi amigo.
+
+*Sale de la división de la historia HU-41.*
+
+```gherkin
+@RF @RN-11
+Escenario: PA-58-01 · Solicitud aceptada
+  Dado que he recibido una solicitud de amistad
+  Cuando la acepto
+  Entonces ambos pasamos a ser amigos
+  Y podemos ver el contenido solo amigos del otro
+
+@RF
+Escenario: PA-58-02 · Solicitud rechazada
+  Dado que he recibido una solicitud de amistad
+  Cuando la rechazo
+  Entonces no se crea la amistad
+```
 
 ### HU-42 · Eliminar una amistad
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-42 | 2 puntos | Should | HU-41 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-42 | 2 puntos | Should | HU-41 | RF |
 
 > **Como** usuario registrado  
 > **quiero** eliminar a un usuario de mis amigos  
-> **para** que deje de ver mi contenido solo amigos.
-
-**Clasificación:** RF · RI-03, RI-04 · RN-11
-
-**Reglas de negocio asociadas**
-- RN-11 · La amistad es independiente del seguimiento.
+> **para** que deje de ver mi contenido «solo amigos».
 
 ```gherkin
 @RF
@@ -962,22 +894,15 @@ Escenario: PA-42-02 · Se mantiene el seguimiento
   Entonces sigo siguiéndole
 ```
 
----
+### HU-35 · Bloquear a un usuario
 
-### HU-35 · Bloquear y desbloquear usuarios
-
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-35 | 5 puntos | Should | HU-24 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-35 | 3 puntos | Should | HU-24 | RF |
 
 > **Como** usuario registrado  
 > **quiero** bloquear a otro usuario  
 > **para** que no pueda seguirme, enviarme solicitudes ni ver mi contenido.
-
-**Clasificación:** RF · RI-03, RI-04, RI-05 · RN-12
-
-**Reglas de negocio asociadas**
-- RN-12 · Bloquear elimina el seguimiento y la amistad, e impide seguir, solicitar amistad y ver el perfil.
 
 ```gherkin
 @RF @RN-12
@@ -992,9 +917,23 @@ Escenario: PA-35-02 · Usuario bloqueado intenta interactuar
   Dado que he bloqueado a un usuario
   Cuando intenta seguirme o enviarme una solicitud de amistad
   Entonces el sistema no se lo permite
+```
 
+### HU-56 · Desbloquear a un usuario
+
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-56 | 2 puntos | Should | HU-35 | RF |
+
+> **Como** usuario registrado  
+> **quiero** desbloquear a un usuario que bloqueé  
+> **para** que pueda volver a ver mi contenido público.
+
+*Sale de la división de la historia HU-35.*
+
+```gherkin
 @RF
-Escenario: PA-35-03 · Desbloqueo
+Escenario: PA-56-01 · Desbloqueo
   Dado que tengo un usuario bloqueado
   Cuando lo desbloqueo desde mi lista de bloqueados
   Entonces puede volver a ver mi contenido público
@@ -1006,19 +945,15 @@ Escenario: PA-35-03 · Desbloqueo
 
 Favoritos y tableros.
 
----
+### HU-07 · Marcar un favorito
 
-### HU-07 · Marcar y desmarcar favoritos
-
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-07 | 3 puntos | Must | HU-02, HU-04 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-07 | 2 puntos | Must | HU-02, HU-04 | RF |
 
 > **Como** usuario registrado  
 > **quiero** marcar canciones, álbumes y artistas como favoritos  
 > **para** tener a mano la música que más me gusta.
-
-**Clasificación:** RF · RI-11
 
 ```gherkin
 @RF
@@ -1026,31 +961,37 @@ Escenario: PA-07-01 · Marcar un favorito
   Dado que estoy en la ficha de una canción
   Cuando la marco como favorita
   Entonces aparece en la subcategoría Canciones de mi pestaña Favoritos
+```
 
+### HU-46 · Quitar un favorito
+
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-46 | 1 punto | Must | HU-07 | RF |
+
+> **Como** usuario registrado  
+> **quiero** quitar un elemento de mis favoritos  
+> **para** que solo aparezca lo que me sigue gustando.
+
+*Sale de la división de la historia HU-07.*
+
+```gherkin
 @RF
-Escenario: PA-07-02 · Desmarcar un favorito
+Escenario: PA-46-01 · Desmarcar un favorito
   Dado que un álbum ya es favorito
   Cuando lo desmarco
   Entonces desaparece de mis favoritos
 ```
 
----
-
 ### HU-09 · Crear un tablero
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-09 | 3 puntos | Should | HU-02 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-09 | 3 puntos | Should | HU-02 | RF |
 
 > **Como** usuario registrado  
 > **quiero** crear tableros  
 > **para** organizar mi música a mi manera.
-
-**Clasificación:** RF · RI-02, RI-12 · RN-09, RN-14
-
-**Reglas de negocio asociadas**
-- RN-09 · Si no se elige nivel, se aplica el nivel de privacidad por defecto.
-- RN-14 · Un tablero debe tener nombre.
 
 ```gherkin
 @RF
@@ -1072,22 +1013,15 @@ Escenario: PA-09-03 · Tablero sin nombre
   Entonces el sistema me pide indicar un nombre
 ```
 
----
+### HU-25 · Añadir contenido a un tablero
 
-### HU-25 · Añadir y quitar contenido de un tablero
-
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-25 | 3 puntos | Should | HU-04, HU-09 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-25 | 2 puntos | Should | HU-04, HU-09 | RF |
 
 > **Como** propietario de un tablero  
-> **quiero** añadir y quitar canciones y álbumes  
-> **para** mantenerlo actualizado.
-
-**Clasificación:** RF · RI-12 · RN-14
-
-**Reglas de negocio asociadas**
-- RN-14 · Un tablero no puede contener dos veces el mismo elemento.
+> **quiero** añadir canciones y álbumes  
+> **para** completar la colección.
 
 ```gherkin
 @RF
@@ -1102,30 +1036,37 @@ Escenario: PA-25-02 · Canción repetida
   Cuando intento añadirla de nuevo
   Entonces el sistema me avisa
   Y no la duplica
+```
 
+### HU-49 · Quitar contenido de un tablero
+
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-49 | 1 punto | Should | HU-25 | RF |
+
+> **Como** propietario de un tablero  
+> **quiero** quitar canciones y álbumes  
+> **para** mantenerlo actualizado.
+
+*Sale de la división de la historia HU-25.*
+
+```gherkin
 @RF
-Escenario: PA-25-03 · Quitar una canción
+Escenario: PA-49-01 · Quitar una canción
   Dado que una canción está en mi tablero
   Cuando la quito
   Entonces deja de aparecer en él
 ```
 
----
+### HU-26 · Editar un tablero
 
-### HU-26 · Editar y eliminar un tablero
-
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-26 | 3 puntos | Should | HU-09 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-26 | 2 puntos | Should | HU-09 | RF |
 
 > **Como** propietario de un tablero  
-> **quiero** modificar su nombre y su descripción, o eliminarlo  
+> **quiero** modificar su nombre y su descripción  
 > **para** mantener organizada mi música.
-
-**Clasificación:** RF · RI-12 · RN-13
-
-**Reglas de negocio asociadas**
-- RN-13 · Solo el propietario puede modificar o eliminar su tablero.
 
 ```gherkin
 @RF
@@ -1134,37 +1075,43 @@ Escenario: PA-26-01 · Edición de un tablero
   Cuando modifico su nombre o su descripción y guardo los cambios
   Entonces el tablero se muestra actualizado
 
-@RF
-Escenario: PA-26-02 · Eliminación de un tablero
-  Dado que soy el propietario de un tablero
-  Cuando lo elimino y confirmo la acción
-  Entonces desaparece de mi perfil
-  Y desaparece de la lista de tableros seguidos de otros usuarios
-
 @RN-13
-Escenario: PA-26-03 · Tablero de otro usuario
+Escenario: PA-26-02 · Tablero de otro usuario
   Dado que el tablero es de otro usuario
   Cuando lo consulto
   Entonces no tengo la opción de editarlo ni eliminarlo
 ```
 
----
+### HU-50 · Eliminar un tablero
+
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-50 | 1 punto | Should | HU-09 | RF |
+
+> **Como** propietario de un tablero  
+> **quiero** eliminarlo  
+> **para** quitar las colecciones que ya no uso.
+
+*Sale de la división de la historia HU-26.*
+
+```gherkin
+@RF
+Escenario: PA-50-01 · Eliminación de un tablero
+  Dado que soy el propietario de un tablero
+  Cuando lo elimino y confirmo la acción
+  Entonces desaparece de mi perfil
+  Y desaparece de la lista de tableros seguidos de otros usuarios
+```
 
 ### HU-34 · Cambiar la privacidad de un tablero
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-34 | 3 puntos | Should | HU-09 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-34 | 3 puntos | Should | HU-09 | RF |
 
 > **Como** propietario de un tablero  
 > **quiero** cambiar su nivel de privacidad  
 > **para** decidir con quién comparto esa colección.
-
-**Clasificación:** RF · RI-02, RI-12 · RN-08, RN-15 · RNF-02
-
-**Reglas de negocio asociadas**
-- RN-08 · Visibilidad según el nivel de privacidad.
-- RN-15 · Si un tablero deja de ser público, deja de mostrarse a quienes ya no tienen permiso.
 
 ```gherkin
 @RF
@@ -1186,22 +1133,15 @@ Escenario: PA-34-03 · Tablero público con seguidores que cambia de nivel
   Entonces deja de mostrarse a quienes ya no tienen permiso
 ```
 
----
-
 ### HU-27 · Seguir un tablero público
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-27 | 3 puntos | Could | HU-09 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-27 | 3 puntos | Could | HU-09 | RF |
 
 > **Como** usuario registrado  
 > **quiero** seguir los tableros públicos de otros usuarios  
 > **para** enterarme cuando añaden música nueva.
-
-**Clasificación:** RF · RI-12, RI-17 · RN-15
-
-**Reglas de negocio asociadas**
-- RN-15 · Solo se pueden seguir los tableros públicos.
 
 ```gherkin
 @RF @RN-15
@@ -1223,56 +1163,39 @@ Escenario: PA-27-02 · Aviso de contenido nuevo
 
 Actividad, notificaciones, recomendaciones y ranking.
 
----
+### HU-11 · Recibir notificaciones por correo
 
-### HU-11 · Recibir notificaciones
-
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-11 | 8 puntos | Should | HU-02 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-11 | 8 puntos | Should | HU-02 | RF |
 
 > **Como** usuario registrado  
-> **quiero** recibir notificaciones de lo que me afecta  
-> **para** no perderme nada relevante.
-
-**Clasificación:** RF · RI-17
+> **quiero** recibir por correo electrónico los avisos de lo que me afecta  
+> **para** no perderme nada relevante aunque no tenga la web abierta.
 
 ```gherkin
 @RF
 Escenario: PA-11-01 · Nuevo seguidor o solicitud de amistad
   Dado que otro usuario empieza a seguirme o me envía una solicitud de amistad
-  Cuando abro mis notificaciones
-  Entonces veo el aviso correspondiente
+  Cuando se registra la acción
+  Entonces recibo un correo en la dirección con la que me registré
 
 @RF
 Escenario: PA-11-02 · Invitación a una comunidad
   Dado que recibo una invitación a una comunidad
-  Cuando abro mis notificaciones
-  Entonces puedo aceptarla o rechazarla desde ahí
-
-@RF
-Escenario: PA-11-03 · Notificaciones leídas
-  Dado que tengo notificaciones sin leer
-  Cuando las abro
-  Entonces pasan a estado leído
+  Cuando abro el correo
+  Entonces tiene un enlace para aceptarla o rechazarla en la web
 ```
-
----
 
 ### HU-12 · Ver recomendaciones personalizadas
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-12 | 8 puntos | Could | HU-05, HU-07 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-12 | 8 puntos | Could | HU-05, HU-07 | RF |
 
 > **Como** usuario registrado  
 > **quiero** recibir recomendaciones de canciones, álbumes y artistas en la página principal  
 > **para** descubrir música nueva según mis gustos.
-
-**Clasificación:** RF · RI-10, RI-11, RI-18 · RN-20
-
-**Reglas de negocio asociadas**
-- RN-20 · Regla de cálculo de las recomendaciones.
 
 ```gherkin
 @RF @RN-20
@@ -1295,22 +1218,15 @@ Escenario: PA-12-03 · Usuario sin datos
   Entonces veo el ranking semanal en lugar de recomendaciones
 ```
 
----
-
 ### HU-15 · Consultar el ranking semanal
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-15 | 5 puntos | Could | HU-05 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-15 | 5 puntos | Could | HU-05 | RF |
 
 > **Como** usuario  
 > **quiero** consultar en la página principal el ranking semanal de canciones y álbumes  
 > **para** conocer lo más valorado del momento.
-
-**Clasificación:** RF · RI-10, RI-19 · RN-19
-
-**Reglas de negocio asociadas**
-- RN-19 · Regla de cálculo del ranking.
 
 ```gherkin
 @RF @RN-19
@@ -1344,22 +1260,15 @@ Escenario: PA-15-05 · Empate
   Entonces aparece primero el que tiene más valoraciones
 ```
 
----
-
 ### HU-28 · Consultar la actividad de mis seguidos y amigos
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-28 | 5 puntos | Could | HU-10, HU-41 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-28 | 5 puntos | Could | HU-10, HU-41 | RF |
 
 > **Como** usuario registrado  
 > **quiero** ver en la página principal la actividad reciente de los usuarios que sigo y de mis amigos  
 > **para** descubrir música a través de ellos.
-
-**Clasificación:** RF · RI-03, RI-04, RI-16 · RN-08
-
-**Reglas de negocio asociadas**
-- RN-08 · La actividad hereda el nivel de privacidad del elemento al que se refiere.
 
 ```gherkin
 @RF @RN-08
@@ -1387,23 +1296,15 @@ Escenario: PA-28-03 · Actividad sobre contenido privado
 
 Ciclo de vida, acceso, miembros, publicaciones y moderación de las comunidades.
 
----
-
 ### HU-14 · Crear una comunidad
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-14 | 5 puntos | Could | HU-02 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-14 | 5 puntos | Could | HU-02 | RF |
 
 > **Como** usuario registrado  
 > **quiero** crear una comunidad  
 > **para** reunir a personas con mis mismos gustos musicales.
-
-**Clasificación:** RF · RI-13 · RN-04, RN-16
-
-**Reglas de negocio asociadas**
-- RN-04 · Quien crea la comunidad pasa a ser su administrador.
-- RN-16 · El nombre de una comunidad es único.
 
 ```gherkin
 @RF @RN-04
@@ -1420,23 +1321,15 @@ Escenario: PA-14-02 · Nombre repetido
   Entonces el sistema me pide elegir otro nombre
 ```
 
----
+### HU-29 · Editar una comunidad
 
-### HU-29 · Editar y eliminar una comunidad
-
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-29 | 3 puntos | Could | HU-14 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-29 | 2 puntos | Could | HU-14 | RF |
 
 > **Como** administrador de una comunidad  
-> **quiero** modificar su información o eliminarla  
-> **para** mantenerla actualizada o cerrarla.
-
-**Clasificación:** RF · RI-13, RI-14, RI-17 · RN-13, RN-23 · RNF-02
-
-**Reglas de negocio asociadas**
-- RN-13 · Solo los administradores de la comunidad pueden modificarla o eliminarla.
-- RN-23 · Al eliminar una comunidad se borran sus publicaciones.
+> **quiero** modificar su información  
+> **para** mantenerla actualizada.
 
 ```gherkin
 @RF
@@ -1445,36 +1338,43 @@ Escenario: PA-29-01 · Edición de una comunidad
   Cuando modifico su descripción, sus normas o su tipo de acceso y guardo los cambios
   Entonces la comunidad se muestra actualizada
 
-@RF @RN-23
-Escenario: PA-29-02 · Eliminación de una comunidad
-  Dado que administro una comunidad
-  Cuando la elimino y confirmo la acción
-  Entonces desaparece junto con sus publicaciones
-  Y sus miembros reciben una notificación
-
 @RN-13
-Escenario: PA-29-03 · Miembro sin rol de administrador
+Escenario: PA-29-02 · Miembro sin rol de administrador
   Dado que soy un miembro sin rol de administrador
   Cuando consulto la comunidad
   Entonces no tengo la opción de editarla ni eliminarla
 ```
 
----
+### HU-51 · Eliminar una comunidad
 
-### HU-30 · Unirse y abandonar una comunidad
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-51 | 1 punto | Could | HU-14 | RF |
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-30 | 3 puntos | Could | HU-14 |
+> **Como** administrador de una comunidad  
+> **quiero** eliminarla  
+> **para** cerrar una comunidad que ya no tiene sentido.
+
+*Sale de la división de la historia HU-29.*
+
+```gherkin
+@RF @RN-23
+Escenario: PA-51-01 · Eliminación de una comunidad
+  Dado que administro una comunidad
+  Cuando la elimino y confirmo la acción
+  Entonces desaparece junto con sus publicaciones
+  Y sus miembros reciben una notificación
+```
+
+### HU-30 · Unirse a una comunidad pública
+
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-30 | 1 punto | Could | HU-14 | RF |
 
 > **Como** usuario registrado  
-> **quiero** unirme a una comunidad o abandonarla  
-> **para** participar solo en las que me interesan.
-
-**Clasificación:** RF · RI-13 · RN-17
-
-**Reglas de negocio asociadas**
-- RN-17 · Acceso libre a las comunidades públicas y con aprobación a las privadas.
+> **quiero** unirme a una comunidad pública  
+> **para** participar en ella.
 
 ```gherkin
 @RF @RN-17
@@ -1482,36 +1382,70 @@ Escenario: PA-30-01 · Unirse a una comunidad pública
   Dado que una comunidad es pública
   Cuando pulso Unirme
   Entonces paso a ser miembro
+```
 
+### HU-52 · Solicitar acceso a una comunidad privada
+
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-52 | 1 punto | Could | HU-14 | RF |
+
+> **Como** usuario registrado  
+> **quiero** solicitar el acceso a una comunidad privada  
+> **para** que sus administradores me admitan.
+
+*Sale de la división de la historia HU-30.*
+
+```gherkin
 @RN-17
-Escenario: PA-30-02 · Solicitar acceso a una comunidad privada
+Escenario: PA-52-01 · Solicitar acceso a una comunidad privada
   Dado que una comunidad es privada
   Cuando pulso Solicitar acceso
   Entonces se envía una solicitud a sus administradores
+```
 
+### HU-53 · Abandonar una comunidad
+
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-53 | 1 punto | Could | HU-30 | RF |
+
+> **Como** miembro de una comunidad  
+> **quiero** abandonarla  
+> **para** participar solo en las que me interesan.
+
+*Sale de la división de la historia HU-30.*
+
+```gherkin
 @RF
-Escenario: PA-30-03 · Abandonar una comunidad
+Escenario: PA-53-01 · Abandonar una comunidad
   Dado que soy miembro de una comunidad
   Cuando la abandono
   Entonces dejo de ser miembro
+
+@RN-24
+Escenario: PA-53-02 · El creador abandona la comunidad
+  Dado que el creador de la comunidad la abandona y hay otros administradores
+  Cuando se completa la acción
+  Entonces el administrador más antiguo pasa a ser el administrador principal
+  Y ya puede gestionar a todos los administradores
+
+@RN-04
+Escenario: PA-53-03 · Último administrador intenta abandonar
+  Dado que soy el único administrador
+  Cuando intento abandonar la comunidad
+  Entonces el sistema me pide nombrar antes a otro administrador
 ```
 
----
+### HU-31 · Invitar a una comunidad
 
-### HU-31 · Gestionar invitaciones y solicitudes
-
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-31 | 8 puntos | Could | HU-11, HU-30 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-31 | 2 puntos | Could | HU-11, HU-30 | RF |
 
 > **Como** administrador de una comunidad  
-> **quiero** invitar a usuarios y responder a las solicitudes de acceso  
-> **para** controlar quién entra en ella.
-
-**Clasificación:** RF · RI-13, RI-17 · RN-17
-
-**Reglas de negocio asociadas**
-- RN-17 · En una comunidad privada se entra por invitación o mediante solicitud aprobada.
+> **quiero** invitar a usuarios  
+> **para** que formen parte de ella.
 
 ```gherkin
 @RF @RN-17
@@ -1519,40 +1453,45 @@ Escenario: PA-31-01 · Invitación a un usuario
   Dado que administro una comunidad
   Cuando invito a un usuario
   Entonces recibe una invitación que puede aceptar o rechazar
+```
 
+### HU-54 · Responder solicitudes de acceso
+
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-54 | 1 punto | Could | HU-52 | RF |
+
+> **Como** administrador de una comunidad  
+> **quiero** aceptar o rechazar las solicitudes de acceso  
+> **para** controlar quién entra.
+
+*Sale de la división de la historia HU-31.*
+
+```gherkin
 @RF
-Escenario: PA-31-02 · Solicitud aceptada
+Escenario: PA-54-01 · Solicitud aceptada
   Dado que hay una solicitud de acceso pendiente
   Cuando la acepto
   Entonces el usuario pasa a ser miembro
   Y recibe una notificación
 
 @RF
-Escenario: PA-31-03 · Solicitud rechazada
+Escenario: PA-54-02 · Solicitud rechazada
   Dado que hay una solicitud de acceso pendiente
   Cuando la rechazo
   Entonces el usuario no se añade
   Y recibe una notificación
 ```
 
----
+### HU-32 · Expulsar a un miembro
 
-### HU-32 · Gestionar miembros y administradores
-
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-32 | 5 puntos | Could | HU-30 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-32 | 3 puntos | Could | HU-30 | RF |
 
 > **Como** administrador de una comunidad  
-> **quiero** expulsar a miembros y nombrar a otros administradores  
+> **quiero** expulsar a los miembros que incumplen las normas  
 > **para** mantener el buen funcionamiento de la comunidad.
-
-**Clasificación:** RF · RI-13, RI-17 · RN-04, RN-17, RN-24 · RNF-02
-
-**Reglas de negocio asociadas**
-- RN-04 · Una comunidad siempre tiene al menos un administrador.
-- RN-17 · Un usuario expulsado recibe una notificación y puede volver a solicitar el acceso una sola vez; si se le expulsa por segunda vez, ya no puede.
-- RN-24 · Nadie puede expulsar al creador de la comunidad ni quitarle el rol de administrador; si se va, pasa a ser administrador principal el administrador más antiguo.
 
 ```gherkin
 @RF @RN-17
@@ -1575,49 +1514,43 @@ Escenario: PA-32-03 · Segunda expulsión
   Entonces recibe una notificación
   Y no puede volver a solicitar el acceso
 
+@RN-24
+Escenario: PA-32-04 · Administrador intenta expulsar al creador
+  Dado que soy administrador de una comunidad que no he creado
+  Cuando intento expulsar al creador o quitarle el rol de administrador
+  Entonces el sistema no me lo permite
+```
+
+### HU-55 · Nombrar administrador de una comunidad
+
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-55 | 2 puntos | Could | HU-30 | RF |
+
+> **Como** administrador de una comunidad  
+> **quiero** nombrar administrador a otro miembro  
+> **para** compartir la gestión.
+
+*Sale de la división de la historia HU-32.*
+
+```gherkin
 @RF @RN-24
-Escenario: PA-32-04 · Nombrar a otro administrador
+Escenario: PA-55-01 · Nombrar a otro administrador
   Dado que quiero compartir la gestión de la comunidad
   Cuando nombro administrador a un miembro
   Entonces obtiene los permisos de administración
   Pero no puede expulsar al creador de la comunidad ni quitarle el rol de administrador
-
-@RN-24
-Escenario: PA-32-05 · Administrador intenta expulsar al creador
-  Dado que soy administrador de una comunidad que no he creado
-  Cuando intento expulsar al creador o quitarle el rol de administrador
-  Entonces el sistema no me lo permite
-
-@RN-24
-Escenario: PA-32-06 · El creador abandona la comunidad
-  Dado que el creador de la comunidad la abandona y hay otros administradores
-  Cuando se completa la acción
-  Entonces el administrador más antiguo pasa a ser el administrador principal
-  Y ya puede gestionar a todos los administradores
-
-@RN-04
-Escenario: PA-32-07 · Último administrador intenta abandonar
-  Dado que soy el único administrador
-  Cuando intento abandonar la comunidad
-  Entonces el sistema me pide nombrar antes a otro administrador
 ```
-
----
 
 ### HU-33 · Publicar en una comunidad
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-33 | 5 puntos | Could | HU-30 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-33 | 5 puntos | Could | HU-30 | RF |
 
 > **Como** miembro de una comunidad  
 > **quiero** publicar mensajes y compartir canciones y álbumes  
 > **para** conversar sobre música con el resto de miembros.
-
-**Clasificación:** RF · RI-14 · RN-17
-
-**Reglas de negocio asociadas**
-- RN-17 · Las publicaciones de una comunidad privada solo las ven sus miembros.
 
 ```gherkin
 @RF
@@ -1639,22 +1572,15 @@ Escenario: PA-33-03 · No miembro de una comunidad privada
   Entonces el sistema no me las muestra
 ```
 
----
-
 ### HU-38 · Denunciar una publicación
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-38 | 2 puntos | Could | HU-33 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-38 | 2 puntos | Could | HU-33 | RF |
 
 > **Como** miembro de una comunidad  
 > **quiero** denunciar una publicación que incumple sus normas  
 > **para** que los administradores de la comunidad la revisen.
-
-**Clasificación:** RF · RI-15, RI-17 · RN-18
-
-**Reglas de negocio asociadas**
-- RN-18 · No se puede denunciar dos veces el mismo contenido; las denuncias de publicaciones las resuelven los administradores de la comunidad.
 
 ```gherkin
 @RF @RN-18
@@ -1670,22 +1596,15 @@ Escenario: PA-38-02 · Denuncia repetida
   Entonces el sistema me indica que ya está en revisión
 ```
 
----
-
 ### HU-39 · Moderar las publicaciones de una comunidad
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-39 | 3 puntos | Could | HU-38 |
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-39 | 3 puntos | Could | HU-38 | RF |
 
 > **Como** administrador de una comunidad  
 > **quiero** revisar las denuncias y eliminar las publicaciones que incumplen las normas  
 > **para** mantener un ambiente respetuoso en la comunidad.
-
-**Clasificación:** RF · RI-14, RI-15, RI-17 · RN-18 · RNF-02
-
-**Reglas de negocio asociadas**
-- RN-18 · Las denuncias de publicaciones las resuelven los administradores de la comunidad.
 
 ```gherkin
 @RF
@@ -1711,14 +1630,16 @@ Escenario: PA-39-03 · Denuncia no válida
 
 ---
 
-### HU-16 · Acceder a funciones premium · fuera del alcance
+## Fuera del alcance
 
-| Identificador | Estimación | Prioridad MoSCoW | Dependencias |
-| --- | --- | --- | --- |
-| HU-16 | – | Won't | – |
+### HU-16 · Acceder a funciones premium
+
+| Identificador | Estimación | Prioridad MoSCoW | Dependencias | Clasificación |
+| --- | --- | --- | --- | --- |
+| HU-16 | – | Won't | – | – |
 
 > **Como** usuario premium  
 > **quiero** consultar estadísticas personalizadas de mi actividad  
 > **para** conocer mejor mis hábitos musicales.
 
-Esta historia queda fuera del alcance de la versión actual, por lo que no se definen sus criterios de aceptación ni se clasifica.
+Esta historia queda fuera del alcance de la versión actual, por lo que no se definen sus pruebas de aceptación.
