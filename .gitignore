@@ -1,0 +1,16 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno (las de verdad no se suben; solo los .env.example)
+.env
+.env*.local
+
+# Resultados de tests y builds
+coverage/
+dist/
+
+# Sistema operativo y editores
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
