@@ -52,6 +52,8 @@ CREATE TABLE users (
     created_at         TIMESTAMPTZ  NOT NULL DEFAULT now(),
     CHECK (status <> 'suspended' OR suspension_reason IS NOT NULL)
 );
+-- RN-01: el nombre de usuario tampoco se repite cambiando mayúsculas (Lucia.M y lucia.m).
+CREATE UNIQUE INDEX users_username_lower_key ON users (lower(username));
 
 CREATE TABLE privacy_settings (
     user_id                 BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,

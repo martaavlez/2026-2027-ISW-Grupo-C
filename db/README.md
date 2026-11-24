@@ -38,7 +38,7 @@ El catálogo de prueba tiene 3 artistas, 4 álbumes y 10 canciones. Un álbum y 
 
 | Regla | Cómo se aplica |
 |---|---|
-| RN-01 · usuario y correo únicos | `UNIQUE` sobre `CITEXT` (no distingue mayúsculas) |
+| RN-01 · usuario y correo únicos | `UNIQUE` sobre `CITEXT` en el correo e índice único sobre `lower(username)` (no distinguen mayúsculas) |
 | RN-05 · una reseña por usuario y elemento | Índices únicos parciales en `reviews` |
 | RN-06 · puntuación de 1 a 5 | `CHECK` |
 | RN-11 · una sola solicitud de amistad abierta por pareja | Índice único sobre la pareja ordenada |

@@ -59,7 +59,7 @@ cp .env.example .env
 npx expo start
 ```
 
-- **Web:** pulsa `w` en la terminal. Se abre en http://localhost:8081. La pantalla de inicio muestra «API conectada» si la API está arrancada.
+- **Web:** pulsa `w` en la terminal. Se abre en http://localhost:8081 con la pantalla de bienvenida. Para comprobar que la app habla con la API, crea una cuenta desde «Crear cuenta»: si todo va bien, llegas a la pantalla de inicio con tu nombre.
 - **Móvil (Expo Go):** escanea el código QR. El móvil y el ordenador tienen que estar en la misma wifi y, en `app/.env`, `EXPO_PUBLIC_API_URL` tiene que llevar la IP del ordenador en lugar de `localhost`. Si la red no lo permite (por ejemplo, la wifi de la universidad), usa un túnel:
   ```bash
   npx expo login            # una sola vez, con vuestra cuenta de Expo
@@ -91,6 +91,17 @@ El pipeline [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta en
 5. Informe de cobertura: resumen en la página de la ejecución y carpeta `coverage/` descargable como artefacto.
 6. Resultado: verde si todo pasa, rojo si algo falla. Se ve en la pestaña **Actions** y en cada pull request.
 
+## Seguridad
+
+Todas las reglas se comprueban en la API, aunque la app también avise antes de enviar (RNF-02): una petición hecha a mano, sin pasar por la interfaz, se rechaza igual.
+
+- **Contraseñas (RNF-03):** mínimo 8 caracteres con una letra y un número, y máximo 72 (el límite de bcrypt). Se guardan con bcrypt (coste 12) y nunca se devuelven.
+- **Sesión (RNF-11):** token JWT firmado con HS256 y caducidad de 24 horas. En producción, `JWT_SECRET` es obligatoria.
+- **Fuerza bruta:** las rutas de `/auth` admiten `AUTH_RATE_LIMIT` intentos por IP cada 15 minutos; después responden 429.
+- **Peticiones:** cuerpo JSON de 10 KB como máximo, cabeceras de seguridad con Helmet y consultas SQL siempre con parámetros.
+- **Errores:** solo se enseñan los mensajes pensados para el usuario; los fallos internos devuelven un 500 sin detalles.
+- **Datos únicos (RN-01):** el correo y el nombre de usuario no se repiten ni cambiando mayúsculas, también en la base de datos.
+
 ## Variables de entorno
 
 Cada carpeta tiene un `.env.example` con las variables necesarias. Copia el archivo como `.env` y rellénalo. Los `.env` no se suben al repositorio.
@@ -100,6 +111,8 @@ Cada carpeta tiene un `.env.example` con las variables necesarias. Copia el arch
 | `PORT` | `api/` | Puerto de la API (por defecto 3000) |
 | `DATABASE_URL` | `api/` | Conexión con PostgreSQL |
 | `CORS_ORIGIN` | `api/` | Dirección de la web que puede llamar a la API |
+| `JWT_SECRET` | `api/` | Clave con la que se firman los tokens de sesión. En producción es obligatoria y de al menos 32 caracteres |
+| `AUTH_RATE_LIMIT` | `api/` | Intentos permitidos por IP cada 15 minutos en las rutas de autenticación (por defecto 20) |
 | `EXPO_PUBLIC_API_URL` | `app/` | Dirección de la API que usa la aplicación |
 
 ## Forma de trabajo
