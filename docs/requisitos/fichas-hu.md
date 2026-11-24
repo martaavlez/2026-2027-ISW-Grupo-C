@@ -1199,10 +1199,11 @@ Escenario: PA-11-02 · Invitación a una comunidad
 
 ```gherkin
 @RF @RN-20
-Escenario: PA-12-01 · Recomendaciones según mis gustos
-  Dado que tengo favoritos o valoraciones de 4 o más
+Escenario: PA-12-01 · Recomendaciones según mi perfil de gustos
+  Dado que mis favoritos y mis valoraciones de 4 o más son un 60 % de pop y un 40 % de rock
   Cuando accedo a la página principal
-  Entonces veo recomendaciones del mismo género o artista
+  Entonces las recomendaciones mantienen esa proporción de pop y rock
+  Y dentro de cada género aparecen primero los de mejor valoración media
   Y no aparecen elementos que ya he valorado o marcado como favoritos
 
 @RN-20
