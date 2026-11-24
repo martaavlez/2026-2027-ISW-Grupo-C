@@ -2,6 +2,9 @@
 // con la versión simulada de MusicBrainz (PA-20-04).
 const { Pool } = require('pg');
 
+// Carga el .env (DATABASE_URL) igual que la API, para que en local también se ejecuten.
+require('../../src/config');
+
 const { createCatalogImport } = require('../../src/catalog-import');
 const { MusicBrainzUnavailableError } = require('../../src/catalog-import/musicbrainz-client');
 const { fakeMusicBrainz, releaseGroup, release, track } = require('../fixtures/musicbrainz');
