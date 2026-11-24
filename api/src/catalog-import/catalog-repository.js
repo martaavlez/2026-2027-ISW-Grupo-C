@@ -60,13 +60,17 @@ async function upsertSong(client, albumId, song) {
   return rows[0];
 }
 
-async function linkArtists(client, table, ownerColumn, ownerId, artistIds) {
+// Consultas fijas para enlazar artistas: ningún nombre de tabla se construye con datos externos.
+const LINK_ARTIST_QUERIES = {
+  album: `INSERT INTO album_artists (album_id, artist_id, position) VALUES ($1, $2, $3)
+          ON CONFLICT (album_id, artist_id) DO UPDATE SET position = EXCLUDED.position`,
+  song: `INSERT INTO song_artists (song_id, artist_id, position) VALUES ($1, $2, $3)
+         ON CONFLICT (song_id, artist_id) DO UPDATE SET position = EXCLUDED.position`,
+};
+
+async function linkArtists(client, kind, ownerId, artistIds) {
   for (const [index, artistId] of artistIds.entries()) {
-    await client.query(
-      `INSERT INTO ${table} (${ownerColumn}, artist_id, position) VALUES ($1, $2, $3)
-       ON CONFLICT (${ownerColumn}, artist_id) DO UPDATE SET position = EXCLUDED.position`,
-      [ownerId, artistId, index + 1],
-    );
+    await client.query(LINK_ARTIST_QUERIES[kind], [ownerId, artistId, index + 1]);
   }
 }
 
@@ -119,7 +123,7 @@ function createCatalogRepository(pool) {
       );
       const albumRow = await upsertAlbum(client, album);
       countUpsert(counts, albumRow);
-      await linkArtists(client, 'album_artists', 'album_id', albumRow.id, albumArtistIds);
+      await linkArtists(client, 'album', albumRow.id, albumArtistIds);
 
       for (const song of songs) {
         if (excluded.has(`song:${song.externalId}`)) {
@@ -136,7 +140,7 @@ function createCatalogRepository(pool) {
         );
         const songRow = await upsertSong(client, albumRow.id, song);
         countUpsert(counts, songRow);
-        await linkArtists(client, 'song_artists', 'song_id', songRow.id, songArtistIds);
+        await linkArtists(client, 'song', songRow.id, songArtistIds);
       }
 
       await client.query('COMMIT');
