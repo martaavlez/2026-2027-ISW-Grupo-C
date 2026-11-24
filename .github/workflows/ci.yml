@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop, main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: repeat
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/repeat
+
+    steps:
+      - name: 1. Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+
+      - name: 2. Instalar dependencias
+        run: npm ci
+
+      - name: 3. Build (lint y formato)
+        run: |
+          npm run lint
+          npm run format:check
+
+      - name: Cargar el esquema y los datos de prueba
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f ../db/schema.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f ../db/seed.sql
+
+      - name: 4. Tests unitarios y de integración con cobertura
+        run: npm run test:coverage
+
+      - name: 5. Resumen de cobertura
+        if: always()
+        run: node ../.github/scripts/coverage-summary.js API coverage/coverage-summary.json >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 5. Guardar el informe de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-api
+          path: api/coverage/
+          if-no-files-found: ignore
+
+  app:
+    name: App
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+
+    env:
+      EXPO_NO_TELEMETRY: 1
+
+    steps:
+      - name: 1. Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: 2. Instalar dependencias
+        run: npm ci
+
+      - name: 3. Build (lint, formato, tipos y web)
+        run: |
+          npm run lint
+          npm run format:check
+          npm run typecheck
+          npm run build:web
+
+      - name: 4. Tests unitarios con cobertura
+        run: npm run test:coverage
+
+      - name: 5. Resumen de cobertura
+        if: always()
+        run: node ../.github/scripts/coverage-summary.js App coverage/coverage-summary.json >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 5. Guardar el informe de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-app
+          path: app/coverage/
+          if-no-files-found: ignore
