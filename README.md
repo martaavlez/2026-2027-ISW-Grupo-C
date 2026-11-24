@@ -1,5 +1,7 @@
 # Repeat
 
+[![CI](https://github.com/martaavlez/2026-2027-ISW-Grupo-C/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/martaavlez/2026-2027-ISW-Grupo-C/actions/workflows/ci.yml)
+
 Aplicación social para valorar, reseñar, organizar y compartir música. Proyecto de Ingeniería del Software · Grupo C · curso 2026-2027.
 
 ## Estructura del repositorio
@@ -10,7 +12,7 @@ Aplicación social para valorar, reseñar, organizar y compartir música. Proyec
 | `app/` | Aplicación web adaptable al móvil: Expo + Expo Router (React Native for Web) |
 | `db/` | Esquema de la base de datos (`schema.sql`) y datos de prueba (`seed.sql`) |
 | `docs/` | Documentación: requisitos, arquitectura, ADR, modelo conceptual, diseño y estrategia de ramas |
-| `.github/` | Plantilla de pull request y, más adelante, el pipeline de CI |
+| `.github/` | Plantilla de pull request y pipeline de CI (`workflows/ci.yml`) |
 
 ## Requisitos
 
@@ -77,6 +79,17 @@ Se ejecutan dentro de `api/` o de `app/`.
 | `npm run dev` | (`api/`) Arranca la API y la reinicia al guardar |
 | `npm run build:web` | (`app/`) Genera la versión web para producción en `dist/` |
 | `npm run typecheck` | (`app/`) Comprueba los tipos de TypeScript |
+
+## Integración continua
+
+El pipeline [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta en GitHub Actions en cada push a `develop` y en cada pull request hacia `develop` o `main`. Tiene dos trabajos, uno para `api/` y otro para `app/`, y cada uno hace:
+
+1. Checkout del código.
+2. Instalación de dependencias (`npm ci`).
+3. Build: lint, formato y, en la app, comprobación de tipos y generación de la web.
+4. Tests con cobertura. La API se prueba contra un PostgreSQL real con el esquema de `db/`. Si la cobertura de líneas baja del 60 %, el pipeline falla.
+5. Informe de cobertura: resumen en la página de la ejecución y carpeta `coverage/` descargable como artefacto.
+6. Resultado: verde si todo pasa, rojo si algo falla. Se ve en la pestaña **Actions** y en cada pull request.
 
 ## Variables de entorno
 

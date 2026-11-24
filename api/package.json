@@ -44,7 +44,13 @@
     ],
     "coverageReporters": [
       "text",
-      "lcov"
-    ]
+      "lcov",
+      "json-summary"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "lines": 60
+      }
+    }
   }
 }
