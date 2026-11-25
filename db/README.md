@@ -6,9 +6,9 @@ Esquema relacional en PostgreSQL 16 que implementa los requisitos de informació
 
 | Archivo | Contenido |
 |---|---|
-| `schema.sql` | Tipos enumerados, 29 tablas, claves, restricciones e índices |
+| `schema.sql` | Tipos enumerados, 30 tablas, claves, restricciones e índices |
 | `seed.sql` | Datos de prueba ficticios |
-| `../docs/modelo/` | Modelo conceptual (diagramas de clases, imágenes y archivo editable de draw.io) |
+| `modelo-conceptual/` | Modelo conceptual (diagramas de clases, imágenes y archivo editable de draw.io) |
 
 ## Cómo se ejecuta
 
@@ -32,7 +32,7 @@ Todos los usuarios y el catálogo son inventados. La contraseña de todos los us
 | nora.eco | Usuario | |
 | teo.bucle | Usuario | Cuenta suspendida |
 
-El catálogo de prueba tiene 3 artistas, 4 álbumes y 10 canciones. Un álbum y una canción tienen dos artistas (RI-07, RI-08). El catálogo real se importa a diario desde MusicBrainz (RNF-10); en desarrollo y en las pruebas se usa un mock.
+El catálogo de prueba tiene 3 artistas, 4 álbumes y 10 canciones. Un álbum y una canción tienen dos artistas (RI-07, RI-08). El catálogo real se importa desde MusicBrainz (HU-20): una primera importación por géneros y después las novedades de cada día (ver la sección «Importación del catálogo» del README principal). En las pruebas se usa un mock (RNF-10).
 
 ## Reglas comprobadas en la base de datos
 
@@ -47,6 +47,7 @@ El catálogo de prueba tiene 3 artistas, 4 álbumes y 10 canciones. Un álbum y 
 | RN-23 · borrado completo de la cuenta | `ON DELETE CASCADE` |
 | RN-23 · borrar un álbum borra sus canciones y lo que depende de él | `ON DELETE CASCADE` |
 | RN-21 · lo eliminado no se vuelve a importar | Tabla `import_exclusions` |
+| PA-20-03 · fecha de la última importación correcta | Tabla `import_runs` |
 | RI-09, RI-15 · quién resuelve | Columna `resolved_by` en incidencias y denuncias |
 
 El resto de reglas (permisos, privacidad, plazos) se comprueban en la API.

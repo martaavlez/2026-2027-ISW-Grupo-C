@@ -13,7 +13,9 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "import:initial": "node src/scripts/import-catalog.js --initial",
+    "import:daily": "node src/scripts/import-catalog.js --daily"
   },
   "license": "UNLICENSED",
   "dependencies": {
@@ -40,7 +42,8 @@
     "testEnvironment": "node",
     "collectCoverageFrom": [
       "src/**/*.js",
-      "!src/server.js"
+      "!src/server.js",
+      "!src/scripts/**"
     ],
     "coverageReporters": [
       "text",

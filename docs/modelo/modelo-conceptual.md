@@ -10,7 +10,7 @@ El usuario tiene una configuración de privacidad propia (composición). Seguimi
 
 ## Catálogo y agente de IA
 
-Artistas, álbumes y canciones son elementos del catálogo importados de MusicBrainz. Álbumes y canciones se pueden valorar, por eso comparten la clase abstracta ElementoValorable. Un álbum y una canción pueden tener varios artistas, y la canción no existe sin su álbum (composición). El agente de IA registra sus correcciones seguras y crea incidencias que resuelve el administrador; lo que el administrador elimina queda excluido de las importaciones.
+Artistas, álbumes y canciones son elementos del catálogo importados de MusicBrainz. Álbumes y canciones se pueden valorar, por eso comparten la clase abstracta ElementoValorable. Un álbum y una canción pueden tener varios artistas, y la canción no existe sin su álbum (composición). El agente de IA registra sus correcciones seguras y crea incidencias que resuelve el administrador; lo que el administrador elimina queda excluido de las importaciones. Cada importación queda registrada con su resultado; la diaria trae lo publicado desde la última importación correcta (HU-20).
 
 ![Figura 2. Modelo conceptual: catálogo y agente de IA](2-catalogo-y-agente-ia.png)
 
