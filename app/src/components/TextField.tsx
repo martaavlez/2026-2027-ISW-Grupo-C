@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
 
-import { colors, fonts, spacing } from '../theme';
+import { fonts, spacing, useColors } from '../theme';
 
 type Props = Omit<TextInputProps, 'style'> & {
   label: string;
@@ -10,24 +10,26 @@ type Props = Omit<TextInputProps, 'style'> & {
   password?: boolean;
 };
 
-/** Campo de formulario con su etiqueta y su mensaje de error. */
+/** Campo de formulario con su etiqueta en DM Mono y su mensaje de error. */
 export function TextField({ label, error, password = false, ...inputProps }: Props) {
+  const colors = useColors();
   const [visible, setVisible] = useState(false);
-  const [focused, setFocused] = useState(false);
 
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.label}>{label.toUpperCase()}</Text>
+      <Text style={[styles.label, { color: colors.ink }]}>{label.toUpperCase()}</Text>
       <View
-        style={[styles.box, focused ? styles.boxFocused : null, error ? styles.boxError : null]}
+        style={[
+          styles.box,
+          { borderColor: error ? colors.accent : colors.ink, backgroundColor: colors.surface },
+          error ? styles.boxError : null,
+        ]}
       >
         <TextInput
           accessibilityLabel={label}
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={colors.starEmpty}
           secureTextEntry={password && !visible}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          style={styles.input}
+          style={[styles.input, { color: colors.ink }]}
           {...inputProps}
         />
         {password ? (
@@ -37,12 +39,14 @@ export function TextField({ label, error, password = false, ...inputProps }: Pro
             onPress={() => setVisible(!visible)}
             hitSlop={8}
           >
-            <Text style={styles.toggle}>{visible ? 'OCULTAR' : 'MOSTRAR'}</Text>
+            <Text style={[styles.toggle, { color: colors.ink }]}>
+              {visible ? 'OCULTAR' : 'MOSTRAR'}
+            </Text>
           </Pressable>
         ) : null}
       </View>
       {error ? (
-        <Text accessibilityRole="alert" style={styles.error}>
+        <Text accessibilityRole="alert" style={[styles.error, { color: colors.accentText }]}>
           {error}
         </Text>
       ) : null}
@@ -51,27 +55,24 @@ export function TextField({ label, error, password = false, ...inputProps }: Pro
 }
 
 const styles = StyleSheet.create({
-  wrapper: { gap: spacing.sm - 2 },
-  label: { fontFamily: fonts.mono, fontSize: 12, letterSpacing: 1, color: colors.textMuted },
+  wrapper: { gap: spacing.sm - 2, flex: 1, minWidth: 0 },
+  label: { fontFamily: fonts.mono, fontSize: 12 },
   box: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 48,
-    paddingHorizontal: 14,
+    height: 46,
+    paddingHorizontal: 12,
     borderWidth: 2,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
   },
-  boxFocused: { borderColor: colors.cyan },
-  boxError: { borderColor: colors.pink, backgroundColor: colors.pinkSoft },
+  boxError: { borderWidth: 3 },
   input: {
     flex: 1,
+    minWidth: 0,
+    height: '100%',
     fontFamily: fonts.body,
     fontSize: 16,
-    color: colors.text,
-    paddingVertical: spacing.sm,
     outlineStyle: 'none',
   } as object,
-  toggle: { fontFamily: fonts.monoMedium, fontSize: 12, letterSpacing: 1, color: colors.cyan },
-  error: { fontFamily: fonts.body, fontSize: 13, color: colors.pink },
+  toggle: { fontFamily: fonts.mono, fontSize: 11 },
+  error: { fontFamily: fonts.body, fontSize: 13 },
 });

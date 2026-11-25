@@ -1,46 +1,69 @@
-// Tema «Neón oscuro · versión calmada» (diseño «Repeat · Temas retro»).
-import { Platform } from 'react-native';
+// Diseño de Hertz: modo claro y oscuro (docs/diseno/hertz.md · 2. Tokens).
+// El modo se elige según la preferencia del sistema (prefers-color-scheme).
+import { useColorScheme } from 'react-native';
 
-export const colors = {
-  background: '#0D0221',
-  surface: '#1E1050',
-  border: '#3A2A6E',
-  divider: '#24154D',
-  text: '#F4F1FF',
-  textMuted: '#B9A8E8',
-  cyan: '#00F0FF',
-  pink: '#FF2E97',
-  yellow: '#FFE45E',
-  onCyan: '#0D0221',
-  pinkSoft: 'rgba(255, 46, 151, 0.10)',
+export type Colors = {
+  background: string;
+  surface: string;
+  ink: string;
+  shadow: string;
+  accent: string;
+  accentText: string;
+  onAccent: string;
+  kraft: string;
+  folderOpen: string;
+  starEmpty: string;
+  wormBody: string;
+};
+
+export const lightColors: Colors = {
+  background: '#F4EFE6',
+  surface: '#FBF8F2',
+  ink: '#161412',
+  shadow: '#161412',
+  accent: '#FF2E97',
+  accentText: '#C2186F',
+  onAccent: '#161412',
+  kraft: '#E4DCCD',
+  folderOpen: '#F9D7E6',
+  starEmpty: '#C9C2B4',
+  wormBody: '#FFFFFF',
+};
+
+export const darkColors: Colors = {
+  background: '#141210',
+  surface: '#1E1B18',
+  ink: '#F2ECE1',
+  shadow: '#56504A',
+  accent: '#FF5CAB',
+  accentText: '#FF8CC4',
+  onAccent: '#141210',
+  kraft: '#2B2722',
+  folderOpen: '#3B2231',
+  starEmpty: '#4A443C',
+  wormBody: '#1E1B18',
 };
 
 /** Nombres de las fuentes que se cargan en app/_layout.tsx. */
 export const fonts = {
-  logo: 'Silkscreen_700Bold',
-  heading: 'PixelifySans_700Bold',
-  body: 'IBMPlexSans_400Regular',
-  bodyMedium: 'IBMPlexSans_500Medium',
-  bodyBold: 'IBMPlexSans_600SemiBold',
-  mono: 'IBMPlexMono_400Regular',
-  monoMedium: 'IBMPlexMono_500Medium',
+  display: 'ArchivoCondensed-Black',
+  body: 'Archivo_400Regular',
+  bodyBold: 'Archivo_700Bold',
+  bodyExtraBold: 'Archivo_800ExtraBold',
+  mono: 'DMMono_400Regular',
+  monoMedium: 'DMMono_500Medium',
 };
 
-export const spacing = { xs: 4, sm: 8, md: 16, lg: 20, xl: 24 };
+export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 36 };
 
-/** Brillo neón del logo y de los textos destacados. */
-export const neonGlow = {
-  textShadowColor: 'rgba(0, 240, 255, 0.7)',
-  textShadowOffset: { width: 0, height: 0 },
-  textShadowRadius: 8,
-};
+/** Ancho a partir del cual se usa la composición de ordenador. */
+export const DESKTOP_MIN_WIDTH = 960;
 
-/** Fondo con la cuadrícula suave del diseño (solo en la web, donde se usa CSS). */
-export const gridBackground =
-  Platform.OS === 'web'
-    ? ({
-        backgroundImage:
-          'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)',
-        backgroundSize: '16px 16px',
-      } as object)
-    : {};
+export function useColors(): Colors {
+  return useColorScheme() === 'dark' ? darkColors : lightColors;
+}
+
+/** Sombra sólida desplazada del diseño (botones 3 px, tarjetas y carpetas 4–6 px). */
+export function offsetShadow(colors: Colors, size: number) {
+  return { boxShadow: `${size}px ${size}px 0 ${colors.shadow}` };
+}

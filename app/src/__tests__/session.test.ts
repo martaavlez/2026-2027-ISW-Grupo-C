@@ -30,8 +30,8 @@ test('test_session_withLocalStorage_isSavedInTheBrowser', () => {
 
   saveSession(session);
 
-  expect(JSON.parse(store.get('repeat.session') ?? '')).toEqual(session);
+  expect(JSON.parse(store.get('hertz.session') ?? '')).toEqual(session);
   expect(getSession()).toEqual(session);
   clearSession();
-  expect(store.has('repeat.session')).toBe(false);
+  expect(store.has('hertz.session')).toBe(false);
 });

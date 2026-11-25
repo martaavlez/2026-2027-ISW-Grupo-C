@@ -2,7 +2,7 @@
 // En la web se usa localStorage; donde no existe (tests, Expo Go) se guarda en memoria.
 import type { Session } from './api';
 
-const KEY = 'repeat.session';
+const KEY = 'hertz.session';
 let memorySession: Session | null = null;
 
 function storage(): Storage | null {

@@ -1,16 +1,22 @@
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 
-import { colors, fonts, neonGlow } from '../theme';
+import { fonts, useColors } from '../theme';
 
-/** «REPEAT» en letra pixelada cian con brillo neón. */
-export function Logo({ size = 24 }: { size?: number }) {
+/** «HERTZ» en Archivo condensada. */
+export function Logo({ size = 30 }: { size?: number }) {
+  const colors = useColors();
   return (
-    <Text accessibilityRole="header" style={[styles.logo, { fontSize: size }]}>
-      REPEAT
+    <Text
+      accessibilityRole="header"
+      style={{
+        fontFamily: fonts.display,
+        fontSize: size,
+        lineHeight: size * 0.86,
+        letterSpacing: -0.02 * size,
+        color: colors.ink,
+      }}
+    >
+      HERTZ
     </Text>
   );
 }
-
-const styles = StyleSheet.create({
-  logo: { fontFamily: fonts.logo, letterSpacing: 1, color: colors.cyan, ...neonGlow },
-});

@@ -1,39 +1,51 @@
-// Inicio de un usuario recién registrado, todavía sin datos (M02, simplificada).
-// Las recomendaciones y el ranking llegarán con sus propias HU.
+// Inicio de un usuario recién registrado, todavía sin datos (simplificada).
+// El disco de la semana, el ranking y las recomendaciones llegarán con sus propias HU.
 import { Redirect } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Logo } from '../components/Logo';
-import { Screen } from '../components/Screen';
+import { TopBar } from '../components/TopBar';
+import { Worm } from '../components/Worm';
 import { getSession } from '../services/session';
-import { colors, fonts, spacing } from '../theme';
+import { fonts, spacing, useColors } from '../theme';
 
 export default function HomeScreen() {
+  const colors = useColors();
   const session = getSession();
   if (!session) return <Redirect href="/" />;
 
   return (
-    <Screen centered>
-      <View style={styles.content}>
-        <Logo />
-        <Text style={styles.title}>¡Hola, {session.user.name}!</Text>
-        <Text style={styles.text}>
-          Tu cuenta está lista. Cuando empieces a valorar música, aquí verás tus recomendaciones y
-          el ranking de la semana.
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <TopBar userName={session.user.name} />
+      <ScrollView contentContainerStyle={styles.content}>
+        <Worm pose="hola" width={220} />
+        <Text accessibilityRole="header" style={[styles.title, { color: colors.ink }]}>
+          ¡HOLA, {session.user.name.toUpperCase()}!
         </Text>
-      </View>
-    </Screen>
+        <Text style={[styles.text, { color: colors.ink }]}>
+          Tu cuenta está lista. Cuando empieces a valorar música, aquí verás el disco de la semana,
+          el ranking y recomendaciones para ti.
+        </Text>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { gap: spacing.md, alignItems: 'center' },
-  title: { fontFamily: fonts.heading, fontSize: 28, color: colors.text, textAlign: 'center' },
+  screen: { flex: 1 },
+  content: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
+  title: {
+    fontFamily: fonts.display,
+    fontSize: 72,
+    lineHeight: 64,
+    textAlign: 'center',
+    marginTop: spacing.md,
+  },
   text: {
     fontFamily: fonts.body,
-    fontSize: 15,
-    lineHeight: 22,
-    color: colors.textMuted,
+    fontSize: 17,
+    lineHeight: 25,
     textAlign: 'center',
+    maxWidth: 520,
+    marginTop: spacing.md,
   },
 });

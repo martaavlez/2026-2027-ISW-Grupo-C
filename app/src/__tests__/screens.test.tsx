@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import HomeScreen from '../app/inicio';
-import WelcomeScreen from '../app/index';
+import EntryScreen from '../app/index';
 import RegisterScreen from '../app/registro';
 import { registerUser } from '../services/api';
 import { clearSession, getSession, saveSession } from '../services/session';
@@ -16,6 +16,7 @@ jest.mock('expo-router', () => ({
   },
 }));
 jest.mock('../services/api', () => ({ registerUser: jest.fn() }));
+jest.mock('react-native-svg', () => ({ SvgXml: () => null }));
 
 const session = {
   token: 't',
@@ -32,27 +33,30 @@ async function fillValidForm() {
   await fireEvent.changeText(screen.getByLabelText('Nombre de usuario'), 'lucia.m');
   await fireEvent.changeText(screen.getByLabelText('Correo electrónico'), 'lucia@correo.es');
   await fireEvent.changeText(screen.getByLabelText('Contraseña'), 'secreta123');
-  await fireEvent.press(
-    screen.getByLabelText('Acepto las condiciones de uso y la política de privacidad'),
-  );
+  await fireEvent.press(screen.getByLabelText('Acepto los términos y la política de privacidad.'));
 }
 
-describe('A01 · Bienvenida', () => {
-  test('test_WelcomeScreen_whenPressingCreateAccount_goesToRegister', async () => {
-    await render(<WelcomeScreen />);
+describe('Entrada', () => {
+  test('test_EntryScreen_withoutSession_goesToRegister', async () => {
+    await render(<EntryScreen />);
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Crear cuenta' }));
+    expect(screen.getByText('Redirige a /registro')).toBeTruthy();
+  });
 
-    expect(mockRouter.push).toHaveBeenCalledWith('/registro');
-    expect(screen.getByText('Reseña, valora y comparte la música que te mueve')).toBeTruthy();
+  test('test_EntryScreen_withSession_goesHome', async () => {
+    saveSession(session);
+
+    await render(<EntryScreen />);
+
+    expect(screen.getByText('Redirige a /inicio')).toBeTruthy();
   });
 });
 
-describe('A02 / A03 · Registro', () => {
+describe('HertzRegistro · Crear cuenta', () => {
   test('test_RegisterScreen_withEmptyForm_showsErrorsWithoutCallingApi', async () => {
     await render(<RegisterScreen />);
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Crear cuenta' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Crear mi cuenta' }));
 
     expect(screen.getByText('Escribe tu nombre.')).toBeTruthy();
     expect(
@@ -63,13 +67,13 @@ describe('A02 / A03 · Registro', () => {
 
   test('test_RegisterScreen_whileTypingPassword_updatesRequirements', async () => {
     await render(<RegisterScreen />);
-    expect(screen.getByText('✗ Al menos un número')).toBeTruthy();
+    expect(screen.getByText('✗ AL MENOS UN NÚMERO')).toBeTruthy();
 
     await fireEvent.changeText(screen.getByLabelText('Contraseña'), 'abc1');
 
-    expect(screen.getByText('✓ Al menos un número')).toBeTruthy();
-    expect(screen.getByText('✓ Al menos una letra')).toBeTruthy();
-    expect(screen.getByText('✗ Mínimo 8 caracteres')).toBeTruthy();
+    expect(screen.getByText('✓ AL MENOS UN NÚMERO')).toBeTruthy();
+    expect(screen.getByText('✓ AL MENOS UNA LETRA')).toBeTruthy();
+    expect(screen.getByText('✗ MÍNIMO 8 CARACTERES')).toBeTruthy();
   });
 
   test('test_RegisterScreen_withValidData_savesSessionAndGoesHome', async () => {
@@ -77,7 +81,7 @@ describe('A02 / A03 · Registro', () => {
     await render(<RegisterScreen />);
     await fillValidForm();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Crear cuenta' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Crear mi cuenta' }));
 
     expect(registerUser).toHaveBeenCalledWith({
       name: 'Lucía Moreno',
@@ -96,7 +100,7 @@ describe('A02 / A03 · Registro', () => {
     await render(<RegisterScreen />);
     await fillValidForm();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Crear cuenta' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Crear mi cuenta' }));
 
     expect(await screen.findByText(message)).toBeTruthy();
     expect(mockRouter.replace).not.toHaveBeenCalled();
@@ -112,8 +116,6 @@ describe('A02 / A03 · Registro', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Mostrar contraseña' }));
 
     expect(screen.getByLabelText('Contraseña').props.secureTextEntry).toBe(false);
-    await fireEvent.press(screen.getByRole('button', { name: 'Volver' }));
-    expect(mockRouter.back).toHaveBeenCalled();
   });
 
   test('test_RegisterScreen_whenApiIsUnreachable_showsGeneralError', async () => {
@@ -123,7 +125,7 @@ describe('A02 / A03 · Registro', () => {
     await render(<RegisterScreen />);
     await fillValidForm();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Crear cuenta' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Crear mi cuenta' }));
 
     expect(await screen.findByText('No se ha podido conectar')).toBeTruthy();
   });
@@ -135,7 +137,8 @@ describe('Inicio tras registrarse', () => {
 
     await render(<HomeScreen />);
 
-    expect(screen.getByText('¡Hola, Lucía Moreno!')).toBeTruthy();
+    expect(screen.getByText('¡HOLA, LUCÍA MORENO!')).toBeTruthy();
+    expect(screen.getByLabelText('Tu perfil')).toBeTruthy();
   });
 
   test('test_HomeScreen_withoutSession_redirectsToWelcome', async () => {

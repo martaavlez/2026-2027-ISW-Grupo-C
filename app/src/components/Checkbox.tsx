@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, fonts, spacing } from '../theme';
+import { fonts, spacing, useColors } from '../theme';
 
 type Props = {
   label: string;
@@ -10,6 +10,7 @@ type Props = {
 };
 
 export function Checkbox({ label, checked, onChange, error }: Props) {
+  const colors = useColors();
   return (
     <View style={styles.wrapper}>
       <Pressable
@@ -19,13 +20,19 @@ export function Checkbox({ label, checked, onChange, error }: Props) {
         onPress={() => onChange(!checked)}
         style={styles.row}
       >
-        <View style={[styles.box, checked ? styles.checked : null, error ? styles.boxError : null]}>
-          {checked ? <Text style={styles.tick}>✓</Text> : null}
+        <View
+          style={[
+            styles.box,
+            { borderColor: error ? colors.accent : colors.ink },
+            checked ? { backgroundColor: colors.ink } : null,
+          ]}
+        >
+          {checked ? <Text style={[styles.tick, { color: colors.background }]}>✓</Text> : null}
         </View>
-        <Text style={styles.label}>{label}</Text>
+        <Text style={[styles.label, { color: colors.ink }]}>{label}</Text>
       </Pressable>
       {error ? (
-        <Text accessibilityRole="alert" style={styles.error}>
+        <Text accessibilityRole="alert" style={[styles.error, { color: colors.accentText }]}>
           {error}
         </Text>
       ) : null}
@@ -35,18 +42,16 @@ export function Checkbox({ label, checked, onChange, error }: Props) {
 
 const styles = StyleSheet.create({
   wrapper: { gap: spacing.xs },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md - 4 },
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
   box: {
-    width: 22,
-    height: 22,
+    width: 20,
+    height: 20,
+    marginTop: 1,
     borderWidth: 2,
-    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checked: { backgroundColor: colors.cyan, borderColor: colors.cyan },
-  boxError: { borderColor: colors.pink },
-  tick: { color: colors.onCyan, fontSize: 14, fontWeight: '700' },
-  label: { flex: 1, fontFamily: fonts.body, fontSize: 14, color: colors.textMuted },
-  error: { fontFamily: fonts.body, fontSize: 13, color: colors.pink },
+  tick: { fontSize: 12, fontWeight: '800', lineHeight: 14 },
+  label: { flex: 1, fontFamily: fonts.body, fontSize: 14, lineHeight: 20 },
+  error: { fontFamily: fonts.body, fontSize: 13 },
 });

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Hertz · Tablero abierto · oscuro</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=DM+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+.case{background:url(/_blob/d654b5b7bd5b78319634c9d3a7ba8bac) center/100% 100% no-repeat}
+.disc{background:url(/_blob/31431d88d1707a4de78b5cd02b4eabfd) center/100% 100% no-repeat}
+a{color:#F2ECE1}a:hover{color:#FF5CAB}
+</style>
+</helmet>
+<div style="width:1440px;height:900px;box-sizing:border-box;background:#141210;color:#F2ECE1;font-family:'Archivo',sans-serif;position:relative;overflow:hidden">
+  <!-- el tablero: su CD saliendo de la caja -->
+  <div aria-hidden="true" style="position:absolute;left:126px;top:226px;width:470px;height:470px;border-radius:50%;background:radial-gradient(circle closest-side,transparent 0 28%,#EDBFAE 28%)"></div>
+  <div class="disc" aria-hidden="true" style="position:absolute;left:66px;top:178px;width:560px;height:560px"></div>
+  <div class="case" aria-hidden="true" style="position:absolute;left:-180px;top:178px;width:560px;height:560px;filter:drop-shadow(6px 6px 0 #56504A)"></div>
+  <!-- barra superior -->
+  <header style="position:absolute;left:0;right:0;top:0;height:64px;box-sizing:border-box;border-bottom:2px solid #F2ECE1;display:flex;align-items:center;gap:36px;padding:0 48px;font-family:'DM Mono',monospace;font-size:13px;background:#141210;z-index:3">
+    <b style="font-family:'Archivo',sans-serif;font-size:30px;font-weight:900;font-stretch:62%;letter-spacing:.01em">HERTZ</b>
+    <nav style="display:flex;gap:30px;margin-left:auto">
+      <a href="OscuroInicio.dc.html" style="text-decoration:none">INICIO</a>
+      <a href="#" style="text-decoration:none">DESCUBRIR</a>
+      <a href="#" style="text-decoration:none">COMUNIDAD</a>
+    </nav>
+    <a href="#" aria-label="Buscar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#F2ECE1" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M16 16l5 5"/></svg></a>
+    <a href="OscuroPerfil.dc.html" aria-label="Tu perfil" aria-current="page" style="width:34px;height:34px;border-radius:50%;border:2px solid #F2ECE1;box-shadow:0 0 0 3px #141210,0 0 0 5px #FF5CAB;background:#3B2231;display:grid;place-items:center;text-decoration:none;font-family:'Archivo',sans-serif;font-weight:800">L</a>
+  </header>
+  <!-- contenido del tablero -->
+  <main style="position:absolute;left:690px;right:48px;top:92px;display:flex;flex-direction:column;gap:16px">
+    <a href="OscuroPerfil.dc.html" style="font-family:'DM Mono',monospace;font-size:12px;text-decoration:none">← Mis tableros</a>
+    <span style="font-family:'DM Mono',monospace;font-size:13px">TABLERO DE @LUCÍA · 14 ELEMENTOS · 37 SEGUIDORES</span>
+    <h1 style="margin:0;font-size:112px;line-height:.82;font-weight:900;font-stretch:62%;letter-spacing:-.01em">DOMINGOS<br>LENTOS</h1>
+    <p style="margin:0;max-width:640px;font-size:17px;line-height:1.5">Discos y canciones para la sobremesa, sin prisa.</p>
+    <!-- opciones dentro del tablero (solo las ve su dueña) -->
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:14px;font-weight:700">
+      <a href="#" style="padding:10px 16px;background:#FF5CAB;color:#141210;border:2px solid #F2ECE1;box-shadow:3px 3px 0 #56504A;text-decoration:none">+ Añadir canción o álbum</a>
+      <a href="#" style="padding:10px 16px;border:2px solid #F2ECE1;text-decoration:none">Editar</a>
+      <div role="radiogroup" aria-label="Privacidad del tablero" style="display:flex;border:2px solid #F2ECE1;font-family:'DM Mono',monospace;font-size:12px;font-weight:500">
+        <a role="radio" aria-checked="true" href="#" style="padding:11px 12px;background:#F2ECE1;color:#141210;text-decoration:none">PÚBLICO</a>
+        <a role="radio" aria-checked="false" href="#" style="padding:11px 12px;border-left:2px solid #F2ECE1;text-decoration:none">SOLO AMIGOS</a>
+        <a role="radio" aria-checked="false" href="#" style="padding:11px 12px;border-left:2px solid #F2ECE1;text-decoration:none">PRIVADO</a>
+      </div>
+      <a href="#" aria-label="Más opciones: eliminar tablero" style="padding:10px 14px;border:2px solid #F2ECE1;text-decoration:none">•••</a>
+    </div>
+    <!-- lista -->
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:6px"><h2 style="margin:0;font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:#FF8CC4">EN ESTE TABLERO</h2><span style="font-family:'DM Mono',monospace;font-size:12px">tipo · tu nota · añadido</span></div>
+    <ol style="list-style:none;margin:0;padding:0;border-top:2px solid #F2ECE1">
+      <li style="display:grid;grid-template-columns:36px 52px minmax(0,1fr) 76px 100px 64px;gap:16px;align-items:center;padding:10px 0;border-bottom:1px solid #F2ECE1"><span style="font-family:'DM Mono',monospace;font-size:12px">01</span><span style="width:52px;height:52px;background:#CFC4F0;border:2px solid #F2ECE1;box-sizing:border-box"></span><span><b>[ÁLBUM]</b><br><span style="font-family:'DM Mono',monospace;font-size:11px">[ARTISTA]</span></span><span style="font-family:'DM Mono',monospace;font-size:11px">ÁLBUM</span><span style="letter-spacing:2px">★★★★★</span><span style="font-family:'DM Mono',monospace;font-size:12px;text-align:right">3 oct</span></li>
+      <li style="display:grid;grid-template-columns:36px 52px minmax(0,1fr) 76px 100px 64px;gap:16px;align-items:center;padding:10px 0;border-bottom:1px solid #F2ECE1"><span style="font-family:'DM Mono',monospace;font-size:12px">02</span><span style="width:52px;height:52px;background:#F2E3A8;border-radius:50%;border:2px solid #F2ECE1;box-sizing:border-box"></span><span><b>[CANCIÓN]</b><br><span style="font-family:'DM Mono',monospace;font-size:11px">[ARTISTA]</span></span><span style="font-family:'DM Mono',monospace;font-size:11px">CANCIÓN</span><span style="letter-spacing:2px">★★★★☆</span><span style="font-family:'DM Mono',monospace;font-size:12px;text-align:right">28 sep</span></li>
+      <li style="display:grid;grid-template-columns:36px 52px minmax(0,1fr) 76px 100px 64px;gap:16px;align-items:center;padding:10px 0;border-bottom:1px solid #F2ECE1"><span style="font-family:'DM Mono',monospace;font-size:12px">03</span><span style="width:52px;height:52px;background:#C9D8BE;border:2px solid #F2ECE1;box-sizing:border-box"></span><span><b>[ÁLBUM]</b><br><span style="font-family:'DM Mono',monospace;font-size:11px">[ARTISTA]</span></span><span style="font-family:'DM Mono',monospace;font-size:11px">ÁLBUM</span><span style="letter-spacing:2px">★★★★☆</span><span style="font-family:'DM Mono',monospace;font-size:12px;text-align:right">21 sep</span></li>
+    </ol>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <a href="#" style="font-family:'DM Mono',monospace;font-size:12px">VER LOS 14 →</a>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

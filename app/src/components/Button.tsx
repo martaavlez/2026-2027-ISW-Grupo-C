@@ -1,16 +1,25 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 
-import { colors, fonts } from '../theme';
+import { Colors, fonts, offsetShadow, useColors } from '../theme';
 
 type Props = {
   label: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'dark';
   disabled?: boolean;
   loading?: boolean;
 };
 
-/** Botón principal (cian con borde y sombra rosa) o secundario (solo borde). */
+function variantStyle(colors: Colors, variant: NonNullable<Props['variant']>) {
+  if (variant === 'primary') return { backgroundColor: colors.accent, ...offsetShadow(colors, 3) };
+  if (variant === 'dark') return { backgroundColor: colors.ink };
+  return { backgroundColor: 'transparent' };
+}
+
+/**
+ * Botón principal (rosa con sombra), secundario (solo borde) u oscuro (tinta).
+ * Al pulsar el principal, se desplaza 3 px y pierde la sombra.
+ */
 export function Button({
   label,
   onPress,
@@ -18,7 +27,11 @@ export function Button({
   disabled = false,
   loading = false,
 }: Props) {
+  const colors = useColors();
   const inactive = disabled || loading;
+  const textColor =
+    variant === 'primary' ? colors.onAccent : variant === 'dark' ? colors.background : colors.ink;
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -26,29 +39,32 @@ export function Button({
       accessibilityState={{ disabled: inactive, busy: loading }}
       disabled={inactive}
       onPress={onPress}
-      style={[styles.base, styles[variant], inactive ? styles.inactive : null]}
+      style={({ pressed }) => [
+        styles.base,
+        { borderColor: colors.ink },
+        variantStyle(colors, variant),
+        pressed && variant === 'primary' ? styles.pressed : null,
+        inactive ? styles.inactive : null,
+      ]}
     >
       {loading ? (
-        <ActivityIndicator color={colors.onCyan} />
+        <ActivityIndicator color={textColor} />
       ) : (
-        <Text style={variant === 'primary' ? styles.primaryText : styles.secondaryText}>
-          {label}
-        </Text>
+        <Text style={[styles.text, { color: textColor }]}>{label}</Text>
       )}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  base: { minHeight: 48, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center' },
-  primary: {
-    backgroundColor: colors.cyan,
-    borderWidth: 3,
-    borderColor: colors.pink,
-    boxShadow: `4px 4px 0 ${colors.pink}, 0 0 16px rgba(0, 240, 255, 0.45)`,
+  base: {
+    minHeight: 48,
+    paddingHorizontal: 20,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  secondary: { minHeight: 44, borderWidth: 2, borderColor: colors.border },
+  pressed: { transform: [{ translateX: 3 }, { translateY: 3 }], boxShadow: 'none' },
   inactive: { opacity: 0.5 },
-  primaryText: { fontFamily: fonts.heading, fontSize: 16, color: colors.onCyan },
-  secondaryText: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.text },
+  text: { fontFamily: fonts.bodyBold, fontSize: 16 },
 });
