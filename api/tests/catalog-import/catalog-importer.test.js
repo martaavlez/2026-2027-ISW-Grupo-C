@@ -1,0 +1,164 @@
+const { createCatalogImporter } = require('../../src/catalog-import/catalog-importer');
+const { MusicBrainzUnavailableError } = require('../../src/catalog-import/musicbrainz-client');
+const { fakeMusicBrainz, releaseGroup } = require('../fixtures/musicbrainz');
+
+const ROCK = { tag: 'rock', name: 'Rock' };
+const silentLogger = { error: jest.fn(), warn: jest.fn(), info: jest.fn() };
+
+function fakeRepository({ lastSuccess = null, saveAlbum } = {}) {
+  return {
+    saved: [],
+    runs: [],
+    startRun: jest.fn(async function (kind) {
+      this.runs.push({ kind });
+      return this.runs.length;
+    }),
+    finishRun: jest.fn(async function (id, result) {
+      Object.assign(this.runs[id - 1], result);
+    }),
+    getLastSuccessfulRun: jest.fn(async () => lastSuccess),
+    saveAlbum: jest.fn(
+      saveAlbum ??
+        async function (data) {
+          this.saved.push(data);
+          return { added: 1 + data.artists.length + data.songs.length, updated: 0, skipped: 0 };
+        },
+    ),
+  };
+}
+
+function importerWith({ musicBrainz = fakeMusicBrainz(), repository = fakeRepository(), ...rest }) {
+  const importer = createCatalogImporter({
+    musicBrainz,
+    repository,
+    genres: [ROCK],
+    initialLimitPerGenre: 500,
+    dailyLimitPerGenre: 1000,
+    logger: silentLogger,
+    now: () => new Date('2026-11-24T10:00:00Z'),
+    ...rest,
+  });
+  return { importer, musicBrainz, repository };
+}
+
+test('test_importInitial_withNewAlbum_savesAlbumArtistsAndSongs', async () => {
+  const { importer, repository } = importerWith({});
+
+  const result = await importer.importInitial();
+
+  expect(result).toEqual({ status: 'success', added: 5, updated: 0, skipped: 0 });
+  const [saved] = repository.saved;
+  expect(saved.album).toMatchObject({ externalId: 'test-mb-rg-1', genre: 'Rock' });
+  expect(saved.artists.map((artist) => artist.name)).toEqual(['Los Faroles']);
+  expect(saved.songs.map((song) => song.title)).toEqual(['Primera ola', 'Corriente', 'Resaca']);
+  expect(repository.runs[0]).toMatchObject({ kind: 'initial', status: 'success', added: 5 });
+});
+
+test('test_importInitial_withMoreResultsThanAPage_readsPagesUpToTheLimit', async () => {
+  const groups = Array.from({ length: 150 }, (_, i) =>
+    releaseGroup({ id: `rg-${i}`, releases: [{ id: 'test-mb-release-1', status: 'Official' }] }),
+  );
+  const { importer, musicBrainz, repository } = importerWith({
+    musicBrainz: fakeMusicBrainz({ releaseGroups: groups }),
+  });
+
+  await importer.importInitial({ limitPerGenre: 120, offset: 10 });
+
+  const offsets = musicBrainz.searchReleaseGroups.mock.calls.map(([args]) => args.offset);
+  expect(offsets).toEqual([10, 110]);
+  expect(repository.saved).toHaveLength(120);
+});
+
+test('test_importInitial_withCompilationOrMissingRelease_skipsIt', async () => {
+  const musicBrainz = fakeMusicBrainz({
+    releaseGroups: [
+      releaseGroup({ id: 'compilation', 'secondary-types': ['Compilation'] }),
+      releaseGroup({ id: 'no-releases', releases: [] }),
+      releaseGroup({ id: 'gone', releases: [{ id: 'deleted-release', status: 'Official' }] }),
+    ],
+  });
+  const { importer, repository } = importerWith({ musicBrainz });
+
+  const result = await importer.importInitial();
+
+  expect(result.skipped).toBe(3);
+  expect(repository.saveAlbum).not.toHaveBeenCalled();
+});
+
+test('test_importInitial_whenAnAlbumCannotBeSaved_continuesWithTheRest', async () => {
+  const musicBrainz = fakeMusicBrainz({
+    releaseGroups: [releaseGroup({ id: 'bad' }), releaseGroup({ id: 'good' })],
+  });
+  const saveAlbum = jest
+    .fn()
+    .mockRejectedValueOnce(new Error('value too long'))
+    .mockResolvedValueOnce({ added: 5, updated: 0, skipped: 0 });
+  const { importer } = importerWith({ musicBrainz, repository: fakeRepository({ saveAlbum }) });
+
+  const result = await importer.importInitial();
+
+  expect(result).toEqual({ status: 'success', added: 5, updated: 0, skipped: 1 });
+});
+
+test('test_importNewReleases_withPreviousImport_asksForReleasesSinceTheDayBefore', async () => {
+  const repository = fakeRepository({ lastSuccess: { startedAt: '2026-11-23T03:00:00Z' } });
+  const { importer, musicBrainz } = importerWith({ repository });
+
+  await importer.importNewReleases();
+
+  expect(musicBrainz.searchReleaseGroups).toHaveBeenCalledWith({
+    tag: 'rock',
+    releasedSince: '2026-11-22',
+    limit: 100,
+    offset: 0,
+  });
+  expect(repository.runs[0].kind).toBe('daily');
+});
+
+test('test_importNewReleases_withoutPreviousImport_runsTheInitialImport', async () => {
+  const { importer, repository, musicBrainz } = importerWith({});
+
+  await importer.importNewReleases();
+
+  expect(repository.runs[0].kind).toBe('initial');
+  expect(musicBrainz.searchReleaseGroups.mock.calls[0][0].releasedSince).toBeNull();
+});
+
+test('test_importNewReleases_whenMusicBrainzIsDown_recordsFailedRun', async () => {
+  const musicBrainz = fakeMusicBrainz({
+    failWith: new MusicBrainzUnavailableError('MusicBrainz no está disponible (ECONNREFUSED)'),
+  });
+  const repository = fakeRepository({ lastSuccess: { startedAt: '2026-11-23T03:00:00Z' } });
+  const { importer } = importerWith({ musicBrainz, repository });
+
+  const result = await importer.importNewReleases();
+
+  expect(result.status).toBe('failed');
+  expect(repository.runs[0]).toMatchObject({
+    status: 'failed',
+    errorMessage: 'MusicBrainz no está disponible (ECONNREFUSED)',
+  });
+  expect(repository.saveAlbum).not.toHaveBeenCalled();
+});
+
+test('test_importInitial_withUnexpectedError_recordsFailedRunAndRethrows', async () => {
+  const musicBrainz = fakeMusicBrainz({ failWith: new TypeError('bug') });
+  const { importer, repository } = importerWith({ musicBrainz });
+
+  await expect(importer.importInitial()).rejects.toThrow('bug');
+  expect(repository.runs[0].status).toBe('failed');
+});
+
+test('test_isDue_dependsOnLastSuccessfulImport', async () => {
+  const never = importerWith({}).importer;
+  const today = importerWith({
+    repository: fakeRepository({ lastSuccess: { startedAt: '2026-11-24T03:00:00Z' } }),
+  }).importer;
+  const yesterday = importerWith({
+    repository: fakeRepository({ lastSuccess: { startedAt: '2026-11-23T03:00:00Z' } }),
+  }).importer;
+
+  await expect(never.isDue()).resolves.toBe(true);
+  await expect(today.isDue()).resolves.toBe(false);
+  await expect(yesterday.isDue()).resolves.toBe(true);
+});

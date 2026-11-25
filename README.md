@@ -79,6 +79,8 @@ Se ejecutan dentro de `api/` o de `app/`.
 | `npm run dev` | (`api/`) Arranca la API y la reinicia al guardar |
 | `npm run build:web` | (`app/`) Genera la versión web para producción en `dist/` |
 | `npm run typecheck` | (`app/`) Comprueba los tipos de TypeScript |
+| `npm run import:initial` | (`api/`) Primera importación del catálogo desde MusicBrainz |
+| `npm run import:daily` | (`api/`) Importa las novedades desde la última importación correcta |
 
 ## Integración continua
 
@@ -102,6 +104,24 @@ Todas las reglas se comprueban en la API, aunque la app también avise antes de 
 - **Errores:** solo se enseñan los mensajes pensados para el usuario; los fallos internos devuelven un 500 sin detalles.
 - **Datos únicos (RN-01):** el correo y el nombre de usuario no se repiten ni cambiando mayúsculas, también en la base de datos.
 
+## Importación del catálogo (HU-20)
+
+El catálogo se importa desde la API pública de [MusicBrainz](https://musicbrainz.org), respetando su límite de una petición por segundo e identificándose con el `MUSICBRAINZ_USER_AGENT` (RNF-10).
+
+- **Primera importación:** trae hasta `IMPORT_INITIAL_LIMIT_PER_GENRE` álbumes, EP y singles de cada género de `IMPORT_GENRES`, con sus canciones y artistas. Con los valores por defecto (10 géneros y 500 por género) tarda alrededor de hora y media.
+  ```bash
+  cd api
+  npm run import:initial
+  ```
+  Para ampliar el catálogo más adelante, se continúa por donde se quedó. Lo que ya existe se actualiza y no se duplica (RN-21):
+  ```bash
+  npm run import:initial -- --limit 500 --offset 500
+  ```
+- **Importación diaria:** trae lo publicado desde el día anterior a la última importación correcta. Con `IMPORT_ENABLED=true`, la API la lanza sola cada día a la hora `IMPORT_DAILY_HOUR`. Si al arrancar no ha habido ninguna importación correcta, hace primero la inicial. A mano: `npm run import:daily`.
+- **Si MusicBrainz no responde (PA-20-03):** el catálogo que ya hay no se toca, la importación queda registrada como fallida en la tabla `import_runs` y se reintenta cada hora. La fecha de la última importación correcta se guarda en esa misma tabla para el panel del administrador.
+- **Lo eliminado por el administrador no vuelve (RN-21):** se guarda en `import_exclusions` y la importación lo salta.
+- **En las pruebas (PA-20-04):** se usa una versión simulada de MusicBrainz (`api/tests/fixtures/musicbrainz.js`). Los tests no pueden llamar a la API real.
+
 ## Variables de entorno
 
 Cada carpeta tiene un `.env.example` con las variables necesarias. Copia el archivo como `.env` y rellénalo. Los `.env` no se suben al repositorio.
@@ -113,6 +133,12 @@ Cada carpeta tiene un `.env.example` con las variables necesarias. Copia el arch
 | `CORS_ORIGIN` | `api/` | Dirección de la web que puede llamar a la API |
 | `JWT_SECRET` | `api/` | Clave con la que se firman los tokens de sesión. En producción es obligatoria y de al menos 32 caracteres |
 | `AUTH_RATE_LIMIT` | `api/` | Intentos permitidos por IP cada 15 minutos en las rutas de autenticación (por defecto 20) |
+| `IMPORT_ENABLED` | `api/` | `true` para que la API importe sola las novedades cada día |
+| `IMPORT_GENRES` | `api/` | Géneros que se importan (`etiqueta=Nombre`, separados por comas) |
+| `IMPORT_INITIAL_LIMIT_PER_GENRE` | `api/` | Álbumes por género en la primera importación (por defecto 500) |
+| `IMPORT_DAILY_LIMIT_PER_GENRE` | `api/` | Tope diario de novedades por género (por defecto 1000) |
+| `IMPORT_DAILY_HOUR` | `api/` | Hora de la importación diaria, de 0 a 23 (por defecto 3) |
+| `MUSICBRAINZ_USER_AGENT` | `api/` | Nombre y contacto con los que Repeat se identifica ante MusicBrainz |
 | `EXPO_PUBLIC_API_URL` | `app/` | Dirección de la API que usa la aplicación |
 
 ## Forma de trabajo

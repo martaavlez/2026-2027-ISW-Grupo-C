@@ -31,6 +31,7 @@ CREATE TYPE notification_type  AS ENUM ('new_follower', 'friend_request', 'frien
                                         'access_request', 'access_response', 'community_deleted', 'community_expulsion',
                                         'board_updated', 'community_report', 'report_resolved');
 CREATE TYPE ranking_kind       AS ENUM ('songs', 'albums');
+CREATE TYPE import_status      AS ENUM ('running', 'success', 'failed');
 
 -- ---------------------------------------------------------------------
 -- RI-01 · Usuario  y  RI-02 · Configuración de privacidad
@@ -159,6 +160,24 @@ CREATE TABLE import_exclusions (
     excluded_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (kind, external_id)
 );
+
+-- HU-20 · Registro de cada importación desde MusicBrainz.
+-- PA-20-03: el administrador ve la fecha de la última importación correcta,
+-- y la importación diaria trae las novedades publicadas desde esa fecha.
+CREATE TABLE import_runs (
+    id             BIGSERIAL PRIMARY KEY,
+    kind           VARCHAR(10) NOT NULL CHECK (kind IN ('initial', 'daily')),
+    started_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    finished_at    TIMESTAMPTZ,
+    status         import_status NOT NULL DEFAULT 'running',
+    added_count    INTEGER NOT NULL DEFAULT 0 CHECK (added_count >= 0),
+    updated_count  INTEGER NOT NULL DEFAULT 0 CHECK (updated_count >= 0),
+    skipped_count  INTEGER NOT NULL DEFAULT 0 CHECK (skipped_count >= 0),
+    error_message  VARCHAR(500),
+    CHECK (status = 'running' OR finished_at IS NOT NULL),
+    CHECK (status <> 'failed' OR error_message IS NOT NULL)
+);
+CREATE INDEX import_runs_status_started_idx ON import_runs (status, started_at DESC);
 
 -- ---------------------------------------------------------------------
 -- RI-09 · Incidencia del catálogo  y  registro de acciones del agente (RNF-07)
