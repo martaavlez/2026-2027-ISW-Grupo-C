@@ -39,7 +39,16 @@ function createUserRepository(pool) {
     }
   }
 
-  return { findTakenFields, createWithDefaultPrivacy };
+  /** Devuelve el id del usuario si existe y no está suspendido; si no, null. */
+  async function findActiveId(id) {
+    const { rows } = await pool.query(
+      "SELECT id::text AS id FROM users WHERE id = $1 AND status = 'active'",
+      [id],
+    );
+    return rows[0]?.id ?? null;
+  }
+
+  return { findTakenFields, createWithDefaultPrivacy, findActiveId };
 }
 
 module.exports = { createUserRepository };

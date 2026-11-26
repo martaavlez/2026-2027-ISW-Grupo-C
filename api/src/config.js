@@ -30,6 +30,11 @@ const config = {
     windowMs: 15 * 60 * 1000,
     limit: toInteger(process.env.AUTH_RATE_LIMIT, 20),
   },
+  // Peticiones por IP y minuto a las páginas públicas del catálogo (frena la descarga masiva).
+  readRateLimit: {
+    windowMs: 60 * 1000,
+    limit: toInteger(process.env.READ_RATE_LIMIT, 120),
+  },
   musicBrainz: {
     baseUrl: process.env.MUSICBRAINZ_BASE_URL || 'https://musicbrainz.org/ws/2',
     // RNF-10: MusicBrainz exige que cada aplicación se identifique con su User-Agent.

@@ -21,4 +21,10 @@ class ConflictError extends ApiError {
   }
 }
 
-module.exports = { ApiError, ValidationError, ConflictError };
+class NotFoundError extends ApiError {
+  constructor(message = 'No existe') {
+    super(404, message);
+  }
+}
+
+module.exports = { ApiError, ValidationError, ConflictError, NotFoundError };
