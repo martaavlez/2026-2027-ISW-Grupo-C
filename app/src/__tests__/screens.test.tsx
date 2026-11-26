@@ -152,6 +152,7 @@ describe('Inicio tras registrarse', () => {
     expect(screen.getByText('¡HOLA, LUCÍA MORENO!')).toBeTruthy();
     expect(screen.getByLabelText('Tu perfil')).toBeTruthy();
     expect(screen.getByLabelText('Buscar')).toBeTruthy();
+    expect(screen.getByText('MIS FAVORITOS →').props.accessibilityHint).toBe('/favoritos');
   });
 
   test('test_HomeScreen_withoutSession_redirectsToWelcome', async () => {

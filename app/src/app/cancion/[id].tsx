@@ -4,6 +4,7 @@ import { StyleSheet, Text } from 'react-native';
 
 import { ArtistLinks } from '../../components/ArtistLinks';
 import { CdCase } from '../../components/CdCase';
+import { FavoriteButton } from '../../components/FavoriteButton';
 import { MyReview } from '../../components/MyReview';
 import { RatingPicker } from '../../components/RatingPicker';
 import { ReviewComposer } from '../../components/ReviewComposer';
@@ -93,6 +94,12 @@ export default function SongScreen() {
       aside={
         <>
           <CdCase coverUrl={song.album.coverUrl} size={desktop ? 420 : 300} />
+          <FavoriteButton
+            key={song.id}
+            kind="song"
+            id={song.id}
+            initial={Boolean(song.isFavorite)}
+          />
           <RatingSummary
             averageRating={song.averageRating}
             ratingsCount={song.ratingsCount}

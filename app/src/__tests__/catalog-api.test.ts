@@ -1,4 +1,6 @@
 import {
+  getMyFavorites,
+  setFavorite,
   getAlbum,
   getArtist,
   getReviews,
@@ -73,17 +75,24 @@ test('test_getReviews_requestsNextPageWithOffset', async () => {
   expect(fetchFn.mock.calls[0][0]).toBe('http://localhost:3000/songs/3/reviews?offset=10');
 });
 
-test('test_getArtist_requestsArtistWithoutToken', async () => {
+test('test_getArtist_asVisitorOrWithSession', async () => {
   const fetchFn = jest.fn().mockResolvedValue(response(200, { id: '3' }));
 
-  await expect(getArtist('3', fetchFn)).resolves.toEqual({ ok: true, data: { id: '3' } });
+  await expect(getArtist('3', undefined, fetchFn)).resolves.toEqual({
+    ok: true,
+    data: { id: '3' },
+  });
   expect(fetchFn).toHaveBeenCalledWith('http://localhost:3000/artists/3', { headers: {} });
+  await getArtist('3', 'tok', fetchFn);
+  expect(fetchFn).toHaveBeenLastCalledWith('http://localhost:3000/artists/3', {
+    headers: { Authorization: 'Bearer tok' },
+  });
 });
 
 test('test_getArtist_whenNotFound_returnsArtistMessage', async () => {
   const fetchFn = jest.fn().mockResolvedValue(response(404, {}));
 
-  const result = await getArtist('9', fetchFn);
+  const result = await getArtist('9', undefined, fetchFn);
 
   expect(!result.ok && result.error).toBe('Este artista no existe o ya no está en el catálogo.');
 });
@@ -174,4 +183,46 @@ test('test_publishReview_errors', async () => {
     needsLogin: true,
   });
   expect((await publishReview('song', '1', form, 'tok', offline)).ok).toBe(false);
+});
+
+test('test_setFavorite_putsOrDeletesWithToken', async () => {
+  const fetchFn = jest.fn().mockResolvedValue(response(200, { favorite: true }));
+
+  await expect(setFavorite('song', '3', true, 'tok', fetchFn)).resolves.toEqual({ ok: true });
+  await setFavorite('artist', '4', false, 'tok', fetchFn);
+
+  expect(fetchFn).toHaveBeenNthCalledWith(1, 'http://localhost:3000/songs/3/favorite', {
+    method: 'PUT',
+    headers: { Authorization: 'Bearer tok' },
+  });
+  expect(fetchFn).toHaveBeenNthCalledWith(2, 'http://localhost:3000/artists/4/favorite', {
+    method: 'DELETE',
+    headers: { Authorization: 'Bearer tok' },
+  });
+});
+
+test('test_setFavorite_errors', async () => {
+  const visitor = jest.fn().mockResolvedValue(response(401, { error: 'Inicia sesión.' }));
+  const offline = jest.fn().mockRejectedValue(new TypeError('x'));
+
+  await expect(setFavorite('album', '1', true, undefined, visitor)).resolves.toEqual({
+    ok: false,
+    error: 'Inicia sesión.',
+    needsLogin: true,
+  });
+  expect((await setFavorite('album', '1', true, 'tok', offline)).ok).toBe(false);
+});
+
+test('test_getMyFavorites', async () => {
+  const data = { songs: [], albums: [], artists: [] };
+  const ok = jest.fn().mockResolvedValue(response(200, data));
+  const expired = jest.fn().mockResolvedValue(response(401, {}));
+  const offline = jest.fn().mockRejectedValue(new TypeError('x'));
+
+  await expect(getMyFavorites('tok', ok)).resolves.toEqual({ ok: true, data });
+  expect(ok).toHaveBeenCalledWith('http://localhost:3000/me/favorites', {
+    headers: { Authorization: 'Bearer tok' },
+  });
+  await expect(getMyFavorites('tok', expired)).resolves.toMatchObject({ needsLogin: true });
+  await expect(getMyFavorites('tok', offline)).resolves.toMatchObject({ needsLogin: false });
 });

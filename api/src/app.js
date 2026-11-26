@@ -13,12 +13,15 @@ const config = require('./config');
 const { ApiError } = require('./errors');
 const { createAuthRouter, createSessionRouter } = require('./routes/auth');
 const { createCatalogRouter } = require('./routes/catalog');
+const { createFavoriteRouter } = require('./routes/favorites');
 const { createRatingRouter } = require('./routes/ratings');
 const { createReviewRouter } = require('./routes/reviews');
 const { createSearchRouter } = require('./routes/search');
 const { createSearchRepository } = require('./search/search-repository');
 const { createSearchService } = require('./search/search-service');
 const { createHealthRouter } = require('./routes/health');
+const { createFavoriteRepository } = require('./favorites/favorite-repository');
+const { createFavoriteService } = require('./favorites/favorite-service');
 const { createRatingRepository } = require('./ratings/rating-repository');
 const { createRatingService } = require('./ratings/rating-service');
 const { createReviewRepository } = require('./reviews/review-repository');
@@ -35,6 +38,7 @@ function createDefaultServices(db) {
   const catalog = createCatalogRepository(db.pool);
   const reviews = createReviewRepository(db.pool);
   const ratings = createRatingRepository(db.pool);
+  const favorites = createFavoriteRepository(db.pool);
   return {
     authService: createAuthService({ users, tokenOptions }),
     loginService: createLoginService({
@@ -42,7 +46,8 @@ function createDefaultServices(db) {
       tokenOptions,
     }),
     resolveViewer: createViewerResolver({ users, secret: config.jwtSecret }),
-    catalogService: createCatalogService({ catalog, reviews, ratings }),
+    catalogService: createCatalogService({ catalog, reviews, ratings, favorites }),
+    favoriteService: createFavoriteService({ favorites }),
     ratingService: createRatingService({ ratings, catalog }),
     reviewService: createReviewService({ reviews, catalog }),
     searchService: createSearchService({ searchRepository: createSearchRepository(db.pool) }),
@@ -108,12 +113,13 @@ function createApp({
     createAuthRouter(services.authService, services.loginService),
   );
   app.use(
-    ['/albums', '/songs', '/artists', '/search'],
+    ['/albums', '/songs', '/artists', '/search', '/me'],
     createLimiter(readRateLimit, 'Demasiadas peticiones. Espera un momento y vuelve a probar.'),
     optionalViewer(services.resolveViewer ?? visitorOnly),
   );
   app.use(createCatalogRouter(services.catalogService));
   app.use(createRatingRouter(services.ratingService));
+  app.use(createFavoriteRouter(services.favoriteService));
   app.use(createReviewRouter(services.reviewService, reviewPublishLimit));
   app.use('/search', createSearchRouter(services.searchService));
 

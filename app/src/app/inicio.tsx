@@ -1,6 +1,6 @@
 // Inicio de un usuario recién registrado, todavía sin datos (simplificada).
 // El disco de la semana, el ranking y las recomendaciones llegarán con sus propias HU.
-import { Redirect } from 'expo-router';
+import { Link, Redirect } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { TopBar } from '../components/TopBar';
@@ -25,6 +25,12 @@ export default function HomeScreen() {
           Tu cuenta está lista. Cuando empieces a valorar música, aquí verás el disco de la semana,
           el ranking y recomendaciones para ti.
         </Text>
+        <Link
+          href="/favoritos"
+          style={[styles.link, { color: colors.ink, borderBottomColor: colors.accent }]}
+        >
+          MIS FAVORITOS →
+        </Link>
       </ScrollView>
     </View>
   );
@@ -39,6 +45,13 @@ const styles = StyleSheet.create({
     lineHeight: 64,
     textAlign: 'center',
     marginTop: spacing.md,
+  },
+  link: {
+    fontFamily: fonts.mono,
+    fontSize: 14,
+    borderBottomWidth: 2,
+    paddingBottom: 3,
+    marginTop: spacing.lg,
   },
   text: {
     fontFamily: fonts.body,

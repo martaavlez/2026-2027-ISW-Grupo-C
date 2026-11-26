@@ -25,7 +25,7 @@ function createCatalogRouter(catalogService) {
   });
 
   router.get('/artists/:id', async (req, res) => {
-    res.json(await catalogService.getArtist(req.params.id));
+    res.json(await catalogService.getArtist(req.params.id, req.viewerId));
   });
 
   return router;
