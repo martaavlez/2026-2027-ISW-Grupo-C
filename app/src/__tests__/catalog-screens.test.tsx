@@ -221,6 +221,7 @@ const artist: Artist = {
   id: '3',
   name: 'Mara Kei',
   imageUrl: null,
+  imageCredit: null,
   genre: 'Dream pop',
   description: 'Proyecto de <b>pop</b> nacido en Valencia.',
   songsCount: 1234,
@@ -312,4 +313,31 @@ test('test_SongScreen_fromAnEp_namesItAsEp', async () => {
 
   expect(await screen.findByText('DEL EP PRIMERAS CINTAS →')).toBeTruthy();
   expect(screen.getByText('EP')).toBeTruthy();
+});
+
+test('test_ArtistScreen_withPhoto_showsCredit', async () => {
+  jest.mocked(getArtist).mockResolvedValue({
+    ok: true,
+    data: {
+      ...artist,
+      imageUrl: 'https://upload.wikimedia.org/a.jpg',
+      imageCredit: 'Ana · CC BY 4.0 · Wikimedia Commons',
+    },
+  });
+
+  await render(<ArtistScreen />);
+
+  expect(await screen.findByText('FOTO: Ana · CC BY 4.0 · Wikimedia Commons')).toBeTruthy();
+});
+
+test('test_ArtistScreen_withoutPhoto_hidesCredit', async () => {
+  jest.mocked(getArtist).mockResolvedValue({
+    ok: true,
+    data: { ...artist, imageUrl: null, imageCredit: 'No debe salir' },
+  });
+
+  await render(<ArtistScreen />);
+
+  await screen.findByText('MARA KEI');
+  expect(screen.queryByText(/No debe salir/)).toBeNull();
 });

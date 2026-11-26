@@ -110,3 +110,22 @@ test('test_createClient_inTestsWithoutMock_refusesRealMusicBrainz', () => {
     'versión simulada de MusicBrainz',
   );
 });
+
+test('test_getArtistUrlRelations_requestsUrlRelsAndReturnsThem', async () => {
+  const relations = [{ type: 'wikidata', url: { resource: 'https://www.wikidata.org/wiki/Q1' } }];
+  const fetchFn = jest
+    .fn()
+    .mockResolvedValue({ ok: true, status: 200, json: async () => ({ relations }) });
+  const { client } = clientWith(fetchFn);
+
+  await expect(client.getArtistUrlRelations('mbid-1')).resolves.toEqual(relations);
+  const url = new URL(fetchFn.mock.calls[0][0]);
+  expect(url.pathname).toBe('/ws/2/artist/mbid-1');
+  expect(url.searchParams.get('inc')).toBe('url-rels');
+});
+
+test('test_getArtistUrlRelations_unknownArtist_returnsEmpty', async () => {
+  const fetchFn = jest.fn().mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });
+  const { client } = clientWith(fetchFn);
+  await expect(client.getArtistUrlRelations('nope')).resolves.toEqual([]);
+});

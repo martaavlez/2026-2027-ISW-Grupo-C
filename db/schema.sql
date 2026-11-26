@@ -106,6 +106,8 @@ CREATE TABLE artists (
     image_url    TEXT,
     genre        VARCHAR(50),
     description  VARCHAR(1000),
+    image_credit VARCHAR(300),                                           -- autor y licencia de la foto (Wikimedia Commons)
+    image_checked_at TIMESTAMPTZ,                                        -- cuándo se buscó su foto (para no repetir)
     external_id  TEXT NOT NULL UNIQUE,                                   -- identificador de MusicBrainz (RN-21)
     imported_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()

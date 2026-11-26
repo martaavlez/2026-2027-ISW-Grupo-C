@@ -11,6 +11,8 @@ function toIsoDate(date) {
 
 function createCatalogImporter({
   musicBrainz,
+  imageFinder,
+  artistImagesPerRun = 200,
   repository,
   genres,
   initialLimitPerGenre,
@@ -108,7 +110,33 @@ function createCatalogImporter({
     return now().getTime() - new Date(lastSuccess.startedAt).getTime() >= ONE_DAY_MS;
   }
 
-  return { importInitial, importNewReleases, isDue };
+  /**
+   * Busca la foto de los artistas que aún no la tienen (como mucho `limit`).
+   * Si MusicBrainz o Wikimedia dejan de responder, para y lo intenta otro día con los que falten:
+   * solo se apunta como «buscado» a quien se ha podido comprobar.
+   */
+  async function importArtistImages({ limit = artistImagesPerRun } = {}) {
+    const totals = { found: 0, withoutImage: 0 };
+    const pending = await repository.findArtistsPendingImage(limit);
+    for (const artist of pending) {
+      try {
+        const image = await imageFinder.findImage(artist.externalId);
+        await repository.saveArtistImage(artist.id, image);
+        totals[image ? 'found' : 'withoutImage'] += 1;
+      } catch (error) {
+        logger.warn(`Fotos de artistas interrumpidas: ${error.message}`);
+        return {
+          status: 'interrupted',
+          ...totals,
+          pending: pending.length - totals.found - totals.withoutImage,
+        };
+      }
+    }
+    logger.info(`Fotos de artistas: ${JSON.stringify(totals)}`);
+    return { status: 'success', ...totals };
+  }
+
+  return { importInitial, importNewReleases, importArtistImages, isDue };
 }
 
 module.exports = { createCatalogImporter };

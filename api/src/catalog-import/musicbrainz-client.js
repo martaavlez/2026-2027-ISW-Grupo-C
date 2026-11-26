@@ -95,7 +95,13 @@ function createMusicBrainzClient({
     );
   }
 
-  return { searchReleaseGroups, getRelease };
+  /** Enlaces del artista a otras webs (entre ellos, Wikidata, de donde sale su foto). */
+  async function getArtistUrlRelations(artistId) {
+    const body = await get(`/artist/${artistId}`, { inc: 'url-rels' }, { allowNotFound: true });
+    return body?.relations ?? [];
+  }
+
+  return { searchReleaseGroups, getRelease, getArtistUrlRelations };
 }
 
 module.exports = {

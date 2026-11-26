@@ -155,4 +155,56 @@ describeIfDatabase('HU-20 · Importar el catálogo (integración)', () => {
       errorMessage: 'MusicBrainz no está disponible (ECONNREFUSED)',
     });
   });
+
+  test('test_artistImages_pendingSaveAndNeverOverwrite', async () => {
+    const { importer, repository } = importWith(fakeMusicBrainz());
+    await importer.importInitial();
+    const { rows } = await pool.query(
+      "SELECT id::text AS id FROM artists WHERE external_id LIKE 'test-mb-%' ORDER BY id",
+    );
+    const [first] = rows;
+
+    const pendingBefore = (await repository.findArtistsPendingImage(1_000_000)).map((a) =>
+      String(a.id),
+    );
+    expect(pendingBefore).toEqual(expect.arrayContaining(rows.map((row) => row.id)));
+
+    const image = { imageUrl: 'https://upload.wikimedia.org/a.jpg', credit: 'Ana · CC BY' };
+    await repository.saveArtistImage(first.id, image);
+    await repository.saveArtistImage(first.id, {
+      imageUrl: 'https://upload.wikimedia.org/otra.jpg',
+      credit: 'Otra',
+    });
+
+    const saved = await pool.query(
+      'SELECT image_url, image_credit, image_checked_at FROM artists WHERE id = $1',
+      [first.id],
+    );
+    expect(saved.rows[0]).toMatchObject({
+      image_url: 'https://upload.wikimedia.org/a.jpg',
+      image_credit: 'Ana · CC BY',
+      image_checked_at: expect.any(Date),
+    });
+    const pendingAfter = (await repository.findArtistsPendingImage(1_000_000)).map((a) =>
+      String(a.id),
+    );
+    expect(pendingAfter).not.toContain(first.id);
+  });
+
+  test('test_artistImages_withoutPhoto_isMarkedAsChecked', async () => {
+    const { importer, repository } = importWith(fakeMusicBrainz());
+    await importer.importInitial();
+    const { rows } = await pool.query(
+      "SELECT id::text AS id FROM artists WHERE external_id LIKE 'test-mb-%' ORDER BY id LIMIT 1",
+    );
+
+    await repository.saveArtistImage(rows[0].id, null);
+
+    const saved = await pool.query(
+      'SELECT image_url, image_checked_at FROM artists WHERE id = $1',
+      [rows[0].id],
+    );
+    expect(saved.rows[0].image_url).toBeNull();
+    expect(saved.rows[0].image_checked_at).toEqual(expect.any(Date));
+  });
 });

@@ -162,3 +162,66 @@ test('test_isDue_dependsOnLastSuccessfulImport', async () => {
   await expect(today.isDue()).resolves.toBe(false);
   await expect(yesterday.isDue()).resolves.toBe(true);
 });
+
+describe('Fotos de artistas', () => {
+  function imageRepository(pending) {
+    return {
+      ...fakeRepository(),
+      findArtistsPendingImage: jest.fn().mockResolvedValue(pending),
+      saveArtistImage: jest.fn().mockResolvedValue(),
+    };
+  }
+  const image = { imageUrl: 'https://upload.wikimedia.org/a.jpg', credit: 'Ana · CC BY' };
+
+  test('test_importArtistImages_savesFoundAndMissingPhotos', async () => {
+    const repository = imageRepository([
+      { id: '1', externalId: 'mb-1' },
+      { id: '2', externalId: 'mb-2' },
+    ]);
+    const imageFinder = {
+      findImage: jest.fn().mockResolvedValueOnce(image).mockResolvedValueOnce(null),
+    };
+    const { importer } = importerWith({ repository, imageFinder });
+
+    const result = await importer.importArtistImages({ limit: 50 });
+
+    expect(result).toEqual({ status: 'success', found: 1, withoutImage: 1 });
+    expect(repository.findArtistsPendingImage).toHaveBeenCalledWith(50);
+    expect(repository.saveArtistImage).toHaveBeenNthCalledWith(1, '1', image);
+    expect(repository.saveArtistImage).toHaveBeenNthCalledWith(2, '2', null);
+  });
+
+  test('test_importArtistImages_whenServiceFails_stopsWithoutMarkingTheRest', async () => {
+    const repository = imageRepository([
+      { id: '1', externalId: 'mb-1' },
+      { id: '2', externalId: 'mb-2' },
+      { id: '3', externalId: 'mb-3' },
+    ]);
+    const imageFinder = {
+      findImage: jest
+        .fn()
+        .mockResolvedValueOnce(image)
+        .mockRejectedValueOnce(new MusicBrainzUnavailableError('503')),
+    };
+    const { importer } = importerWith({ repository, imageFinder });
+
+    const result = await importer.importArtistImages();
+
+    expect(result).toEqual({ status: 'interrupted', found: 1, withoutImage: 0, pending: 2 });
+    expect(repository.saveArtistImage).toHaveBeenCalledTimes(1);
+    expect(imageFinder.findImage).toHaveBeenCalledTimes(2);
+  });
+
+  test('test_importArtistImages_usesConfiguredLimitByDefault', async () => {
+    const repository = imageRepository([]);
+    const { importer } = importerWith({
+      repository,
+      imageFinder: { findImage: jest.fn() },
+      artistImagesPerRun: 7,
+    });
+
+    await importer.importArtistImages();
+
+    expect(repository.findArtistsPendingImage).toHaveBeenCalledWith(7);
+  });
+});

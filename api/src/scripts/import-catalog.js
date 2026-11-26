@@ -2,6 +2,7 @@
 //   npm run import:initial                            primera importación
 //   npm run import:initial -- --limit 500 --offset 500 continúa con los 500 siguientes de cada género
 //   npm run import:daily                              novedades desde la última importación correcta
+//   npm run import:artist-images -- --limit 100       fotos de los artistas que aún no la tienen
 
 const config = require('../config');
 const db = require('../db');
@@ -16,12 +17,19 @@ async function main() {
   const args = process.argv.slice(2);
   const { importer } = createCatalogImport({ pool: db.pool, config });
 
-  const result = args.includes('--daily')
-    ? await importer.importNewReleases()
-    : await importer.importInitial({
-        limitPerGenre: readOption(args, 'limit', config.catalogImport.initialLimitPerGenre),
-        offset: readOption(args, 'offset', 0),
-      });
+  let result;
+  if (args.includes('--artist-images')) {
+    result = await importer.importArtistImages({
+      limit: readOption(args, 'limit', config.catalogImport.artistImagesPerRun),
+    });
+  } else if (args.includes('--daily')) {
+    result = await importer.importNewReleases();
+  } else {
+    result = await importer.importInitial({
+      limitPerGenre: readOption(args, 'limit', config.catalogImport.initialLimitPerGenre),
+      offset: readOption(args, 'offset', 0),
+    });
+  }
 
   console.log(result);
   process.exitCode = result.status === 'success' ? 0 : 1;

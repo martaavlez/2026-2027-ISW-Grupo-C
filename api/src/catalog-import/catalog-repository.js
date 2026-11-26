@@ -193,7 +193,41 @@ function createCatalogRepository(pool) {
     };
   }
 
-  return { saveAlbum, startRun, finishRun, getLastSuccessfulRun, getImportStatus };
+  /** Artistas sin foto a los que todavía no se les ha buscado. */
+  async function findArtistsPendingImage(limit) {
+    const { rows } = await pool.query(
+      `SELECT id, external_id AS "externalId" FROM artists
+        WHERE image_url IS NULL AND image_checked_at IS NULL
+        ORDER BY id LIMIT $1`,
+      [limit],
+    );
+    return rows;
+  }
+
+  /**
+   * Guarda la foto encontrada (o que no tiene) y apunta que ya se buscó.
+   * Nunca sustituye una foto que ya tenga, por ejemplo una que haya puesto el administrador.
+   */
+  async function saveArtistImage(artistId, image) {
+    await pool.query(
+      `UPDATE artists
+          SET image_url = COALESCE(image_url, $2),
+              image_credit = CASE WHEN image_url IS NULL THEN $3 ELSE image_credit END,
+              image_checked_at = now()
+        WHERE id = $1`,
+      [artistId, image?.imageUrl ?? null, image?.credit ?? null],
+    );
+  }
+
+  return {
+    saveAlbum,
+    startRun,
+    finishRun,
+    getLastSuccessfulRun,
+    getImportStatus,
+    findArtistsPendingImage,
+    saveArtistImage,
+  };
 }
 
 module.exports = { createCatalogRepository };

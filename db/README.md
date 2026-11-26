@@ -8,6 +8,7 @@ Esquema relacional en PostgreSQL 16 que implementa los requisitos de informació
 |---|---|
 | `schema.sql` | Tipos enumerados, 30 tablas, claves, restricciones e índices |
 | `seed.sql` | Datos de prueba ficticios |
+| `migrations/` | Cambios del esquema para bases de datos que ya existen |
 | `modelo-conceptual/` | Modelo conceptual (diagramas de clases, imágenes y archivo editable de draw.io) |
 
 ## Cómo se ejecuta
@@ -19,6 +20,12 @@ psql -d repeat -f seed.sql
 ```
 
 `schema.sql` se ejecuta sobre una base de datos vacía. Para empezar de cero, borra la base de datos (`dropdb repeat`) y vuelve a crearla.
+
+Cuando se añade algo al esquema, en `migrations/` hay un archivo para aplicarlo a una base de datos que ya existe, sin borrarla:
+
+```bash
+psql -d repeat -f migrations/001-fotos-artistas.sql
+```
 
 ## Datos de prueba
 

@@ -122,6 +122,8 @@ export type Artist = {
   id: string;
   name: string;
   imageUrl: string | null;
+  /** Autor y licencia de la foto (Wikimedia Commons). */
+  imageCredit: string | null;
   genre: string | null;
   description: string | null;
   songsCount: number;

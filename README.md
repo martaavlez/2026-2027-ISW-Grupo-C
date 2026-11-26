@@ -122,9 +122,14 @@ El catálogo se importa desde la API pública de [MusicBrainz](https://musicbrai
   npm run import:initial -- --limit 500 --offset 500
   ```
 - **Importación diaria:** trae lo publicado desde el día anterior a la última importación correcta. Con `IMPORT_ENABLED=true`, la API la lanza sola cada día a la hora `IMPORT_DAILY_HOUR`. Si al arrancar no ha habido ninguna importación correcta, hace primero la inicial. A mano: `npm run import:daily`.
+- **Fotos de los artistas:** MusicBrainz no tiene fotos, así que se buscan en [Wikimedia Commons](https://commons.wikimedia.org) siguiendo el enlace del artista a Wikidata. Se guarda la miniatura (`artists.image_url`) y el crédito con el autor y la licencia (`artists.image_credit`), que la ficha del artista muestra debajo de la foto. Solo se aceptan imágenes de `upload.wikimedia.org`, nunca se sustituye una foto que ya exista y a cada artista se le busca una sola vez (`artists.image_checked_at`). Después de cada importación diaria correcta se buscan las de hasta `IMPORT_ARTIST_IMAGES_PER_RUN` artistas. A mano:
+  ```bash
+  npm run import:artist-images -- --limit 100
+  ```
+  Si una base de datos ya existía antes de este cambio, hay que añadirle las dos columnas nuevas una vez: `psql -U postgres -d repeat -f db/migrations/001-fotos-artistas.sql`.
 - **Si MusicBrainz no responde (PA-20-03):** el catálogo que ya hay no se toca, la importación queda registrada como fallida en la tabla `import_runs` y se reintenta cada hora. La fecha de la última importación correcta se guarda en esa misma tabla para el panel del administrador.
 - **Lo eliminado por el administrador no vuelve (RN-21):** se guarda en `import_exclusions` y la importación lo salta.
-- **En las pruebas (PA-20-04):** se usa una versión simulada de MusicBrainz (`api/tests/fixtures/musicbrainz.js`). Los tests no pueden llamar a la API real.
+- **En las pruebas (PA-20-04):** se usa una versión simulada de MusicBrainz (`api/tests/fixtures/musicbrainz.js`) y de Wikimedia. Los tests no pueden llamar a las webs reales.
 
 ## Variables de entorno
 
@@ -143,6 +148,7 @@ Cada carpeta tiene un `.env.example` con las variables necesarias. Copia el arch
 | `IMPORT_INITIAL_LIMIT_PER_GENRE` | `api/` | Álbumes por género en la primera importación (por defecto 500) |
 | `IMPORT_DAILY_LIMIT_PER_GENRE` | `api/` | Tope diario de novedades por género (por defecto 1000) |
 | `IMPORT_DAILY_HOUR` | `api/` | Hora de la importación diaria, de 0 a 23 (por defecto 3) |
+| `IMPORT_ARTIST_IMAGES_PER_RUN` | `api/` | Artistas a los que se busca foto después de cada importación diaria (por defecto 200) |
 | `MUSICBRAINZ_USER_AGENT` | `api/` | Nombre y contacto con los que Repeat se identifica ante MusicBrainz |
 | `EXPO_PUBLIC_API_URL` | `app/` | Dirección de la API que usa la aplicación |
 
