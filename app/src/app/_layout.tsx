@@ -9,6 +9,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 
+import { SessionCheck } from '../components/SessionCheck';
 import { useColors } from '../theme';
 
 export default function RootLayout() {
@@ -29,6 +30,7 @@ export default function RootLayout() {
   return (
     <>
       <StatusBar style="auto" />
+      <SessionCheck />
       <Stack
         screenOptions={{
           headerShown: false,

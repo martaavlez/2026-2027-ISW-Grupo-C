@@ -41,10 +41,10 @@ async function fillValidForm() {
 }
 
 describe('Entrada', () => {
-  test('test_EntryScreen_withoutSession_goesToRegister', async () => {
+  test('test_EntryScreen_withoutSession_goesToLogin', async () => {
     await render(<EntryScreen />);
 
-    expect(screen.getByText('Redirige a /registro')).toBeTruthy();
+    expect(screen.getByText('Redirige a /acceso')).toBeTruthy();
   });
 
   test('test_EntryScreen_withSession_goesHome', async () => {
@@ -57,6 +57,14 @@ describe('Entrada', () => {
 });
 
 describe('HertzRegistro · Crear cuenta', () => {
+  test('test_RegisterScreen_loginTab_goesToLogin', async () => {
+    await render(<RegisterScreen />);
+
+    await fireEvent.press(screen.getByRole('tab', { name: 'INICIAR SESIÓN' }));
+
+    expect(mockRouter.replace).toHaveBeenCalledWith('/acceso');
+  });
+
   test('test_RegisterScreen_withEmptyForm_showsErrorsWithoutCallingApi', async () => {
     await render(<RegisterScreen />);
 

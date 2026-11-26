@@ -4,12 +4,14 @@ const { rateLimit } = require('express-rate-limit');
 const helmet = require('helmet');
 
 const { createAuthService } = require('./auth/auth-service');
+const { createCredentialsRepository } = require('./auth/credentials-repository');
+const { createLoginService } = require('./auth/login-service');
 const { createViewerResolver, optionalViewer } = require('./auth/viewer');
 const { createCatalogRepository } = require('./catalog/catalog-repository');
 const { createCatalogService } = require('./catalog/catalog-service');
 const config = require('./config');
 const { ApiError } = require('./errors');
-const { createAuthRouter } = require('./routes/auth');
+const { createAuthRouter, createSessionRouter } = require('./routes/auth');
 const { createCatalogRouter } = require('./routes/catalog');
 const { createSearchRouter } = require('./routes/search');
 const { createSearchRepository } = require('./search/search-repository');
@@ -18,12 +20,18 @@ const { createHealthRouter } = require('./routes/health');
 const { createReviewRepository } = require('./reviews/review-repository');
 const { createUserRepository } = require('./users/user-repository');
 
+// Comprobaciones de sesión por IP y minuto (más generoso: se hace cada vez que se abre la web).
+const SESSION_CHECK_RATE_LIMIT = { windowMs: 60 * 1000, limit: 120 };
+
+const tokenOptions = { secret: config.jwtSecret, expiresIn: config.jwtExpiresIn };
+
 function createDefaultServices(db) {
   const users = createUserRepository(db.pool);
   return {
-    authService: createAuthService({
-      users,
-      tokenOptions: { secret: config.jwtSecret, expiresIn: config.jwtExpiresIn },
+    authService: createAuthService({ users, tokenOptions }),
+    loginService: createLoginService({
+      credentials: createCredentialsRepository(db.pool),
+      tokenOptions,
     }),
     resolveViewer: createViewerResolver({ users, secret: config.jwtSecret }),
     catalogService: createCatalogService({
@@ -80,10 +88,16 @@ function createApp({
   app.use(express.json({ limit: '10kb' }));
 
   app.use('/health', createHealthRouter(db));
+  // GET /auth/me se consulta al abrir la web: va antes del límite de intentos de /auth.
+  app.use(
+    '/auth/me',
+    createLimiter(SESSION_CHECK_RATE_LIMIT, 'Demasiadas peticiones. Espera un momento.'),
+    createSessionRouter(services.loginService),
+  );
   app.use(
     '/auth',
     createLimiter(authRateLimit, 'Demasiados intentos. Espera unos minutos y vuelve a probar.'),
-    createAuthRouter(services.authService),
+    createAuthRouter(services.authService, services.loginService),
   );
   app.use(
     ['/albums', '/songs', '/artists', '/search'],

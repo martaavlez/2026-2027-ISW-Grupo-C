@@ -98,8 +98,9 @@ El pipeline [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta en
 Todas las reglas se comprueban en la API, aunque la app también avise antes de enviar (RNF-02): una petición hecha a mano, sin pasar por la interfaz, se rechaza igual.
 
 - **Contraseñas (RNF-03):** mínimo 8 caracteres con una letra y un número, y máximo 72 (el límite de bcrypt). Se guardan con bcrypt (coste 12) y nunca se devuelven.
-- **Sesión (RNF-11):** token JWT firmado con HS256 y caducidad de 24 horas. En producción, `JWT_SECRET` es obligatoria.
-- **Fuerza bruta:** las rutas de `/auth` admiten `AUTH_RATE_LIMIT` intentos por IP cada 15 minutos; después responden 429.
+- **Sesión (RNF-11):** token JWT firmado con HS256 y caducidad de 24 horas. En producción, `JWT_SECRET` es obligatoria. Solo se acepta HS256, así que un token sin firma o manipulado se rechaza; al abrir la web se comprueba con `GET /auth/me` y, si ya no vale, se pide iniciar sesión de nuevo (PA-02-04).
+- **Inicio de sesión (HU-02):** con correo o nombre de usuario. El mismo mensaje si el usuario no existe o la contraseña está mal, y la contraseña se compara con bcrypt también cuando el usuario no existe, para que ni el mensaje ni el tiempo de respuesta delaten qué cuentas hay. La suspensión solo se comunica a quien ha puesto la contraseña correcta.
+- **Fuerza bruta:** el registro y el inicio de sesión (`/auth`) admiten `AUTH_RATE_LIMIT` intentos por IP cada 15 minutos; después responden 429.
 - **Descarga masiva:** las fichas del catálogo y el buscador (`/albums`, `/songs`, `/artists`, `/search`) admiten `READ_RATE_LIMIT` peticiones por IP y minuto.
 - **Buscador (HU-03):** el texto se busca tal cual (los comodines `%` y `_` se escapan) y siempre con parámetros. Nunca se busca por correo ni salen cuentas suspendidas o de administración.
 - **Visibilidad (RN-08, RN-12):** quién ve cada reseña se decide en la consulta SQL con el usuario del token, nunca con datos que mande el cliente. Un token caducado, falso o de un usuario suspendido cuenta como visitante.

@@ -63,8 +63,11 @@ export default function RegisterScreen() {
 
   return (
     <EntryLayout>
-      {/* «Iniciar sesión» se activa con la HU-02. */}
-      <Folder activeLabel="CREAR CUENTA" backLabel="INICIAR SESIÓN" backDisabled>
+      <Folder
+        activeLabel="CREAR CUENTA"
+        backLabel="INICIAR SESIÓN"
+        onBackPress={() => router.replace('/acceso')}
+      >
         <View style={styles.form}>
           <Text accessibilityRole="header" style={[styles.title, { color: colors.ink }]}>
             EMPIEZA TU COLECCIÓN
