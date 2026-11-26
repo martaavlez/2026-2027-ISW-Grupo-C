@@ -249,12 +249,33 @@ describeIfDatabase('HU-04 · Consultar una canción o un álbum (integración)',
       genre: 'Pop',
       description: 'Grupo de pruebas',
       imageUrl: null,
+      imageCredit: null,
       songsCount: 2,
     });
     expect(response.body.albums.map((album) => album.title)).toEqual([
       'Disco HU04',
       'EP antiguo HU04',
     ]);
+  });
+
+  test('test_getArtist_withCommonsPhoto_returnsItWithCredit', async () => {
+    await db.pool.query(
+      `UPDATE artists SET image_url = 'https://upload.wikimedia.org/foto.jpg',
+                          image_credit = 'Ana · CC BY 4.0 · Wikimedia Commons'
+        WHERE id = $1`,
+      [ids.artist],
+    );
+
+    const response = await request(app).get(`/artists/${ids.artist}`);
+
+    expect(response.body).toMatchObject({
+      imageUrl: 'https://upload.wikimedia.org/foto.jpg',
+      imageCredit: 'Ana · CC BY 4.0 · Wikimedia Commons',
+    });
+    await db.pool.query(
+      "UPDATE artists SET image_url = 'javascript:alert(1)', image_credit = 'x' WHERE id = $1",
+      [ids.artist],
+    );
   });
 
   test('test_getArtist_unknownOrInvalid_returns404Or400', async () => {

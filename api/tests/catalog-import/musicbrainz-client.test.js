@@ -110,3 +110,63 @@ test('test_createClient_inTestsWithoutMock_refusesRealMusicBrainz', () => {
     'versión simulada de MusicBrainz',
   );
 });
+
+test('test_getArtistUrlRelations_requestsUrlRelsAndReturnsThem', async () => {
+  const relations = [{ type: 'wikidata', url: { resource: 'https://www.wikidata.org/wiki/Q1' } }];
+  const fetchFn = jest
+    .fn()
+    .mockResolvedValue({ ok: true, status: 200, json: async () => ({ relations }) });
+  const { client } = clientWith(fetchFn);
+
+  await expect(client.getArtistUrlRelations('mbid-1')).resolves.toEqual(relations);
+  const url = new URL(fetchFn.mock.calls[0][0]);
+  expect(url.pathname).toBe('/ws/2/artist/mbid-1');
+  expect(url.searchParams.get('inc')).toBe('url-rels');
+});
+
+test('test_getArtistUrlRelations_unknownArtist_returnsEmpty', async () => {
+  const fetchFn = jest.fn().mockResolvedValue({ ok: false, status: 404, json: async () => ({}) });
+  const { client } = clientWith(fetchFn);
+  await expect(client.getArtistUrlRelations('nope')).resolves.toEqual([]);
+});
+
+test('test_searchArtists_quotesTheNameAndMapsResults', async () => {
+  const fetchFn = jest.fn().mockResolvedValue(
+    jsonResponse({
+      artists: [
+        {
+          id: 'mbid-robe',
+          name: 'Robe',
+          disambiguation: 'Spanish singer',
+          country: 'ES',
+          score: 100,
+        },
+      ],
+    }),
+  );
+  const { client } = clientWith(fetchFn);
+
+  await expect(client.searchArtists('Ro"be')).resolves.toEqual([
+    { id: 'mbid-robe', name: 'Robe', disambiguation: 'Spanish singer', country: 'ES', score: 100 },
+  ]);
+  const url = new URL(fetchFn.mock.calls[0][0]);
+  expect(url.pathname).toBe('/ws/2/artist');
+  expect(url.searchParams.get('query')).toBe('artist:"Robe"');
+});
+
+test('test_searchReleaseGroupsByArtist_filtersByArtistAndType', async () => {
+  const fetchFn = jest
+    .fn()
+    .mockResolvedValue(jsonResponse({ count: 1, 'release-groups': [{ id: 'rg' }] }));
+  const { client } = clientWith(fetchFn);
+
+  await expect(
+    client.searchReleaseGroupsByArtist({ artistId: 'mbid-robe', limit: 500, offset: 100 }),
+  ).resolves.toEqual({ total: 1, releaseGroups: [{ id: 'rg' }] });
+  const url = new URL(fetchFn.mock.calls[0][0]);
+  expect(url.searchParams.get('query')).toBe(
+    'arid:mbid-robe AND primarytype:(album OR ep OR single)',
+  );
+  expect(url.searchParams.get('limit')).toBe('100');
+  expect(url.searchParams.get('offset')).toBe('100');
+});

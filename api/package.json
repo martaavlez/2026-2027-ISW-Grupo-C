@@ -15,7 +15,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "import:initial": "node src/scripts/import-catalog.js --initial",
-    "import:daily": "node src/scripts/import-catalog.js --daily"
+    "import:daily": "node src/scripts/import-catalog.js --daily",
+    "import:artist-images": "node src/scripts/import-catalog.js --artist-images",
+    "import:artist": "node src/scripts/import-catalog.js --artist"
   },
   "license": "UNLICENSED",
   "dependencies": {

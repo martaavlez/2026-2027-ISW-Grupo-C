@@ -1,6 +1,6 @@
 // HU-59 · Ficha de un artista (PA-59-01): su información y sus álbumes.
 import { useLocalSearchParams } from 'expo-router';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { Discography } from '../../components/AlbumGrid';
 import { ArtistPhoto } from '../../components/ArtistPhoto';
@@ -41,7 +41,12 @@ export default function ArtistScreen() {
       }
       aside={
         <>
-          <ArtistPhoto name={artist.name} imageUrl={artist.imageUrl} size={desktop ? 360 : 240} />
+          <View style={styles.photo}>
+            <ArtistPhoto name={artist.name} imageUrl={artist.imageUrl} size={desktop ? 360 : 240} />
+            {artist.imageUrl && artist.imageCredit ? (
+              <Text style={[styles.credit, { color: colors.ink }]}>FOTO: {artist.imageCredit}</Text>
+            ) : null}
+          </View>
           <InfoList
             items={[
               ['Género', artist.genre],
@@ -66,5 +71,7 @@ export default function ArtistScreen() {
 const styles = StyleSheet.create({
   kicker: { fontFamily: fonts.mono, fontSize: 13 },
   title: { fontFamily: fonts.display },
+  photo: { gap: 12 },
+  credit: { fontFamily: fonts.mono, fontSize: 10, maxWidth: 360 },
   description: { fontFamily: fonts.body, fontSize: 17, lineHeight: 27, maxWidth: 720 },
 });

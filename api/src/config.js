@@ -48,6 +48,8 @@ const config = {
     initialLimitPerGenre: toInteger(process.env.IMPORT_INITIAL_LIMIT_PER_GENRE, 500),
     dailyLimitPerGenre: toInteger(process.env.IMPORT_DAILY_LIMIT_PER_GENRE, 1000),
     dailyHour: toInteger(process.env.IMPORT_DAILY_HOUR, 3),
+    // Artistas a los que se busca foto en cada importación diaria (unas 3 peticiones cada uno).
+    artistImagesPerRun: toInteger(process.env.IMPORT_ARTIST_IMAGES_PER_RUN, 200),
   },
 };
 

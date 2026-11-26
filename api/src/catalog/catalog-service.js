@@ -118,9 +118,12 @@ function createCatalogService({ catalog, reviews }) {
       catalog.findArtistAlbums(id),
       catalog.countArtistSongs(id),
     ]);
+    const imageUrl = safeImageUrl(artist.imageUrl);
     return {
       ...artist,
-      imageUrl: safeImageUrl(artist.imageUrl),
+      imageUrl,
+      // El crédito (autor y licencia) solo tiene sentido si se muestra la foto.
+      imageCredit: imageUrl ? (artist.imageCredit ?? null) : null,
       songsCount,
       albums: albums.map((album) => ({ ...album, coverUrl: safeImageUrl(album.coverUrl) })),
     };

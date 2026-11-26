@@ -155,4 +155,72 @@ describeIfDatabase('HU-20 · Importar el catálogo (integración)', () => {
       errorMessage: 'MusicBrainz no está disponible (ECONNREFUSED)',
     });
   });
+
+  const MBID = '00000000-0000-4000-8000-00000000a1b2';
+
+  async function insertMusicBrainzArtist() {
+    await pool.query('DELETE FROM artists WHERE external_id = $1', [MBID]);
+    const { rows } = await pool.query(
+      "INSERT INTO artists (name, external_id) VALUES ('Artista MBID', $1) RETURNING id::text AS id",
+      [MBID],
+    );
+    return rows[0].id;
+  }
+
+  test('test_artistImages_onlyArtistsWithMusicBrainzIdArePending', async () => {
+    const { importer, repository } = importWith(fakeMusicBrainz());
+    await importer.importInitial();
+    const artistId = await insertMusicBrainzArtist();
+
+    const pending = (await repository.findArtistsPendingImage(1_000_000)).map((a) => String(a.id));
+
+    expect(pending).toContain(artistId);
+    const { rows } = await pool.query(
+      "SELECT id::text AS id FROM artists WHERE external_id LIKE 'test-mb-%' OR external_id LIKE 'seed-%'",
+    );
+    for (const row of rows) expect(pending).not.toContain(row.id);
+    await pool.query('DELETE FROM artists WHERE id = $1', [artistId]);
+  });
+
+  test('test_artistImages_saveNeverOverwritesAndIsNotPendingAgain', async () => {
+    const { repository } = importWith(fakeMusicBrainz());
+    const artistId = await insertMusicBrainzArtist();
+
+    await repository.saveArtistImage(artistId, {
+      imageUrl: 'https://upload.wikimedia.org/a.jpg',
+      credit: 'Ana · CC BY',
+    });
+    await repository.saveArtistImage(artistId, {
+      imageUrl: 'https://upload.wikimedia.org/otra.jpg',
+      credit: 'Otra',
+    });
+
+    const saved = await pool.query(
+      'SELECT image_url, image_credit, image_checked_at FROM artists WHERE id = $1',
+      [artistId],
+    );
+    expect(saved.rows[0]).toMatchObject({
+      image_url: 'https://upload.wikimedia.org/a.jpg',
+      image_credit: 'Ana · CC BY',
+      image_checked_at: expect.any(Date),
+    });
+    const pending = (await repository.findArtistsPendingImage(1_000_000)).map((a) => String(a.id));
+    expect(pending).not.toContain(artistId);
+    await pool.query('DELETE FROM artists WHERE id = $1', [artistId]);
+  });
+
+  test('test_artistImages_withoutPhoto_isMarkedAsChecked', async () => {
+    const { repository } = importWith(fakeMusicBrainz());
+    const artistId = await insertMusicBrainzArtist();
+
+    await repository.saveArtistImage(artistId, null);
+
+    const saved = await pool.query(
+      'SELECT image_url, image_checked_at FROM artists WHERE id = $1',
+      [artistId],
+    );
+    expect(saved.rows[0].image_url).toBeNull();
+    expect(saved.rows[0].image_checked_at).toEqual(expect.any(Date));
+    await pool.query('DELETE FROM artists WHERE id = $1', [artistId]);
+  });
 });

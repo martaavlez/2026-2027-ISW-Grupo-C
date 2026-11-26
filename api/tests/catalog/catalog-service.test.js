@@ -40,6 +40,7 @@ function serviceWith(overrides = {}) {
       id: '3',
       name: 'Artista',
       imageUrl: 'http://inseguro.test/foto.jpg',
+      imageCredit: 'Crédito que no debe salir sin foto',
       genre: 'Pop',
       description: 'Banda de pruebas',
     }),
@@ -176,6 +177,7 @@ test('test_PA_59_01_getArtist_returnsInfoAlbumsAndSafeImages', async () => {
     genre: 'Pop',
     description: 'Banda de pruebas',
     imageUrl: null,
+    imageCredit: null,
     songsCount: 12,
     albums: [{ id: '1', title: 'Disco', coverUrl: null }],
   });
@@ -190,4 +192,24 @@ test('test_getArtist_withInvalidId_throwsValidationWithoutQuerying', async () =>
   const { service, catalog } = serviceWith();
   await expect(service.getArtist("3' OR '1'='1")).rejects.toBeInstanceOf(ValidationError);
   expect(catalog.findArtist).not.toHaveBeenCalled();
+});
+
+test('test_getArtist_withSafePhoto_keepsCredit', async () => {
+  const { service } = serviceWith({
+    catalog: {
+      findArtist: jest.fn().mockResolvedValue({
+        id: '3',
+        name: 'Artista',
+        imageUrl: 'https://upload.wikimedia.org/a.jpg',
+        imageCredit: 'Ana · CC BY',
+      }),
+    },
+  });
+
+  const result = await service.getArtist('3');
+
+  expect(result).toMatchObject({
+    imageUrl: 'https://upload.wikimedia.org/a.jpg',
+    imageCredit: 'Ana · CC BY',
+  });
 });

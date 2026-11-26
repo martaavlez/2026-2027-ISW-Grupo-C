@@ -74,6 +74,9 @@ async function linkArtists(client, kind, ownerId, artistIds) {
   }
 }
 
+// Identificador de MusicBrainz (MBID): un UUID en minúsculas.
+const MBID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
 function createCatalogRepository(pool) {
   async function saveArtists(client, artists, excluded, artistIdsByExternalId, counts) {
     const ids = [];
@@ -193,7 +196,52 @@ function createCatalogRepository(pool) {
     };
   }
 
-  return { saveAlbum, startRun, finishRun, getLastSuccessfulRun, getImportStatus };
+  /**
+   * Artistas sin foto a los que todavía no se les ha buscado. Solo los que vienen de MusicBrainz
+   * (su identificador es un MBID); los de los datos de prueba no se pueden buscar.
+   */
+  async function findArtistsPendingImage(limit) {
+    const { rows } = await pool.query(
+      `SELECT id, external_id AS "externalId" FROM artists
+        WHERE image_url IS NULL AND image_checked_at IS NULL AND external_id ~ $2
+        ORDER BY id LIMIT $1`,
+      [limit, MBID_PATTERN.source],
+    );
+    return rows;
+  }
+
+  async function findArtistIdByExternalId(externalId) {
+    const { rows } = await pool.query('SELECT id FROM artists WHERE external_id = $1', [
+      externalId,
+    ]);
+    return rows[0]?.id ?? null;
+  }
+
+  /**
+   * Guarda la foto encontrada (o que no tiene) y apunta que ya se buscó.
+   * Nunca sustituye una foto que ya tenga, por ejemplo una que haya puesto el administrador.
+   */
+  async function saveArtistImage(artistId, image) {
+    await pool.query(
+      `UPDATE artists
+          SET image_url = COALESCE(image_url, $2),
+              image_credit = CASE WHEN image_url IS NULL THEN $3 ELSE image_credit END,
+              image_checked_at = now()
+        WHERE id = $1`,
+      [artistId, image?.imageUrl ?? null, image?.credit ?? null],
+    );
+  }
+
+  return {
+    saveAlbum,
+    startRun,
+    finishRun,
+    getLastSuccessfulRun,
+    getImportStatus,
+    findArtistsPendingImage,
+    saveArtistImage,
+    findArtistIdByExternalId,
+  };
 }
 
-module.exports = { createCatalogRepository };
+module.exports = { createCatalogRepository, MBID_PATTERN };

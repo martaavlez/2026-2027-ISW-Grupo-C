@@ -31,7 +31,8 @@ const SONG_ARTISTS_QUERY = `
    WHERE sa.song_id = $1 ORDER BY sa.position, a.name`;
 
 const ARTIST_QUERY = `
-  SELECT id::text AS id, name, image_url AS "imageUrl", genre, description
+  SELECT id::text AS id, name, image_url AS "imageUrl", image_credit AS "imageCredit",
+         genre, description
     FROM artists WHERE id = $1`;
 
 // Álbumes donde aparece el artista, del más reciente al más antiguo (como mucho 200).
