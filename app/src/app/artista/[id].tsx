@@ -3,6 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Discography } from '../../components/AlbumGrid';
+import { FavoriteButton } from '../../components/FavoriteButton';
 import { ArtistPhoto } from '../../components/ArtistPhoto';
 import { InfoList } from '../../components/InfoList';
 import { ItemPage, ItemStatus, titleSize, useIsDesktop } from '../../components/ItemPage';
@@ -47,6 +48,12 @@ export default function ArtistScreen() {
               <Text style={[styles.credit, { color: colors.ink }]}>FOTO: {artist.imageCredit}</Text>
             ) : null}
           </View>
+          <FavoriteButton
+            key={artist.id}
+            kind="artist"
+            id={artist.id}
+            initial={Boolean(artist.isFavorite)}
+          />
           <InfoList
             items={[
               ['Género', artist.genre],

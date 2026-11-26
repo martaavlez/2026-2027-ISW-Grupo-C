@@ -48,7 +48,14 @@ function viewerPart(mine, defaultPrivacy) {
   };
 }
 
-function createCatalogService({ catalog, reviews, ratings = NO_RATINGS }) {
+const NO_FAVORITES = { isFavorite: async () => false };
+
+function createCatalogService({
+  catalog,
+  reviews,
+  ratings = NO_RATINGS,
+  favorites = NO_FAVORITES,
+}) {
   async function findReviewsPage(kind, itemId, viewerId, offset) {
     const page = await reviews.findVisible({
       kind,
@@ -75,16 +82,19 @@ function createCatalogService({ catalog, reviews, ratings = NO_RATINGS }) {
     const id = parseId(rawId);
     const album = await catalog.findAlbum(id);
     if (!album) throw new NotFoundError('El álbum no existe');
-    const [artists, songs, rating, reviewsPage, mine, defaultPrivacy] = await Promise.all([
-      catalog.findAlbumArtists(id),
-      catalog.findAlbumSongs(id),
-      ratingSummary('album', id, album.averageRating),
-      findReviewsPage('album', id, viewerId, 0),
-      ratings.findMine('album', id, viewerId),
-      ratings.findDefaultPrivacy(viewerId),
-    ]);
+    const [artists, songs, rating, reviewsPage, mine, defaultPrivacy, isFavorite] =
+      await Promise.all([
+        catalog.findAlbumArtists(id),
+        catalog.findAlbumSongs(id),
+        ratingSummary('album', id, album.averageRating),
+        findReviewsPage('album', id, viewerId, 0),
+        ratings.findMine('album', id, viewerId),
+        ratings.findDefaultPrivacy(viewerId),
+        favorites.isFavorite('album', id, viewerId),
+      ]);
     return {
       ...album,
+      isFavorite,
       ...viewerPart(mine, defaultPrivacy),
       coverUrl: safeImageUrl(album.coverUrl),
       ...rating,
@@ -99,15 +109,17 @@ function createCatalogService({ catalog, reviews, ratings = NO_RATINGS }) {
     const id = parseId(rawId);
     const song = await catalog.findSong(id);
     if (!song) throw new NotFoundError('La canción no existe');
-    const [artists, rating, reviewsPage, mine, defaultPrivacy] = await Promise.all([
+    const [artists, rating, reviewsPage, mine, defaultPrivacy, isFavorite] = await Promise.all([
       catalog.findSongArtists(id),
       ratingSummary('song', id, song.averageRating),
       findReviewsPage('song', id, viewerId, 0),
       ratings.findMine('song', id, viewerId),
       ratings.findDefaultPrivacy(viewerId),
+      favorites.isFavorite('song', id, viewerId),
     ]);
     return {
       id: song.id,
+      isFavorite,
       ...viewerPart(mine, defaultPrivacy),
       title: song.title,
       trackNumber: song.trackNumber,
@@ -127,18 +139,20 @@ function createCatalogService({ catalog, reviews, ratings = NO_RATINGS }) {
   }
 
   /** HU-59 · Ficha de un artista: su información y sus álbumes (PA-59-01). */
-  async function getArtist(rawId) {
+  async function getArtist(rawId, viewerId = null) {
     const id = parseId(rawId);
     const artist = await catalog.findArtist(id);
     if (!artist) throw new NotFoundError('El artista no existe');
-    const [albums, songsCount] = await Promise.all([
+    const [albums, songsCount, isFavorite] = await Promise.all([
       catalog.findArtistAlbums(id),
       catalog.countArtistSongs(id),
+      favorites.isFavorite('artist', id, viewerId),
     ]);
     const imageUrl = safeImageUrl(artist.imageUrl);
     return {
       ...artist,
       imageUrl,
+      isFavorite,
       // El crédito (autor y licencia) solo tiene sentido si se muestra la foto.
       imageCredit: imageUrl ? (artist.imageCredit ?? null) : null,
       songsCount,

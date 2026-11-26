@@ -7,6 +7,7 @@ import {
   getAlbum,
   getArtist,
   publishReview,
+  setFavorite,
   rateItem,
   getReviews,
   getSong,
@@ -35,6 +36,7 @@ jest.mock('../services/api', () => ({
   getArtist: jest.fn(),
   rateItem: jest.fn(),
   publishReview: jest.fn(),
+  setFavorite: jest.fn(),
 }));
 
 const review = (id: string, overrides: Partial<Review> = {}): Review => ({
@@ -270,7 +272,7 @@ describe('HU-59 · Ficha de artista', () => {
     expect(screen.getByText('Soft Static').props.accessibilityHint).toBe('/album/1');
     expect(screen.getByText('2026 · ★ 4,8')).toBeTruthy();
     expect(screen.getByText('2022')).toBeTruthy();
-    expect(getArtist).toHaveBeenCalledWith('3');
+    expect(getArtist).toHaveBeenCalledWith('3', undefined);
   });
 
   test('test_ArtistScreen_withoutAlbums_saysSo', async () => {
@@ -579,5 +581,76 @@ describe('HU-23 · Escribir una reseña', () => {
     await screen.findByText('TU VALORACIÓN');
 
     expect(screen.queryByLabelText('Tu reseña')).toBeNull();
+  });
+});
+
+describe('HU-07 y HU-46 · Favoritos en las fichas', () => {
+  const session = {
+    token: 'tok',
+    user: { id: 1, name: 'Lucía', username: 'lucia', email: 'l@c.es', role: 'user' },
+  };
+
+  test('test_PA_07_01_markSongAsFavorite', async () => {
+    saveSession(session);
+    mockParams = { id: '10' };
+    jest.mocked(getSong).mockResolvedValue({ ok: true, data: song });
+    jest.mocked(setFavorite).mockResolvedValue({ ok: true });
+
+    await render(<SongScreen />);
+    await fireEvent.press(await screen.findByRole('button', { name: 'Marcar como favorito' }));
+
+    expect(setFavorite).toHaveBeenCalledWith('song', '10', true, 'tok');
+    expect(screen.getByText('♥ En favoritos')).toBeTruthy();
+  });
+
+  test('test_PA_46_01_unmarkAlbum', async () => {
+    saveSession(session);
+    jest.mocked(getAlbum).mockResolvedValue({ ok: true, data: { ...album, isFavorite: true } });
+    jest.mocked(setFavorite).mockResolvedValue({ ok: true });
+
+    await render(<AlbumScreen />);
+    await fireEvent.press(await screen.findByRole('button', { name: 'Quitar de favoritos' }));
+
+    expect(setFavorite).toHaveBeenCalledWith('album', '1', false, 'tok');
+    expect(screen.getByText('♡ Favorito')).toBeTruthy();
+  });
+
+  test('test_favorite_whenItFails_goesBackAndExplains', async () => {
+    saveSession(session);
+    jest.mocked(getAlbum).mockResolvedValue({ ok: true, data: album });
+    jest
+      .mocked(setFavorite)
+      .mockResolvedValue({ ok: false, error: 'No se ha podido conectar.', needsLogin: false });
+
+    await render(<AlbumScreen />);
+    await fireEvent.press(await screen.findByRole('button', { name: 'Marcar como favorito' }));
+
+    expect(await screen.findByText('No se ha podido conectar.')).toBeTruthy();
+    expect(screen.getByText('♡ Favorito')).toBeTruthy();
+  });
+
+  test('test_favorite_withExpiredSession_asksToLogIn', async () => {
+    saveSession(session);
+    jest.mocked(getAlbum).mockResolvedValue({ ok: true, data: album });
+    jest.mocked(setFavorite).mockResolvedValue({ ok: false, error: 'x', needsLogin: true });
+
+    await render(<AlbumScreen />);
+    await fireEvent.press(await screen.findByRole('button', { name: 'Marcar como favorito' }));
+
+    expect(getSession()).toBeNull();
+    expect(mockRouter.replace).toHaveBeenCalledWith({
+      pathname: '/acceso',
+      params: { aviso: 'caducada' },
+    });
+  });
+
+  test('test_favorite_asVisitor_asksToLogInWithoutCallingApi', async () => {
+    jest.mocked(getArtist).mockResolvedValue({ ok: true, data: artist });
+
+    await render(<ArtistScreen />);
+    await fireEvent.press(await screen.findByRole('button', { name: 'Marcar como favorito' }));
+
+    expect(setFavorite).not.toHaveBeenCalled();
+    expect(screen.getAllByText('inicia sesión')[0].props.accessibilityHint).toBe('/acceso');
   });
 });

@@ -92,7 +92,7 @@ test('test_getArtist_returns200', async () => {
   const response = await request(appWith({ getArtist })).get('/artists/3');
 
   expect(response.status).toBe(200);
-  expect(getArtist).toHaveBeenCalledWith('3');
+  expect(getArtist).toHaveBeenCalledWith('3', null);
 });
 
 test('test_getArtist_overReadRateLimit_returns429', async () => {

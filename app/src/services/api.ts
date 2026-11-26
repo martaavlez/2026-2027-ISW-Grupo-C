@@ -71,6 +71,8 @@ type RatingSummary = {
   myReview?: { body: string; privacy: Privacy } | null;
   /** Su nivel de privacidad por defecto (RN-09); null para un visitante. */
   defaultPrivacy?: Privacy | null;
+  /** Si quien mira lo tiene en favoritos (HU-07). */
+  isFavorite?: boolean;
   averageRating: number | null;
   ratingsCount: number;
   distribution: RatingDistribution;
@@ -132,6 +134,8 @@ export type Artist = {
   imageUrl: string | null;
   /** Autor y licencia de la foto (Wikimedia Commons). */
   imageCredit: string | null;
+  /** Si quien mira lo tiene en favoritos (HU-07). */
+  isFavorite?: boolean;
   genre: string | null;
   description: string | null;
   songsCount: number;
@@ -186,9 +190,9 @@ export function getSong(id: string, token?: string, fetchFn: typeof fetch = fetc
   return getJson<Song>('song', itemPath('song', id), token, fetchFn);
 }
 
-/** HU-59 · Ficha de un artista (no tiene reseñas, así que no hace falta el token). */
-export function getArtist(id: string, fetchFn: typeof fetch = fetch) {
-  return getJson<Artist>('artist', itemPath('artist', id), undefined, fetchFn);
+/** HU-59 · Ficha de un artista. Con sesión se envía el token para saber si es favorito (HU-07). */
+export function getArtist(id: string, token?: string, fetchFn: typeof fetch = fetch) {
+  return getJson<Artist>('artist', itemPath('artist', id), token, fetchFn);
 }
 
 /** «Ver más reseñas»: la siguiente página a partir de offset. */
@@ -325,5 +329,48 @@ export async function publishReview(
     };
   } catch {
     return { ok: false, errors: { general: CONNECTION_ERROR }, needsLogin: false };
+  }
+}
+
+// ---------- HU-07 y HU-46 · Favoritos ----------
+
+export type FavoriteKind = CatalogKind;
+
+export type Favorites = Pick<SearchResults, 'songs' | 'albums' | 'artists'>;
+
+export type FavoriteResult = { ok: true } | { ok: false; error: string; needsLogin: boolean };
+
+/** Marca (favorite = true) o quita (false) un favorito. El usuario sale del token. */
+export async function setFavorite(
+  kind: FavoriteKind,
+  id: string,
+  favorite: boolean,
+  token?: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<FavoriteResult> {
+  try {
+    const response = await fetchFn(`${API_URL}${itemPath(kind, id)}/favorite`, {
+      method: favorite ? 'PUT' : 'DELETE',
+      headers: authHeaders(token),
+    });
+    if (response.ok) return { ok: true };
+    const body = (await response.json()) as { error?: string };
+    return { ok: false, error: body.error ?? LOAD_ERROR, needsLogin: response.status === 401 };
+  } catch {
+    return { ok: false, error: CONNECTION_ERROR, needsLogin: false };
+  }
+}
+
+/** Favoritos del usuario por subcategoría: canciones, álbumes y artistas. */
+export async function getMyFavorites(
+  token: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<{ ok: true; data: Favorites } | { ok: false; error: string; needsLogin: boolean }> {
+  try {
+    const response = await fetchFn(`${API_URL}/me/favorites`, { headers: authHeaders(token) });
+    if (response.ok) return { ok: true, data: (await response.json()) as Favorites };
+    return { ok: false, error: LOAD_ERROR, needsLogin: response.status === 401 };
+  } catch {
+    return { ok: false, error: CONNECTION_ERROR, needsLogin: false };
   }
 }
