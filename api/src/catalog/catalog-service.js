@@ -37,7 +37,18 @@ function toPublicReview(review) {
   return { ...review, photoUrl: safeImageUrl(review.photoUrl) };
 }
 
-function createCatalogService({ catalog, reviews, ratings = { findMyRating: async () => null } }) {
+const NO_RATINGS = { findMine: async () => null, findDefaultPrivacy: async () => null };
+
+/** Lo que el usuario que mira ya tiene en ese elemento: su nota, su reseña y su privacidad por defecto. */
+function viewerPart(mine, defaultPrivacy) {
+  return {
+    myRating: mine?.rating ?? null,
+    myReview: mine?.body ? { body: mine.body, privacy: mine.privacy } : null,
+    defaultPrivacy,
+  };
+}
+
+function createCatalogService({ catalog, reviews, ratings = NO_RATINGS }) {
   async function findReviewsPage(kind, itemId, viewerId, offset) {
     const page = await reviews.findVisible({
       kind,
@@ -64,16 +75,17 @@ function createCatalogService({ catalog, reviews, ratings = { findMyRating: asyn
     const id = parseId(rawId);
     const album = await catalog.findAlbum(id);
     if (!album) throw new NotFoundError('El álbum no existe');
-    const [artists, songs, rating, reviewsPage, myRating] = await Promise.all([
+    const [artists, songs, rating, reviewsPage, mine, defaultPrivacy] = await Promise.all([
       catalog.findAlbumArtists(id),
       catalog.findAlbumSongs(id),
       ratingSummary('album', id, album.averageRating),
       findReviewsPage('album', id, viewerId, 0),
-      ratings.findMyRating('album', id, viewerId),
+      ratings.findMine('album', id, viewerId),
+      ratings.findDefaultPrivacy(viewerId),
     ]);
     return {
       ...album,
-      myRating,
+      ...viewerPart(mine, defaultPrivacy),
       coverUrl: safeImageUrl(album.coverUrl),
       ...rating,
       artists,
@@ -87,15 +99,16 @@ function createCatalogService({ catalog, reviews, ratings = { findMyRating: asyn
     const id = parseId(rawId);
     const song = await catalog.findSong(id);
     if (!song) throw new NotFoundError('La canción no existe');
-    const [artists, rating, reviewsPage, myRating] = await Promise.all([
+    const [artists, rating, reviewsPage, mine, defaultPrivacy] = await Promise.all([
       catalog.findSongArtists(id),
       ratingSummary('song', id, song.averageRating),
       findReviewsPage('song', id, viewerId, 0),
-      ratings.findMyRating('song', id, viewerId),
+      ratings.findMine('song', id, viewerId),
+      ratings.findDefaultPrivacy(viewerId),
     ]);
     return {
       id: song.id,
-      myRating,
+      ...viewerPart(mine, defaultPrivacy),
       title: song.title,
       trackNumber: song.trackNumber,
       durationSeconds: song.durationSeconds,

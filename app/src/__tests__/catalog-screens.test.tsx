@@ -6,6 +6,7 @@ import SongScreen from '../app/cancion/[id]';
 import {
   getAlbum,
   getArtist,
+  publishReview,
   rateItem,
   getReviews,
   getSong,
@@ -33,6 +34,7 @@ jest.mock('../services/api', () => ({
   getReviews: jest.fn(),
   getArtist: jest.fn(),
   rateItem: jest.fn(),
+  publishReview: jest.fn(),
 }));
 
 const review = (id: string, overrides: Partial<Review> = {}): Review => ({
@@ -437,4 +439,145 @@ test('test_ArtistScreen_withoutPhoto_hidesCredit', async () => {
 
   await screen.findByText('MARA KEI');
   expect(screen.queryByText(/No debe salir/)).toBeNull();
+});
+
+describe('HU-23 · Escribir una reseña', () => {
+  const session = {
+    token: 'tok',
+    user: { id: 1, name: 'Lucía', username: 'lucia', email: 'l@c.es', role: 'user' },
+  };
+  const published = {
+    myRating: 4,
+    myReview: { body: 'Precioso', privacy: 'friends' as const },
+    averageRating: 4.6,
+    ratingsCount: 1205,
+    distribution: { 1: 12, 2: 24, 3: 72, 4: 230, 5: 867 },
+    review: review('99', { body: 'Precioso', username: 'lucia' }),
+  };
+
+  async function openAlbum(data: Partial<Album> = {}) {
+    saveSession(session);
+    jest.mocked(getAlbum).mockResolvedValue({
+      ok: true,
+      data: { ...album, myRating: 4, defaultPrivacy: 'friends', ...data },
+    });
+    await render(<AlbumScreen />);
+    await screen.findByText('TU VALORACIÓN');
+  }
+
+  test('test_PA_23_01_publish_addsReviewOnTopAndUpdatesAverage', async () => {
+    jest.mocked(publishReview).mockResolvedValue({ ok: true, data: published });
+    await openAlbum();
+
+    await fireEvent.changeText(screen.getByLabelText('Tu reseña'), 'Precioso');
+    await fireEvent.press(screen.getByRole('radio', { name: 'PÚBLICO' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Publicar reseña' }));
+
+    expect(publishReview).toHaveBeenCalledWith(
+      'album',
+      '1',
+      { rating: 4, body: 'Precioso', privacy: 'public' },
+      'tok',
+    );
+    expect(await screen.findByText('TU RESEÑA · SOLO AMIGOS')).toBeTruthy();
+    expect(screen.getByText('4,6')).toBeTruthy();
+    expect(screen.getByText('LAS QUE PUEDES VER · 4')).toBeTruthy();
+    expect(screen.getAllByText('Precioso')).toHaveLength(2);
+    expect(screen.queryByLabelText('Tu reseña')).toBeNull();
+  });
+
+  test('test_PA_23_02_privacyStartsWithUserDefault', async () => {
+    await openAlbum();
+
+    expect(
+      screen.getByRole('radio', { name: 'SOLO AMIGOS' }).props.accessibilityState.checked,
+    ).toBe(true);
+  });
+
+  test('test_PA_23_04_withoutRating_asksForOneWithoutCallingApi', async () => {
+    await openAlbum({ myRating: null });
+
+    await fireEvent.changeText(screen.getByLabelText('Tu reseña'), 'Sin nota');
+    await fireEvent.press(screen.getByRole('button', { name: 'Publicar reseña' }));
+
+    expect(
+      screen.getByText('Selecciona una puntuación del 1 al 5 para publicar la reseña.'),
+    ).toBeTruthy();
+    expect(publishReview).not.toHaveBeenCalled();
+  });
+
+  test('test_publish_withoutText_asksForItUntilTyping', async () => {
+    await openAlbum();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Publicar reseña' }));
+
+    expect(screen.getByText('Escribe tu reseña antes de publicarla.')).toBeTruthy();
+    expect(publishReview).not.toHaveBeenCalled();
+    await fireEvent.changeText(screen.getByLabelText('Tu reseña'), 'A');
+    expect(screen.queryByText('Escribe tu reseña antes de publicarla.')).toBeNull();
+  });
+
+  test('test_ratingWarning_disappearsAfterChoosingStars', async () => {
+    jest.mocked(rateItem).mockResolvedValue({
+      ok: true,
+      data: { myRating: 3, averageRating: 4, ratingsCount: 1, distribution: album.distribution },
+    });
+    await openAlbum({ myRating: null });
+    await fireEvent.changeText(screen.getByLabelText('Tu reseña'), 'Texto');
+    await fireEvent.press(screen.getByRole('button', { name: 'Publicar reseña' }));
+    expect(
+      screen.getByText('Selecciona una puntuación del 1 al 5 para publicar la reseña.'),
+    ).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('radio', { name: '3 estrellas' }));
+
+    expect(await screen.findByLabelText('Valora este álbum de 1 a 5')).toBeTruthy();
+    expect(
+      screen.queryByText('Selecciona una puntuación del 1 al 5 para publicar la reseña.'),
+    ).toBeNull();
+  });
+
+  test('test_publish_serverError_isShown', async () => {
+    jest.mocked(publishReview).mockResolvedValue({
+      ok: false,
+      needsLogin: false,
+      errors: { body: 'Ya has publicado una reseña de este elemento.' },
+    });
+    await openAlbum();
+
+    await fireEvent.changeText(screen.getByLabelText('Tu reseña'), 'Otra');
+    await fireEvent.press(screen.getByRole('button', { name: 'Publicar reseña' }));
+
+    expect(await screen.findByText('Ya has publicado una reseña de este elemento.')).toBeTruthy();
+  });
+
+  test('test_publish_withExpiredSession_asksToLogIn', async () => {
+    jest.mocked(publishReview).mockResolvedValue({ ok: false, needsLogin: true, errors: {} });
+    await openAlbum();
+
+    await fireEvent.changeText(screen.getByLabelText('Tu reseña'), 'Texto');
+    await fireEvent.press(screen.getByRole('button', { name: 'Publicar reseña' }));
+
+    expect(getSession()).toBeNull();
+    expect(mockRouter.replace).toHaveBeenCalledWith({
+      pathname: '/acceso',
+      params: { aviso: 'caducada' },
+    });
+  });
+
+  test('test_alreadyPublished_showsMyReviewInsteadOfForm', async () => {
+    await openAlbum({ myReview: { body: 'Mi opinión', privacy: 'private' } });
+
+    expect(screen.getByText('TU RESEÑA · PRIVADA')).toBeTruthy();
+    expect(screen.getByText('Mi opinión')).toBeTruthy();
+    expect(screen.queryByLabelText('Tu reseña')).toBeNull();
+  });
+
+  test('test_visitor_doesNotSeeTheForm', async () => {
+    jest.mocked(getAlbum).mockResolvedValue({ ok: true, data: album });
+    await render(<AlbumScreen />);
+    await screen.findByText('TU VALORACIÓN');
+
+    expect(screen.queryByLabelText('Tu reseña')).toBeNull();
+  });
 });

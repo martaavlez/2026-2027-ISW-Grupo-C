@@ -1,4 +1,12 @@
-import { getAlbum, getArtist, getReviews, getSong, rateItem, search } from '../services/api';
+import {
+  getAlbum,
+  getArtist,
+  getReviews,
+  getSong,
+  publishReview,
+  rateItem,
+  search,
+} from '../services/api';
 
 const response = (status: number, body: unknown) =>
   ({ ok: status < 300, status, json: async () => body }) as Response;
@@ -135,4 +143,35 @@ test('test_rateItem_errors', async () => {
     needsLogin: true,
   });
   expect((await rateItem('album', '1', 3, 'tok', offline)).ok).toBe(false);
+});
+
+test('test_publishReview_putsFormWithToken', async () => {
+  const fetchFn = jest.fn().mockResolvedValue(response(201, { myRating: 4 }));
+
+  await expect(
+    publishReview('album', '1', { rating: 4, body: 'Bien', privacy: 'public' }, 'tok', fetchFn),
+  ).resolves.toEqual({ ok: true, data: { myRating: 4 } });
+  const [url, options] = fetchFn.mock.calls[0];
+  expect(url).toBe('http://localhost:3000/albums/1/review');
+  expect(options.method).toBe('PUT');
+  expect(JSON.parse(options.body)).toEqual({ rating: 4, body: 'Bien', privacy: 'public' });
+});
+
+test('test_publishReview_errors', async () => {
+  const invalid = jest.fn().mockResolvedValue(response(400, { errors: { body: 'Falta' } }));
+  const visitor = jest.fn().mockResolvedValue(response(401, { error: 'Inicia sesión.' }));
+  const offline = jest.fn().mockRejectedValue(new TypeError('x'));
+  const form = { rating: 4, body: 'x', privacy: 'public' as const };
+
+  await expect(publishReview('song', '1', form, 'tok', invalid)).resolves.toEqual({
+    ok: false,
+    errors: { body: 'Falta' },
+    needsLogin: false,
+  });
+  await expect(publishReview('song', '1', form, undefined, visitor)).resolves.toEqual({
+    ok: false,
+    errors: { general: 'Inicia sesión.' },
+    needsLogin: true,
+  });
+  expect((await publishReview('song', '1', form, 'tok', offline)).ok).toBe(false);
 });

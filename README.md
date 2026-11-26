@@ -104,6 +104,7 @@ Todas las reglas se comprueban en la API, aunque la app también avise antes de 
 - **Descarga masiva:** las fichas del catálogo y el buscador (`/albums`, `/songs`, `/artists`, `/search`) admiten `READ_RATE_LIMIT` peticiones por IP y minuto.
 - **Buscador (HU-03):** el texto se busca tal cual (los comodines `%` y `_` se escapan) y siempre con parámetros. Nunca se busca por correo ni salen cuentas suspendidas o de administración.
 - **Valoraciones (HU-05):** solo con sesión, y el autor sale siempre del token, nunca del cuerpo de la petición. La nota se comprueba en la API (entero del 1 al 5) y la media se recalcula en la misma transacción, bloqueando el elemento para que dos valoraciones a la vez no la descuadren (RN-07).
+- **Reseñas (HU-23):** el texto (hasta 2.000 caracteres, sin caracteres de control) y la privacidad se comprueban en la API, se guardan como texto y la pantalla nunca los interpreta como HTML. Como mucho 30 reseñas por IP cada 15 minutos contra el spam.
 - **Visibilidad (RN-08, RN-12):** quién ve cada reseña se decide en la consulta SQL con el usuario del token, nunca con datos que mande el cliente. Un token caducado, falso o de un usuario suspendido cuenta como visitante.
 - **Peticiones:** cuerpo JSON de 10 KB como máximo, cabeceras de seguridad con Helmet y consultas SQL siempre con parámetros.
 - **Errores:** solo se enseñan los mensajes pensados para el usuario; los fallos internos devuelven un 500 sin detalles.
