@@ -30,10 +30,12 @@ test.each([
 });
 
 test('test_getMyFavorites_usesViewer', async () => {
-  const listMine = jest.fn().mockResolvedValue({ songs: [], albums: [], artists: [] });
+  const listMine = jest.fn().mockResolvedValue({ total: 0, items: [], offset: 24, pageSize: 24 });
 
-  const response = await request(appWith({ listMine })).get('/me/favorites');
+  const response = await request(appWith({ listMine })).get(
+    '/me/favorites?type=songs&offset=24&userId=1',
+  );
 
   expect(response.status).toBe(200);
-  expect(listMine).toHaveBeenCalledWith('7');
+  expect(listMine).toHaveBeenCalledWith('7', 'songs', '24');
 });

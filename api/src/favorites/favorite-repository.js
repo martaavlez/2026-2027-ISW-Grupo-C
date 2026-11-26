@@ -56,18 +56,30 @@ const MY_SONGS = `
   SELECT s.id::text AS id, s.title, al.id::text AS "albumId", al.title AS "albumTitle",
          al.cover_url AS "coverUrl", ${ARTIST_NAMES('song_artists', 'song_id', 's.id')} AS artists
     FROM favorites f JOIN songs s ON s.id = f.song_id JOIN albums al ON al.id = s.album_id
-   WHERE f.user_id = $1 ORDER BY f.created_at DESC, f.id DESC`;
+   WHERE f.user_id = $1 ORDER BY f.created_at DESC, f.id DESC
+   LIMIT $2 OFFSET $3`;
 
 const MY_ALBUMS = `
   SELECT al.id::text AS id, al.title, al.type, al.release_year AS "releaseYear",
          al.cover_url AS "coverUrl", ${ARTIST_NAMES('album_artists', 'album_id', 'al.id')} AS artists
     FROM favorites f JOIN albums al ON al.id = f.album_id
-   WHERE f.user_id = $1 ORDER BY f.created_at DESC, f.id DESC`;
+   WHERE f.user_id = $1 ORDER BY f.created_at DESC, f.id DESC
+   LIMIT $2 OFFSET $3`;
 
 const MY_ARTISTS = `
   SELECT ar.id::text AS id, ar.name, ar.genre, ar.image_url AS "imageUrl"
     FROM favorites f JOIN artists ar ON ar.id = f.artist_id
-   WHERE f.user_id = $1 ORDER BY f.created_at DESC, f.id DESC`;
+   WHERE f.user_id = $1 ORDER BY f.created_at DESC, f.id DESC
+   LIMIT $2 OFFSET $3`;
+
+const MY_LISTS = { song: MY_SONGS, album: MY_ALBUMS, artist: MY_ARTISTS };
+
+const COUNT = {
+  song: 'SELECT count(*)::int AS total FROM favorites WHERE user_id = $1 AND song_id IS NOT NULL',
+  album: 'SELECT count(*)::int AS total FROM favorites WHERE user_id = $1 AND album_id IS NOT NULL',
+  artist:
+    'SELECT count(*)::int AS total FROM favorites WHERE user_id = $1 AND artist_id IS NOT NULL',
+};
 
 function createFavoriteRepository(pool) {
   async function inTransaction(work) {
@@ -110,17 +122,24 @@ function createFavoriteRepository(pool) {
     return (await pool.query(IS_FAVORITE[kind], [userId, itemId])).rowCount > 0;
   }
 
-  /** Favoritos del usuario por subcategoría (pestaña Favoritos del perfil), del más reciente. */
-  async function findByUser(userId) {
-    const [songs, albums, artists] = await Promise.all([
-      pool.query(MY_SONGS, [userId]),
-      pool.query(MY_ALBUMS, [userId]),
-      pool.query(MY_ARTISTS, [userId]),
+  /** Una página de una subcategoría de sus favoritos, del más reciente, con el total. */
+  async function findPage(userId, kind, { limit, offset }) {
+    const [items, total] = await Promise.all([
+      pool.query(MY_LISTS[kind], [userId, limit, offset]),
+      pool.query(COUNT[kind], [userId]),
     ]);
-    return { songs: songs.rows, albums: albums.rows, artists: artists.rows };
+    return { total: total.rows[0].total, items: items.rows };
   }
 
-  return { add, remove, isFavorite, findByUser };
+  /** La primera página de cada subcategoría (pestaña Favoritos del perfil). */
+  async function findByUser(userId, { limit, offset = 0 }) {
+    const [songs, albums, artists] = await Promise.all(
+      ['song', 'album', 'artist'].map((kind) => findPage(userId, kind, { limit, offset })),
+    );
+    return { songs, albums, artists };
+  }
+
+  return { add, remove, isFavorite, findByUser, findPage };
 }
 
 module.exports = { createFavoriteRepository };

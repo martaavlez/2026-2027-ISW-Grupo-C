@@ -1,5 +1,7 @@
 import {
+  getMyProfile,
   getMyFavorites,
+  getMyReviews,
   setFavorite,
   getAlbum,
   getArtist,
@@ -213,16 +215,42 @@ test('test_setFavorite_errors', async () => {
   expect((await setFavorite('album', '1', true, 'tok', offline)).ok).toBe(false);
 });
 
-test('test_getMyFavorites', async () => {
-  const data = { songs: [], albums: [], artists: [] };
+test('test_getMyFavorites_asksForOnePageOfASubcategory', async () => {
+  const data = { offset: 6, pageSize: 24, items: [] };
   const ok = jest.fn().mockResolvedValue(response(200, data));
   const expired = jest.fn().mockResolvedValue(response(401, {}));
   const offline = jest.fn().mockRejectedValue(new TypeError('x'));
 
-  await expect(getMyFavorites('tok', ok)).resolves.toEqual({ ok: true, data });
-  expect(ok).toHaveBeenCalledWith('http://localhost:3000/me/favorites', {
+  await expect(getMyFavorites('tok', 'albums', 6, ok)).resolves.toEqual({ ok: true, data });
+  expect(ok).toHaveBeenCalledWith('http://localhost:3000/me/favorites?type=albums&offset=6', {
     headers: { Authorization: 'Bearer tok' },
   });
-  await expect(getMyFavorites('tok', expired)).resolves.toMatchObject({ needsLogin: true });
-  await expect(getMyFavorites('tok', offline)).resolves.toMatchObject({ needsLogin: false });
+  await expect(getMyFavorites('tok', 'songs', 0, expired)).resolves.toMatchObject({
+    needsLogin: true,
+  });
+  await expect(getMyFavorites('tok', 'songs', 0, offline)).resolves.toMatchObject({
+    needsLogin: false,
+  });
+});
+
+test('test_getMyReviews_asksFromOffset', async () => {
+  const ok = jest.fn().mockResolvedValue(response(200, { offset: 10, pageSize: 10, items: [] }));
+
+  await expect(getMyReviews('tok', 10, ok)).resolves.toMatchObject({ ok: true });
+  expect(ok).toHaveBeenCalledWith('http://localhost:3000/me/reviews?offset=10', {
+    headers: { Authorization: 'Bearer tok' },
+  });
+});
+
+test('test_getMyProfile', async () => {
+  const ok = jest.fn().mockResolvedValue(response(200, { user: { id: '1' } }));
+  const expired = jest.fn().mockResolvedValue(response(401, {}));
+  const offline = jest.fn().mockRejectedValue(new TypeError('x'));
+
+  await expect(getMyProfile('tok', ok)).resolves.toEqual({ ok: true, data: { user: { id: '1' } } });
+  expect(ok).toHaveBeenCalledWith('http://localhost:3000/me/profile', {
+    headers: { Authorization: 'Bearer tok' },
+  });
+  await expect(getMyProfile('tok', expired)).resolves.toMatchObject({ needsLogin: true });
+  await expect(getMyProfile('tok', offline)).resolves.toMatchObject({ needsLogin: false });
 });

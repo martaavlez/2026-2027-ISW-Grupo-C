@@ -18,8 +18,9 @@ function createFavoriteRouter(favoriteService) {
     });
   }
 
+  // GET /me/favorites?type=songs&offset=6 · «Ver más» de una subcategoría.
   router.get('/me/favorites', async (req, res) => {
-    res.json(await favoriteService.listMine(req.viewerId));
+    res.json(await favoriteService.listMine(req.viewerId, req.query.type, req.query.offset));
   });
 
   return router;

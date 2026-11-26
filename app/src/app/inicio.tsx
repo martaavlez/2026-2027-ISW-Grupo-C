@@ -26,10 +26,10 @@ export default function HomeScreen() {
           el ranking y recomendaciones para ti.
         </Text>
         <Link
-          href="/favoritos"
+          href="/perfil"
           style={[styles.link, { color: colors.ink, borderBottomColor: colors.accent }]}
         >
-          MIS FAVORITOS →
+          MI PERFIL →
         </Link>
       </ScrollView>
     </View>

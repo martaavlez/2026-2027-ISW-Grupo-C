@@ -54,22 +54,27 @@ function SignUpLink() {
 
 function UserAvatar({ userName }: { userName: string }) {
   const colors = useColors();
+  // Lleva a tu perfil (HU-06).
   return (
-    <View
-      accessibilityLabel="Tu perfil"
-      style={[
-        styles.avatar,
-        {
-          borderColor: colors.ink,
-          backgroundColor: colors.folderOpen,
-          boxShadow: `0 0 0 3px ${colors.background}, 0 0 0 5px ${colors.accent}`,
-        },
-      ]}
-    >
-      <Text style={[styles.initial, { color: colors.ink }]}>
-        {userName.charAt(0).toUpperCase()}
-      </Text>
-    </View>
+    <Link href="/perfil" asChild>
+      <Pressable
+        accessibilityRole="link"
+        accessibilityLabel="Tu perfil"
+        // Con Link asChild el estilo tiene que ir en un solo objeto: un array rompe la web.
+        style={StyleSheet.flatten([
+          styles.avatar,
+          {
+            borderColor: colors.ink,
+            backgroundColor: colors.folderOpen,
+            boxShadow: `0 0 0 3px ${colors.background}, 0 0 0 5px ${colors.accent}`,
+          },
+        ])}
+      >
+        <Text style={[styles.initial, { color: colors.ink }]}>
+          {userName.charAt(0).toUpperCase()}
+        </Text>
+      </Pressable>
+    </Link>
   );
 }
 

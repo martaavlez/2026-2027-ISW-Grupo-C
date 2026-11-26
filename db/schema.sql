@@ -266,6 +266,8 @@ CREATE TABLE board_items (
     added_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
     CHECK (num_nonnulls(song_id, album_id) = 1)
 );
+-- Portada del tablero: la de uno de sus elementos, elegida por el dueño (si no, la del primero).
+ALTER TABLE boards ADD COLUMN cover_item_id BIGINT REFERENCES board_items(id) ON DELETE SET NULL;
 -- RN-14: sin elementos repetidos
 CREATE UNIQUE INDEX board_items_song  ON board_items (board_id, song_id)  WHERE song_id  IS NOT NULL;
 CREATE UNIQUE INDEX board_items_album ON board_items (board_id, album_id) WHERE album_id IS NOT NULL;

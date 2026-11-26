@@ -25,6 +25,7 @@ Cuando se añade algo al esquema, en `migrations/` hay un archivo para aplicarlo
 
 ```bash
 psql -d repeat -f migrations/001-fotos-artistas.sql
+psql -d repeat -f migrations/002-portada-tableros.sql
 ```
 
 ## Datos de prueba

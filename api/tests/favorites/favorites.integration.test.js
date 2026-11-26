@@ -77,8 +77,9 @@ describeIfDatabase('HU-07 y HU-46 · Favoritos (integración)', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ favorite: true });
-    const mine = await as(request(app).get('/me/favorites'), ids.ana);
-    expect(mine.body.songs).toEqual([
+    const mine = await as(request(app).get('/me/favorites?type=songs'), ids.ana);
+    expect(mine.body.total).toBe(1);
+    expect(mine.body.items).toEqual([
       expect.objectContaining({
         id: ids.song,
         title: 'Canción HU07',
@@ -112,8 +113,8 @@ describeIfDatabase('HU-07 y HU-46 · Favoritos (integración)', () => {
     const response = await as(request(app).delete(`/albums/${ids.album}/favorite`), ids.ana);
 
     expect(response.body).toEqual({ favorite: false });
-    const mine = await as(request(app).get('/me/favorites'), ids.ana);
-    expect(mine.body.albums).toEqual([]);
+    const mine = await as(request(app).get('/me/favorites?type=albums'), ids.ana);
+    expect(mine.body).toMatchObject({ total: 0, items: [] });
     const activity = await db.pool.query(
       "SELECT 1 FROM activities WHERE user_id = $1 AND album_id = $2 AND type = 'favorite'",
       [ids.ana, ids.album],
@@ -132,13 +133,13 @@ describeIfDatabase('HU-07 y HU-46 · Favoritos (integración)', () => {
   });
 
   test('test_favorites_arePersonal', async () => {
-    const mine = await as(request(app).get('/me/favorites'), ids.bea);
-    expect(mine.body.songs).toEqual([]);
+    const mine = await as(request(app).get('/me/favorites?type=songs'), ids.bea);
+    expect(mine.body).toMatchObject({ total: 0, items: [] });
   });
 
   test('test_visitor_cannotMarkOrList', async () => {
     expect((await request(app).put(`/songs/${ids.song}/favorite`)).status).toBe(401);
-    expect((await request(app).get('/me/favorites')).status).toBe(401);
+    expect((await request(app).get('/me/favorites?type=songs')).status).toBe(401);
     expect((await request(app).get(`/songs/${ids.song}`)).body.isFavorite).toBe(false);
   });
 
@@ -148,6 +149,48 @@ describeIfDatabase('HU-07 y HU-46 · Favoritos (integración)', () => {
       (await as(request(app).put(`/songs/${encodeURIComponent("1' OR '1'='1")}/favorite`), ids.ana))
         .status,
     ).toBe(400);
+  });
+
+  test('test_manyFavorites_comeInPages_newestFirst', async () => {
+    const cleo = await insertUser('hu07_cleo');
+    const { rows } = await db.pool.query(
+      `INSERT INTO songs (title, album_id, duration_seconds, external_id)
+       SELECT 'Pista ' || n, $1, 100, 'test-hu07-pista-' || n FROM generate_series(1, 30) AS n
+       RETURNING id::text AS id`,
+      [ids.album],
+    );
+    // Cada una un segundo más tarde que la anterior: la 30 es la más reciente.
+    await db.pool.query(
+      `INSERT INTO favorites (user_id, song_id, created_at)
+       SELECT $1, s.id, now() - (31 - substring(s.title FROM 7)::int) * interval '1 second'
+         FROM songs s WHERE s.id = ANY($2::bigint[])`,
+      [cleo, rows.map((row) => row.id)],
+    );
+
+    const first = await as(request(app).get('/me/favorites?type=songs'), cleo);
+    const second = await as(request(app).get('/me/favorites?type=songs&offset=24'), cleo);
+
+    expect(first.body).toMatchObject({ total: 30, offset: 0, pageSize: 24 });
+    expect(first.body.items).toHaveLength(24);
+    expect(first.body.items[0].title).toBe('Pista 30');
+    expect(second.body.items.map((song) => song.title)).toEqual([
+      'Pista 6',
+      'Pista 5',
+      'Pista 4',
+      'Pista 3',
+      'Pista 2',
+      'Pista 1',
+    ]);
+  });
+
+  test('test_security_listMine_rejectsBadTypeOrOffset', async () => {
+    expect((await as(request(app).get('/me/favorites'), ids.ana)).status).toBe(400);
+    expect((await as(request(app).get('/me/favorites?type=users'), ids.ana)).status).toBe(400);
+    const injected = await as(
+      request(app).get(`/me/favorites?type=songs&offset=${encodeURIComponent('0; DROP TABLE x')}`),
+      ids.ana,
+    );
+    expect(injected.status).toBe(400);
   });
 
   test('test_security_cannotMarkForSomeoneElse', async () => {
