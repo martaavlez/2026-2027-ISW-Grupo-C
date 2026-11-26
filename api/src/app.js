@@ -11,6 +11,9 @@ const config = require('./config');
 const { ApiError } = require('./errors');
 const { createAuthRouter } = require('./routes/auth');
 const { createCatalogRouter } = require('./routes/catalog');
+const { createSearchRouter } = require('./routes/search');
+const { createSearchRepository } = require('./search/search-repository');
+const { createSearchService } = require('./search/search-service');
 const { createHealthRouter } = require('./routes/health');
 const { createReviewRepository } = require('./reviews/review-repository');
 const { createUserRepository } = require('./users/user-repository');
@@ -27,6 +30,7 @@ function createDefaultServices(db) {
       catalog: createCatalogRepository(db.pool),
       reviews: createReviewRepository(db.pool),
     }),
+    searchService: createSearchService({ searchRepository: createSearchRepository(db.pool) }),
   };
 }
 
@@ -82,11 +86,12 @@ function createApp({
     createAuthRouter(services.authService),
   );
   app.use(
-    ['/albums', '/songs', '/artists'],
+    ['/albums', '/songs', '/artists', '/search'],
     createLimiter(readRateLimit, 'Demasiadas peticiones. Espera un momento y vuelve a probar.'),
     optionalViewer(services.resolveViewer ?? visitorOnly),
   );
   app.use(createCatalogRouter(services.catalogService));
+  app.use('/search', createSearchRouter(services.searchService));
 
   app.use((req, res) => {
     res.status(404).json({ error: 'Not found' });
