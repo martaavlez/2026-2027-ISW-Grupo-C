@@ -33,24 +33,26 @@ function finderWith({ relations, fileName = 'Foto.jpg', info } = {}) {
 test('test_findImage_followsMusicBrainzWikidataAndCommons', async () => {
   const { finder, musicBrainz, wikimedia } = finderWith();
 
-  await expect(finder.findImage('mbid-1')).resolves.toEqual({
+  await expect(finder.findImage('4a8a2c9e-1f0b-4d2e-9c3a-7b5e6d4f3a21')).resolves.toEqual({
     imageUrl: THUMB,
     credit: 'Ana & Luis · CC BY-SA 4.0 · Wikimedia Commons',
   });
-  expect(musicBrainz.getArtistUrlRelations).toHaveBeenCalledWith('mbid-1');
+  expect(musicBrainz.getArtistUrlRelations).toHaveBeenCalledWith(
+    '4a8a2c9e-1f0b-4d2e-9c3a-7b5e6d4f3a21',
+  );
   expect(wikimedia.getImageFileName).toHaveBeenCalledWith('Q44190');
   expect(wikimedia.getImageInfo).toHaveBeenCalledWith('Foto.jpg');
 });
 
 test('test_findImage_withoutWikidataLink_returnsNullWithoutAskingWikimedia', async () => {
   const { finder, wikimedia } = finderWith({ relations: [] });
-  await expect(finder.findImage('mbid-1')).resolves.toBeNull();
+  await expect(finder.findImage('4a8a2c9e-1f0b-4d2e-9c3a-7b5e6d4f3a21')).resolves.toBeNull();
   expect(wikimedia.getImageFileName).not.toHaveBeenCalled();
 });
 
 test('test_findImage_withoutPhotoInWikidata_returnsNull', async () => {
   const { finder } = finderWith({ fileName: null });
-  await expect(finder.findImage('mbid-1')).resolves.toBeNull();
+  await expect(finder.findImage('4a8a2c9e-1f0b-4d2e-9c3a-7b5e6d4f3a21')).resolves.toBeNull();
 });
 
 test.each([
@@ -59,7 +61,7 @@ test.each([
   ['no https', { url: 'http://upload.wikimedia.org/foto.jpg', author: 'x', license: 'y' }],
 ])('test_findImage_%s_returnsNull', async (_case, info) => {
   const { finder } = finderWith({ info });
-  await expect(finder.findImage('mbid-1')).resolves.toBeNull();
+  await expect(finder.findImage('4a8a2c9e-1f0b-4d2e-9c3a-7b5e6d4f3a21')).resolves.toBeNull();
 });
 
 test('test_wikidataIdFrom_onlyAcceptsRealWikidataUrls', () => {
@@ -91,4 +93,11 @@ test('test_isCommonsUpload', () => {
   expect(isCommonsUpload('https://upload.wikimedia.org.evil.test/x.jpg')).toBe(false);
   expect(isCommonsUpload('javascript:alert(1)')).toBe(false);
   expect(isCommonsUpload(null)).toBe(false);
+});
+
+test('test_findImage_withIdThatIsNotFromMusicBrainz_returnsNullWithoutAsking', async () => {
+  const { finder, musicBrainz } = finderWith();
+
+  await expect(finder.findImage('seed-artist-001')).resolves.toBeNull();
+  expect(musicBrainz.getArtistUrlRelations).not.toHaveBeenCalled();
 });

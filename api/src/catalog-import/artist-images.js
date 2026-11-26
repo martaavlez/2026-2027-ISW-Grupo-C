@@ -1,6 +1,8 @@
 // Busca la foto de un artista: MusicBrainz → Wikidata → Wikimedia Commons.
 // Se guarda la dirección de la miniatura y el crédito (autor y licencia), que la licencia exige.
 
+const { MBID_PATTERN } = require('./catalog-repository');
+
 const WIKIDATA_URL = /^https:\/\/www\.wikidata\.org\/wiki\/(Q[1-9][0-9]{0,11})$/;
 const COMMONS_UPLOAD = 'https://upload.wikimedia.org/';
 const MAX_CREDIT_LENGTH = 300;
@@ -39,6 +41,8 @@ function isCommonsUpload(url) {
 function createArtistImageFinder({ musicBrainz, wikimedia }) {
   /** Devuelve { imageUrl, credit } o null si el artista no tiene foto libre. */
   async function findImage(artistExternalId) {
+    // Un identificador que no es de MusicBrainz no se puede buscar (MusicBrainz respondería 400).
+    if (!MBID_PATTERN.test(artistExternalId ?? '')) return null;
     const wikidataId = wikidataIdFrom(await musicBrainz.getArtistUrlRelations(artistExternalId));
     if (!wikidataId) return null;
     const fileName = await wikimedia.getImageFileName(wikidataId);

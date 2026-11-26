@@ -74,6 +74,9 @@ async function linkArtists(client, kind, ownerId, artistIds) {
   }
 }
 
+// Identificador de MusicBrainz (MBID): un UUID en minúsculas.
+const MBID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
 function createCatalogRepository(pool) {
   async function saveArtists(client, artists, excluded, artistIdsByExternalId, counts) {
     const ids = [];
@@ -193,13 +196,16 @@ function createCatalogRepository(pool) {
     };
   }
 
-  /** Artistas sin foto a los que todavía no se les ha buscado. */
+  /**
+   * Artistas sin foto a los que todavía no se les ha buscado. Solo los que vienen de MusicBrainz
+   * (su identificador es un MBID); los de los datos de prueba no se pueden buscar.
+   */
   async function findArtistsPendingImage(limit) {
     const { rows } = await pool.query(
       `SELECT id, external_id AS "externalId" FROM artists
-        WHERE image_url IS NULL AND image_checked_at IS NULL
+        WHERE image_url IS NULL AND image_checked_at IS NULL AND external_id ~ $2
         ORDER BY id LIMIT $1`,
-      [limit],
+      [limit, MBID_PATTERN.source],
     );
     return rows;
   }
@@ -230,4 +236,4 @@ function createCatalogRepository(pool) {
   };
 }
 
-module.exports = { createCatalogRepository };
+module.exports = { createCatalogRepository, MBID_PATTERN };

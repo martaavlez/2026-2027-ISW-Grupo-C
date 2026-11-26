@@ -35,7 +35,9 @@ test('test_createCatalogImport_createsWikimediaOnlyWhenNeeded', async () => {
   const pool = {
     query: jest
       .fn()
-      .mockResolvedValueOnce({ rows: [{ id: '1', externalId: 'mb-1' }] })
+      .mockResolvedValueOnce({
+        rows: [{ id: '1', externalId: '4a8a2c9e-1f0b-4d2e-9c3a-7b5e6d4f3a21' }],
+      })
       .mockResolvedValue({ rows: [] }),
   };
 
