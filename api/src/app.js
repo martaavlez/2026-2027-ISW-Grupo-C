@@ -13,10 +13,13 @@ const config = require('./config');
 const { ApiError } = require('./errors');
 const { createAuthRouter, createSessionRouter } = require('./routes/auth');
 const { createCatalogRouter } = require('./routes/catalog');
+const { createRatingRouter } = require('./routes/ratings');
 const { createSearchRouter } = require('./routes/search');
 const { createSearchRepository } = require('./search/search-repository');
 const { createSearchService } = require('./search/search-service');
 const { createHealthRouter } = require('./routes/health');
+const { createRatingRepository } = require('./ratings/rating-repository');
+const { createRatingService } = require('./ratings/rating-service');
 const { createReviewRepository } = require('./reviews/review-repository');
 const { createUserRepository } = require('./users/user-repository');
 
@@ -27,6 +30,9 @@ const tokenOptions = { secret: config.jwtSecret, expiresIn: config.jwtExpiresIn 
 
 function createDefaultServices(db) {
   const users = createUserRepository(db.pool);
+  const catalog = createCatalogRepository(db.pool);
+  const reviews = createReviewRepository(db.pool);
+  const ratings = createRatingRepository(db.pool);
   return {
     authService: createAuthService({ users, tokenOptions }),
     loginService: createLoginService({
@@ -34,10 +40,8 @@ function createDefaultServices(db) {
       tokenOptions,
     }),
     resolveViewer: createViewerResolver({ users, secret: config.jwtSecret }),
-    catalogService: createCatalogService({
-      catalog: createCatalogRepository(db.pool),
-      reviews: createReviewRepository(db.pool),
-    }),
+    catalogService: createCatalogService({ catalog, reviews, ratings }),
+    ratingService: createRatingService({ ratings, catalog }),
     searchService: createSearchService({ searchRepository: createSearchRepository(db.pool) }),
   };
 }
@@ -105,6 +109,7 @@ function createApp({
     optionalViewer(services.resolveViewer ?? visitorOnly),
   );
   app.use(createCatalogRouter(services.catalogService));
+  app.use(createRatingRouter(services.ratingService));
   app.use('/search', createSearchRouter(services.searchService));
 
   app.use((req, res) => {

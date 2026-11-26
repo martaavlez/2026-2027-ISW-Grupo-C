@@ -194,6 +194,28 @@ test('test_getArtist_withInvalidId_throwsValidationWithoutQuerying', async () =>
   expect(catalog.findArtist).not.toHaveBeenCalled();
 });
 
+test('test_getAlbumAndSong_includeViewerRating', async () => {
+  const { service: base } = serviceWith();
+  expect((await base.getAlbum('1', '7')).myRating).toBeNull();
+
+  const { createCatalogService: create } = require('../../src/catalog/catalog-service');
+  const ratings = { findMyRating: jest.fn().mockResolvedValue(4) };
+  const catalog = {
+    findAlbum: jest.fn().mockResolvedValue(album),
+    findAlbumArtists: jest.fn().mockResolvedValue([]),
+    findAlbumSongs: jest.fn().mockResolvedValue([]),
+    findSong: jest.fn().mockResolvedValue(song),
+    findSongArtists: jest.fn().mockResolvedValue([]),
+    findRatingDistribution: jest.fn().mockResolvedValue({ 1: 0, 2: 0, 3: 0, 4: 1, 5: 0 }),
+  };
+  const reviews = { findVisible: jest.fn().mockResolvedValue({ total: 0, items: [] }) };
+  const service = create({ catalog, reviews, ratings });
+
+  expect((await service.getAlbum('1', '7')).myRating).toBe(4);
+  expect((await service.getSong('10', '7')).myRating).toBe(4);
+  expect(ratings.findMyRating).toHaveBeenCalledWith('song', '10', '7');
+});
+
 test('test_getArtist_withSafePhoto_keepsCredit', async () => {
   const { service } = serviceWith({
     catalog: {

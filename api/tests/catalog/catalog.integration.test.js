@@ -228,7 +228,11 @@ describeIfDatabase('HU-04 · Consultar una canción o un álbum (integración)',
     '1 UNION SELECT password_hash FROM users',
     "1' AND pg_sleep(3)--",
   ])('test_security_getAlbum_withSqlInjection_%p_returns400AndChangesNothing', async (payload) => {
-    const before = await db.pool.query('SELECT count(*)::int AS total FROM reviews');
+    // Solo las reseñas de esta prueba: otras pruebas en paralelo crean las suyas.
+    const before = await db.pool.query(
+      'SELECT count(*)::int AS total FROM reviews WHERE album_id = $1 OR song_id = $2',
+      [ids.album, ids.song],
+    );
     const started = Date.now();
 
     const response = await request(app).get(`/albums/${encodeURIComponent(payload)}`);
@@ -236,7 +240,10 @@ describeIfDatabase('HU-04 · Consultar una canción o un álbum (integración)',
     expect(response.status).toBe(400);
     expect(Date.now() - started).toBeLessThan(2000);
     expect(JSON.stringify(response.body)).not.toMatch(/password|hash|SELECT/i);
-    const after = await db.pool.query('SELECT count(*)::int AS total FROM reviews');
+    const after = await db.pool.query(
+      'SELECT count(*)::int AS total FROM reviews WHERE album_id = $1 OR song_id = $2',
+      [ids.album, ids.song],
+    );
     expect(after.rows[0].total).toBe(before.rows[0].total);
   });
 

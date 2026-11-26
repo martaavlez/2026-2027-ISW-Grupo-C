@@ -42,6 +42,17 @@ export function albumTypeLabel(type: Album['type']): string {
   return TYPE_LABELS[type];
 }
 
+const DEMONSTRATIVES: Record<Album['type'], string> = {
+  album: 'este álbum',
+  ep: 'este EP',
+  single: 'este single',
+};
+
+/** «este álbum», «este EP» o «este single», para los textos de valorar y reseñar. */
+export function thisAlbumLabel(type: Album['type']): string {
+  return DEMONSTRATIVES[type];
+}
+
 const TYPE_PLURALS: Record<Album['type'], string> = {
   album: 'Álbumes',
   ep: 'EPs',

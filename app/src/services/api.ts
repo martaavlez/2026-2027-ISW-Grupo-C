@@ -63,6 +63,8 @@ export type Review = {
 export type ReviewsPage = { total: number; pageSize: number; offset: number; items: Review[] };
 
 type RatingSummary = {
+  /** La nota que le ha dado quien mira (null si no la ha valorado o es un visitante). */
+  myRating: number | null;
   averageRating: number | null;
   ratingsCount: number;
   distribution: RatingDistribution;
@@ -244,5 +246,34 @@ export async function search(
     return { ok: false, error: LOAD_ERROR };
   } catch {
     return { ok: false, error: CONNECTION_ERROR };
+  }
+}
+
+// ---------- HU-05 · Valorar una canción o un álbum ----------
+
+export type RatingResult =
+  | { ok: true; data: Omit<RatingSummary, 'myRating'> & { myRating: number } }
+  | { ok: false; error: string; needsLogin: boolean };
+
+/** Guarda la nota del usuario (del 1 al 5). El usuario lo saca la API del token, nunca de aquí. */
+export async function rateItem(
+  kind: ItemKind,
+  id: string,
+  rating: number,
+  token?: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<RatingResult> {
+  try {
+    const response = await fetchFn(`${API_URL}${itemPath(kind, id)}/rating`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+      body: JSON.stringify({ rating }),
+    });
+    const body = await response.json();
+    if (response.ok) return { ok: true, data: body };
+    const error = body.errors?.rating ?? body.error ?? LOAD_ERROR;
+    return { ok: false, error, needsLogin: response.status === 401 };
+  } catch {
+    return { ok: false, error: CONNECTION_ERROR, needsLogin: false };
   }
 }

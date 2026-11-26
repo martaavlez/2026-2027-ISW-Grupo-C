@@ -37,7 +37,7 @@ function toPublicReview(review) {
   return { ...review, photoUrl: safeImageUrl(review.photoUrl) };
 }
 
-function createCatalogService({ catalog, reviews }) {
+function createCatalogService({ catalog, reviews, ratings = { findMyRating: async () => null } }) {
   async function findReviewsPage(kind, itemId, viewerId, offset) {
     const page = await reviews.findVisible({
       kind,
@@ -64,14 +64,16 @@ function createCatalogService({ catalog, reviews }) {
     const id = parseId(rawId);
     const album = await catalog.findAlbum(id);
     if (!album) throw new NotFoundError('El álbum no existe');
-    const [artists, songs, rating, reviewsPage] = await Promise.all([
+    const [artists, songs, rating, reviewsPage, myRating] = await Promise.all([
       catalog.findAlbumArtists(id),
       catalog.findAlbumSongs(id),
       ratingSummary('album', id, album.averageRating),
       findReviewsPage('album', id, viewerId, 0),
+      ratings.findMyRating('album', id, viewerId),
     ]);
     return {
       ...album,
+      myRating,
       coverUrl: safeImageUrl(album.coverUrl),
       ...rating,
       artists,
@@ -85,13 +87,15 @@ function createCatalogService({ catalog, reviews }) {
     const id = parseId(rawId);
     const song = await catalog.findSong(id);
     if (!song) throw new NotFoundError('La canción no existe');
-    const [artists, rating, reviewsPage] = await Promise.all([
+    const [artists, rating, reviewsPage, myRating] = await Promise.all([
       catalog.findSongArtists(id),
       ratingSummary('song', id, song.averageRating),
       findReviewsPage('song', id, viewerId, 0),
+      ratings.findMyRating('song', id, viewerId),
     ]);
     return {
       id: song.id,
+      myRating,
       title: song.title,
       trackNumber: song.trackNumber,
       durationSeconds: song.durationSeconds,
@@ -142,4 +146,4 @@ function createCatalogService({ catalog, reviews }) {
   return { getAlbum, getSong, getArtist, getReviews };
 }
 
-module.exports = { createCatalogService, safeImageUrl, REVIEWS_PAGE_SIZE };
+module.exports = { createCatalogService, safeImageUrl, parseId, REVIEWS_PAGE_SIZE };

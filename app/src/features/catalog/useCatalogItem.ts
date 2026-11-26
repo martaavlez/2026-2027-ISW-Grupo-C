@@ -81,5 +81,24 @@ export function useCatalogItem<T extends WithReviews>(
     });
   }, [kind, id, key, loadedCount, token]);
 
-  return { state, retry, loadMore, loadingMore, loadMoreError, signedIn: Boolean(token) };
+  /** Cambia datos de la ficha ya cargada (por ejemplo, la nota media tras valorar). */
+  const updateItem = useCallback(
+    (changes: Partial<T>) =>
+      setStored((current) =>
+        current?.key === key && current.state.status === 'ready'
+          ? { key, state: { ...current.state, item: { ...current.state.item, ...changes } } }
+          : current,
+      ),
+    [key],
+  );
+
+  return {
+    state,
+    retry,
+    loadMore,
+    loadingMore,
+    loadMoreError,
+    updateItem,
+    signedIn: Boolean(token),
+  };
 }

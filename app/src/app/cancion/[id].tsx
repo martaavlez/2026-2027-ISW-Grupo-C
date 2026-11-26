@@ -4,12 +4,14 @@ import { StyleSheet, Text } from 'react-native';
 
 import { ArtistLinks } from '../../components/ArtistLinks';
 import { CdCase } from '../../components/CdCase';
+import { RatingPicker } from '../../components/RatingPicker';
 import { InfoList } from '../../components/InfoList';
 import { ItemPage, ItemStatus, titleSize, useIsDesktop } from '../../components/ItemPage';
 import { RatingSummary } from '../../components/RatingSummary';
 import { ReviewList } from '../../components/ReviewList';
 import { albumTypeLabel, formatDuration, headline } from '../../features/catalog/format';
 import { useCatalogItem } from '../../features/catalog/useCatalogItem';
+import { useRating } from '../../features/catalog/useRating';
 import { getSong } from '../../services/api';
 import { fonts, useColors } from '../../theme';
 
@@ -17,10 +19,14 @@ export default function SongScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const desktop = useIsDesktop();
-  const { state, retry, loadMore, loadingMore, loadMoreError } = useCatalogItem(
+  const { state, retry, loadMore, loadingMore, loadMoreError, updateItem, signedIn } =
+    useCatalogItem('song', String(id), getSong);
+
+  const rating = useRating(
     'song',
     String(id),
-    getSong,
+    state.status === 'ready' ? state.item.myRating : null,
+    updateItem,
   );
 
   if (state.status === 'loading') return <ItemStatus loading />;
@@ -55,6 +61,14 @@ export default function SongScreen() {
           >
             DEL {albumTypeLabel(song.album.type).toUpperCase()} {song.album.title.toUpperCase()} →
           </Link>
+          <RatingPicker
+            value={rating.value}
+            itemLabel={'esta canción'}
+            signedIn={signedIn}
+            saving={rating.saving}
+            error={rating.error}
+            onRate={rating.rate}
+          />
         </>
       }
       aside={

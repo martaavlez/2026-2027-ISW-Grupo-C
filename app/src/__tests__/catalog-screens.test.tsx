@@ -6,6 +6,7 @@ import SongScreen from '../app/cancion/[id]';
 import {
   getAlbum,
   getArtist,
+  rateItem,
   getReviews,
   getSong,
   type Album,
@@ -13,12 +14,14 @@ import {
   type Review,
   type Song,
 } from '../services/api';
-import { clearSession, saveSession } from '../services/session';
+import { clearSession, getSession, saveSession } from '../services/session';
 
 let mockParams: { id: string } = { id: '1' };
+const mockRouter = { replace: jest.fn() };
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => mockParams,
+  useRouter: () => mockRouter,
   Link: ({ children, href }: { children: React.ReactNode; href: string }) => {
     const { Text: MockText } = jest.requireActual('react-native');
     return <MockText accessibilityHint={href}>{children}</MockText>;
@@ -29,6 +32,7 @@ jest.mock('../services/api', () => ({
   getSong: jest.fn(),
   getReviews: jest.fn(),
   getArtist: jest.fn(),
+  rateItem: jest.fn(),
 }));
 
 const review = (id: string, overrides: Partial<Review> = {}): Review => ({
@@ -50,6 +54,7 @@ const album: Album = {
   genre: 'Dream pop',
   type: 'album',
   releaseYear: 2026,
+  myRating: null,
   averageRating: 4.8,
   ratingsCount: 1204,
   distribution: { 1: 12, 2: 24, 3: 72, 4: 229, 5: 867 },
@@ -73,6 +78,7 @@ const song: Song = {
   trackNumber: 1,
   durationSeconds: 222,
   genre: 'Dream pop',
+  myRating: null,
   averageRating: null,
   ratingsCount: 0,
   distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
@@ -313,6 +319,97 @@ test('test_SongScreen_fromAnEp_namesItAsEp', async () => {
 
   expect(await screen.findByText('DEL EP PRIMERAS CINTAS →')).toBeTruthy();
   expect(screen.getByText('EP')).toBeTruthy();
+});
+
+describe('HU-05 · Valorar', () => {
+  const session = {
+    token: 'tok',
+    user: { id: 1, name: 'Lucía', username: 'lucia', email: 'l@c.es', role: 'user' },
+  };
+  const star = (n: number) =>
+    screen.getByRole('radio', { name: `${n} ${n === 1 ? 'estrella' : 'estrellas'}` });
+
+  test('test_PA_05_01_rateAlbum_savesAndUpdatesAverage', async () => {
+    saveSession(session);
+    jest.mocked(getAlbum).mockResolvedValue({ ok: true, data: album });
+    jest.mocked(rateItem).mockResolvedValue({
+      ok: true,
+      data: {
+        myRating: 4,
+        averageRating: 4.7,
+        ratingsCount: 1205,
+        distribution: { 1: 12, 2: 24, 3: 72, 4: 230, 5: 867 },
+      },
+    });
+
+    await render(<AlbumScreen />);
+    await screen.findByText('TU VALORACIÓN');
+    await fireEvent.press(star(4));
+
+    expect(rateItem).toHaveBeenCalledWith('album', '1', 4, 'tok');
+    expect(await screen.findByText('4,7')).toBeTruthy();
+    expect(screen.getByText('MEDIA · 1.205 VALORACIONES')).toBeTruthy();
+    expect(star(4).props.accessibilityState.checked).toBe(true);
+  });
+
+  test('test_PA_05_02_ficha_showsMyPreviousRating', async () => {
+    saveSession(session);
+    jest.mocked(getAlbum).mockResolvedValue({ ok: true, data: { ...album, myRating: 2 } });
+
+    await render(<AlbumScreen />);
+
+    await screen.findByText('TU VALORACIÓN');
+    expect(star(2).props.accessibilityState.checked).toBe(true);
+    expect(screen.getByLabelText('Valora este álbum de 1 a 5')).toBeTruthy();
+  });
+
+  test('test_PA_05_04_visitor_isAskedToLogInWithoutCallingApi', async () => {
+    jest.mocked(getSong).mockResolvedValue({ ok: true, data: song });
+    mockParams = { id: '10' };
+
+    await render(<SongScreen />);
+    await screen.findByText('TU VALORACIÓN');
+    await fireEvent.press(star(5));
+
+    expect(rateItem).not.toHaveBeenCalled();
+    expect(screen.getByText('inicia sesión').props.accessibilityHint).toBe('/acceso');
+    expect(screen.getByText('crea una cuenta').props.accessibilityHint).toBe('/registro');
+  });
+
+  test('test_rate_withExpiredSession_clearsItAndAsksToLogIn', async () => {
+    saveSession(session);
+    jest.mocked(getSong).mockResolvedValue({ ok: true, data: song });
+    jest.mocked(rateItem).mockResolvedValue({ ok: false, needsLogin: true, error: 'x' });
+    mockParams = { id: '10' };
+
+    await render(<SongScreen />);
+    await screen.findByText('TU VALORACIÓN');
+    await fireEvent.press(star(3));
+
+    expect(getSession()).toBeNull();
+    expect(mockRouter.replace).toHaveBeenCalledWith({
+      pathname: '/acceso',
+      params: { aviso: 'caducada' },
+    });
+  });
+
+  test('test_rate_whenItFails_showsErrorAndKeepsPreviousRating', async () => {
+    saveSession(session);
+    jest
+      .mocked(getAlbum)
+      .mockResolvedValue({ ok: true, data: { ...album, myRating: 2, type: 'ep' } });
+    jest
+      .mocked(rateItem)
+      .mockResolvedValue({ ok: false, needsLogin: false, error: 'No se ha podido conectar.' });
+
+    await render(<AlbumScreen />);
+    await screen.findByText('TU VALORACIÓN');
+    await fireEvent.press(star(5));
+
+    expect(await screen.findByText('No se ha podido conectar.')).toBeTruthy();
+    expect(star(2).props.accessibilityState.checked).toBe(true);
+    expect(screen.getByLabelText('Valora este EP de 1 a 5')).toBeTruthy();
+  });
 });
 
 test('test_ArtistScreen_withPhoto_showsCredit', async () => {
