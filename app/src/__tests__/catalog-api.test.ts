@@ -1,4 +1,4 @@
-import { getAlbum, getArtist, getReviews, getSong } from '../services/api';
+import { getAlbum, getArtist, getReviews, getSong, search } from '../services/api';
 
 const response = (status: number, body: unknown) =>
   ({ ok: status < 300, status, json: async () => body }) as Response;
@@ -78,4 +78,31 @@ test('test_getArtist_whenNotFound_returnsArtistMessage', async () => {
   const result = await getArtist('9', fetchFn);
 
   expect(!result.ok && result.error).toBe('Este artista no existe o ya no está en el catálogo.');
+});
+
+test('test_search_encodesTermAndSendsToken', async () => {
+  const fetchFn = jest.fn().mockResolvedValue(response(200, { query: 'a&b' }));
+
+  await search('a&b=c #x', 'tok', fetchFn);
+
+  expect(fetchFn).toHaveBeenCalledWith('http://localhost:3000/search?q=a%26b%3Dc%20%23x', {
+    headers: { Authorization: 'Bearer tok' },
+  });
+});
+
+test('test_search_with400_returnsServerMessage', async () => {
+  const fetchFn = jest.fn().mockResolvedValue(response(400, { errors: { q: 'Muy corto.' } }));
+  await expect(search('a', undefined, fetchFn)).resolves.toEqual({
+    ok: false,
+    error: 'Muy corto.',
+  });
+});
+
+test('test_search_with500OrNoConnection_returnsError', async () => {
+  const failing = jest.fn().mockResolvedValue(response(500, {}));
+  const offline = jest.fn().mockRejectedValue(new TypeError('x'));
+
+  expect((await search('luz', undefined, failing)).ok).toBe(false);
+  const result = await search('luz', undefined, offline);
+  expect(!result.ok && result.error).toMatch(/conectar con Hertz/);
 });

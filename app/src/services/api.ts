@@ -195,3 +195,51 @@ export function getReviews(
     fetchFn,
   );
 }
+
+// ---------- HU-03 · Buscar contenido ----------
+
+export type SearchResults = {
+  query: string;
+  songs: {
+    id: string;
+    title: string;
+    albumId: string;
+    albumTitle: string;
+    coverUrl: string | null;
+    artists: ArtistRef[];
+  }[];
+  albums: {
+    id: string;
+    title: string;
+    type: Album['type'];
+    releaseYear: number | null;
+    coverUrl: string | null;
+    artists: ArtistRef[];
+  }[];
+  artists: { id: string; name: string; genre: string | null; imageUrl: string | null }[];
+  users: { username: string; name: string; photoUrl: string | null }[];
+  communities: { id: string; name: string; access: 'public' | 'private'; membersCount: number }[];
+};
+
+export type SearchResult = { ok: true; data: SearchResults } | { ok: false; error: string };
+
+/** Con sesión se envía el token para que no salgan los usuarios bloqueados (RN-12). */
+export async function search(
+  term: string,
+  token?: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<SearchResult> {
+  try {
+    const response = await fetchFn(`${API_URL}/search?q=${encodeURIComponent(term)}`, {
+      headers: authHeaders(token),
+    });
+    if (response.ok) return { ok: true, data: (await response.json()) as SearchResults };
+    if (response.status === 400) {
+      const body = (await response.json()) as { errors?: { q?: string } };
+      return { ok: false, error: body.errors?.q ?? LOAD_ERROR };
+    }
+    return { ok: false, error: LOAD_ERROR };
+  } catch {
+    return { ok: false, error: CONNECTION_ERROR };
+  }
+}

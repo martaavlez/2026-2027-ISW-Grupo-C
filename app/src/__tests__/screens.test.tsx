@@ -10,6 +10,10 @@ const mockRouter = { push: jest.fn(), replace: jest.fn(), back: jest.fn() };
 
 jest.mock('expo-router', () => ({
   useRouter: () => mockRouter,
+  Link: ({ children, href }: { children: React.ReactNode; href: string }) => {
+    const { Text: MockText } = jest.requireActual('react-native');
+    return <MockText accessibilityHint={href}>{children}</MockText>;
+  },
   Redirect: ({ href }: { href: string }) => {
     const { Text: MockText } = jest.requireActual('react-native');
     return <MockText>Redirige a {href}</MockText>;
@@ -139,6 +143,7 @@ describe('Inicio tras registrarse', () => {
 
     expect(screen.getByText('¡HOLA, LUCÍA MORENO!')).toBeTruthy();
     expect(screen.getByLabelText('Tu perfil')).toBeTruthy();
+    expect(screen.getByLabelText('Buscar')).toBeTruthy();
   });
 
   test('test_HomeScreen_withoutSession_redirectsToWelcome', async () => {
