@@ -5,7 +5,9 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { ArtistLinks } from '../../components/ArtistLinks';
 import { CdCase } from '../../components/CdCase';
+import { MyReview } from '../../components/MyReview';
 import { RatingPicker } from '../../components/RatingPicker';
+import { ReviewComposer } from '../../components/ReviewComposer';
 import { InfoList } from '../../components/InfoList';
 import { ItemPage, ItemStatus, titleSize, useIsDesktop } from '../../components/ItemPage';
 import { RatingSummary } from '../../components/RatingSummary';
@@ -19,6 +21,7 @@ import {
 } from '../../features/catalog/format';
 import { useCatalogItem } from '../../features/catalog/useCatalogItem';
 import { useRating } from '../../features/catalog/useRating';
+import { useReview } from '../../features/catalog/useReview';
 import { getAlbum } from '../../services/api';
 import { fonts, useColors } from '../../theme';
 
@@ -26,7 +29,7 @@ export default function AlbumScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const desktop = useIsDesktop();
-  const { state, retry, loadMore, loadingMore, loadMoreError, updateItem, signedIn } =
+  const { state, retry, loadMore, loadingMore, loadMoreError, updateItem, addReview, signedIn } =
     useCatalogItem('album', String(id), getAlbum);
 
   const rating = useRating(
@@ -35,6 +38,8 @@ export default function AlbumScreen() {
     state.status === 'ready' ? state.item.myRating : null,
     updateItem,
   );
+
+  const review = useReview('album', String(id), rating.value, updateItem, addReview);
 
   if (state.status === 'loading') return <ItemStatus loading />;
   if (state.status === 'error') {
@@ -70,7 +75,21 @@ export default function AlbumScreen() {
             saving={rating.saving}
             error={rating.error}
             onRate={rating.rate}
-          />
+          >
+            {signedIn && album.myReview ? (
+              <MyReview body={album.myReview.body} privacy={album.myReview.privacy} />
+            ) : null}
+            {signedIn && !album.myReview ? (
+              <ReviewComposer
+                placeholder="¿Qué te ha parecido el disco?"
+                defaultPrivacy={album.defaultPrivacy ?? 'public'}
+                publishing={review.publishing}
+                errors={review.errors}
+                onPublish={review.publish}
+                onEdit={review.clearErrors}
+              />
+            ) : null}
+          </RatingPicker>
         </>
       }
       aside={

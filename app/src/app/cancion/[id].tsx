@@ -4,7 +4,9 @@ import { StyleSheet, Text } from 'react-native';
 
 import { ArtistLinks } from '../../components/ArtistLinks';
 import { CdCase } from '../../components/CdCase';
+import { MyReview } from '../../components/MyReview';
 import { RatingPicker } from '../../components/RatingPicker';
+import { ReviewComposer } from '../../components/ReviewComposer';
 import { InfoList } from '../../components/InfoList';
 import { ItemPage, ItemStatus, titleSize, useIsDesktop } from '../../components/ItemPage';
 import { RatingSummary } from '../../components/RatingSummary';
@@ -12,6 +14,7 @@ import { ReviewList } from '../../components/ReviewList';
 import { albumTypeLabel, formatDuration, headline } from '../../features/catalog/format';
 import { useCatalogItem } from '../../features/catalog/useCatalogItem';
 import { useRating } from '../../features/catalog/useRating';
+import { useReview } from '../../features/catalog/useReview';
 import { getSong } from '../../services/api';
 import { fonts, useColors } from '../../theme';
 
@@ -19,7 +22,7 @@ export default function SongScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const desktop = useIsDesktop();
-  const { state, retry, loadMore, loadingMore, loadMoreError, updateItem, signedIn } =
+  const { state, retry, loadMore, loadingMore, loadMoreError, updateItem, addReview, signedIn } =
     useCatalogItem('song', String(id), getSong);
 
   const rating = useRating(
@@ -28,6 +31,8 @@ export default function SongScreen() {
     state.status === 'ready' ? state.item.myRating : null,
     updateItem,
   );
+
+  const review = useReview('song', String(id), rating.value, updateItem, addReview);
 
   if (state.status === 'loading') return <ItemStatus loading />;
   if (state.status === 'error') {
@@ -68,7 +73,21 @@ export default function SongScreen() {
             saving={rating.saving}
             error={rating.error}
             onRate={rating.rate}
-          />
+          >
+            {signedIn && song.myReview ? (
+              <MyReview body={song.myReview.body} privacy={song.myReview.privacy} />
+            ) : null}
+            {signedIn && !song.myReview ? (
+              <ReviewComposer
+                placeholder="¿Qué te ha parecido la canción?"
+                defaultPrivacy={song.defaultPrivacy ?? 'public'}
+                publishing={review.publishing}
+                errors={review.errors}
+                onPublish={review.publish}
+                onEdit={review.clearErrors}
+              />
+            ) : null}
+          </RatingPicker>
         </>
       }
       aside={

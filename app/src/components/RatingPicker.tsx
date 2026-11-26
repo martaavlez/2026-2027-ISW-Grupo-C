@@ -1,5 +1,5 @@
 import { Link } from 'expo-router';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fonts, offsetShadow, useColors } from '../theme';
@@ -13,13 +13,23 @@ type Props = {
   saving: boolean;
   error: string | null;
   onRate: (rating: number) => void;
+  /** Lo que va debajo de las estrellas en la misma tarjeta (la reseña, HU-23). */
+  children?: ReactNode;
 };
 
 /**
  * HU-05 · «TU VALORACIÓN»: cinco estrellas que se guardan al pulsar (diseño de la ficha).
  * Un visitante también las ve, pero al pulsar se le pide entrar o crear una cuenta (PA-05-04).
  */
-export function RatingPicker({ value, itemLabel, signedIn, saving, error, onRate }: Props) {
+export function RatingPicker({
+  value,
+  itemLabel,
+  signedIn,
+  saving,
+  error,
+  onRate,
+  children,
+}: Props) {
   const colors = useColors();
   const [preview, setPreview] = useState<number | null>(null);
   const [askedToLogIn, setAskedToLogIn] = useState(false);
@@ -95,6 +105,7 @@ export function RatingPicker({ value, itemLabel, signedIn, saving, error, onRate
           .
         </Text>
       ) : null}
+      {children}
     </View>
   );
 }

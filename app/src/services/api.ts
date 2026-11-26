@@ -62,9 +62,15 @@ export type Review = {
 
 export type ReviewsPage = { total: number; pageSize: number; offset: number; items: Review[] };
 
+export type Privacy = 'public' | 'friends' | 'private';
+
 type RatingSummary = {
   /** La nota que le ha dado quien mira (null si no la ha valorado o es un visitante). */
   myRating: number | null;
+  /** Su reseña con texto, si ya la ha publicado (HU-23). */
+  myReview?: { body: string; privacy: Privacy } | null;
+  /** Su nivel de privacidad por defecto (RN-09); null para un visitante. */
+  defaultPrivacy?: Privacy | null;
   averageRating: number | null;
   ratingsCount: number;
   distribution: RatingDistribution;
@@ -275,5 +281,49 @@ export async function rateItem(
     return { ok: false, error, needsLogin: response.status === 401 };
   } catch {
     return { ok: false, error: CONNECTION_ERROR, needsLogin: false };
+  }
+}
+
+// ---------- HU-23 · Escribir una reseña ----------
+
+export type ReviewForm = { rating: number; body: string; privacy: Privacy };
+
+export type PublishResult =
+  | {
+      ok: true;
+      data: {
+        myRating: number;
+        myReview: { body: string; privacy: Privacy };
+        averageRating: number | null;
+        ratingsCount: number;
+        distribution: RatingDistribution;
+        review: Review;
+      };
+    }
+  | { ok: false; errors: FieldErrors; needsLogin: boolean };
+
+/** Publica la reseña. El autor lo saca la API del token. */
+export async function publishReview(
+  kind: ItemKind,
+  id: string,
+  form: ReviewForm,
+  token?: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<PublishResult> {
+  try {
+    const response = await fetchFn(`${API_URL}${itemPath(kind, id)}/review`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+      body: JSON.stringify(form),
+    });
+    const body = await response.json();
+    if (response.ok) return { ok: true, data: body };
+    return {
+      ok: false,
+      errors: body.errors ?? { general: body.error ?? LOAD_ERROR },
+      needsLogin: response.status === 401,
+    };
+  } catch {
+    return { ok: false, errors: { general: CONNECTION_ERROR }, needsLogin: false };
   }
 }

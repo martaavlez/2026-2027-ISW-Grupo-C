@@ -92,6 +92,20 @@ export function useCatalogItem<T extends WithReviews>(
     [key],
   );
 
+  /** Pone la reseña recién publicada la primera de la lista (HU-23). */
+  const addReview = useCallback(
+    (review: Review) =>
+      setStored((current) => {
+        if (current?.key !== key || current.state.status !== 'ready') return current;
+        const ready = current.state;
+        return {
+          key,
+          state: { ...ready, total: ready.total + 1, reviews: [review, ...ready.reviews] },
+        };
+      }),
+    [key],
+  );
+
   return {
     state,
     retry,
@@ -99,6 +113,7 @@ export function useCatalogItem<T extends WithReviews>(
     loadingMore,
     loadMoreError,
     updateItem,
+    addReview,
     signedIn: Boolean(token),
   };
 }

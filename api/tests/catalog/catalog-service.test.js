@@ -196,10 +196,17 @@ test('test_getArtist_withInvalidId_throwsValidationWithoutQuerying', async () =>
 
 test('test_getAlbumAndSong_includeViewerRating', async () => {
   const { service: base } = serviceWith();
-  expect((await base.getAlbum('1', '7')).myRating).toBeNull();
+  expect(await base.getAlbum('1', '7')).toMatchObject({
+    myRating: null,
+    myReview: null,
+    defaultPrivacy: null,
+  });
 
   const { createCatalogService: create } = require('../../src/catalog/catalog-service');
-  const ratings = { findMyRating: jest.fn().mockResolvedValue(4) };
+  const ratings = {
+    findMine: jest.fn().mockResolvedValue({ rating: 4, body: 'Muy bueno', privacy: 'friends' }),
+    findDefaultPrivacy: jest.fn().mockResolvedValue('private'),
+  };
   const catalog = {
     findAlbum: jest.fn().mockResolvedValue(album),
     findAlbumArtists: jest.fn().mockResolvedValue([]),
@@ -211,9 +218,13 @@ test('test_getAlbumAndSong_includeViewerRating', async () => {
   const reviews = { findVisible: jest.fn().mockResolvedValue({ total: 0, items: [] }) };
   const service = create({ catalog, reviews, ratings });
 
-  expect((await service.getAlbum('1', '7')).myRating).toBe(4);
+  expect(await service.getAlbum('1', '7')).toMatchObject({
+    myRating: 4,
+    myReview: { body: 'Muy bueno', privacy: 'friends' },
+    defaultPrivacy: 'private',
+  });
   expect((await service.getSong('10', '7')).myRating).toBe(4);
-  expect(ratings.findMyRating).toHaveBeenCalledWith('song', '10', '7');
+  expect(ratings.findMine).toHaveBeenCalledWith('song', '10', '7');
 });
 
 test('test_getArtist_withSafePhoto_keepsCredit', async () => {

@@ -34,10 +34,13 @@ const RECALCULATE_AVERAGE = {
          WHERE id = $1 RETURNING average_rating::float AS "averageRating"`,
 };
 
-const MY_RATING = {
-  album: 'SELECT rating FROM reviews WHERE album_id = $1 AND author_id = $2',
-  song: 'SELECT rating FROM reviews WHERE song_id = $1 AND author_id = $2',
+const MY_REVIEW = {
+  album: 'SELECT rating, body, privacy FROM reviews WHERE album_id = $1 AND author_id = $2',
+  song: 'SELECT rating, body, privacy FROM reviews WHERE song_id = $1 AND author_id = $2',
 };
+
+const DEFAULT_PRIVACY_OF = `SELECT COALESCE(
+  (SELECT default_content_privacy FROM privacy_settings WHERE user_id = $1), 'public') AS privacy`;
 
 /** Recalcula la nota media (RN-07). La usarán también reseñar, editar y eliminar. */
 async function recalculateAverage(client, kind, itemId) {
@@ -71,14 +74,20 @@ function createRatingRepository(pool) {
     }
   }
 
-  /** La nota que el usuario ha dado a ese elemento, o null. */
-  async function findMyRating(kind, itemId, userId) {
+  /** La valoración (y reseña, si tiene texto) del usuario en ese elemento, o null. */
+  async function findMine(kind, itemId, userId) {
     if (!userId) return null;
-    const { rows } = await pool.query(MY_RATING[kind], [itemId, userId]);
-    return rows[0]?.rating ?? null;
+    const { rows } = await pool.query(MY_REVIEW[kind], [itemId, userId]);
+    return rows[0] ?? null;
   }
 
-  return { saveRating, findMyRating };
+  /** RN-09: nivel de privacidad por defecto del usuario (público si no lo ha cambiado). */
+  async function findDefaultPrivacy(userId) {
+    if (!userId) return null;
+    return (await pool.query(DEFAULT_PRIVACY_OF, [userId])).rows[0].privacy;
+  }
+
+  return { saveRating, findMine, findDefaultPrivacy };
 }
 
-module.exports = { createRatingRepository, recalculateAverage };
+module.exports = { createRatingRepository, recalculateAverage, DEFAULT_PRIVACY };
