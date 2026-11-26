@@ -336,7 +336,40 @@ export async function publishReview(
 
 export type FavoriteKind = CatalogKind;
 
-export type Favorites = Pick<SearchResults, 'songs' | 'albums' | 'artists'>;
+/** Una parte de una lista larga: los primeros elementos y cuántos hay en total. */
+export type Page<T> = { total: number; items: T[] };
+
+/** Lo que devuelve cada «Ver más»: la siguiente parte, desde `offset`. */
+export type NextPage<T> = { offset: number; pageSize: number; items: T[] };
+
+export type FavoriteSong = SearchResults['songs'][number];
+export type FavoriteAlbum = SearchResults['albums'][number];
+export type FavoriteArtist = SearchResults['artists'][number];
+export type FavoriteType = 'songs' | 'albums' | 'artists';
+
+/** Favoritos por subcategoría: solo los primeros de cada una, con su total. */
+export type Favorites = {
+  songs: Page<FavoriteSong>;
+  albums: Page<FavoriteAlbum>;
+  artists: Page<FavoriteArtist>;
+};
+
+export type PageResult<T> =
+  { ok: true; data: NextPage<T> } | { ok: false; error: string; needsLogin: boolean };
+
+async function getPage<T>(
+  path: string,
+  token: string,
+  fetchFn: typeof fetch,
+): Promise<PageResult<T>> {
+  try {
+    const response = await fetchFn(`${API_URL}${path}`, { headers: authHeaders(token) });
+    if (response.ok) return { ok: true, data: (await response.json()) as NextPage<T> };
+    return { ok: false, error: LOAD_ERROR, needsLogin: response.status === 401 };
+  } catch {
+    return { ok: false, error: CONNECTION_ERROR, needsLogin: false };
+  }
+}
 
 export type FavoriteResult = { ok: true } | { ok: false; error: string; needsLogin: boolean };
 
@@ -361,16 +394,76 @@ export async function setFavorite(
   }
 }
 
-/** Favoritos del usuario por subcategoría: canciones, álbumes y artistas. */
-export async function getMyFavorites(
+type FavoriteItem = { songs: FavoriteSong; albums: FavoriteAlbum; artists: FavoriteArtist };
+
+/** «Ver más» de una subcategoría de tus favoritos, a partir de los que ya se ven. */
+export function getMyFavorites<K extends FavoriteType>(
+  token: string,
+  type: K,
+  offset: number,
+  fetchFn: typeof fetch = fetch,
+): Promise<PageResult<FavoriteItem[K]>> {
+  return getPage(`/me/favorites?type=${type}&offset=${offset}`, token, fetchFn);
+}
+
+// ---------- HU-06 · Consultar mi perfil ----------
+
+export type ProfileReview = {
+  id: string;
+  rating: number;
+  body: string | null;
+  privacy: Privacy;
+  createdAt: string;
+  kind: ItemKind;
+  itemId: string;
+  itemTitle: string;
+  coverUrl: string | null;
+  albumType: Album['type'] | null;
+};
+
+/** `coverUrl`: la carátula de uno de sus elementos (el elegido o, si no, el primero). */
+export type ProfileBoard = {
+  id: string;
+  name: string;
+  privacy: Privacy;
+  itemsCount: number;
+  coverUrl: string | null;
+};
+
+export type OwnProfile = {
+  user: { id: string; name: string; username: string; bio: string | null; photoUrl: string | null };
+  counts: {
+    reviews: number;
+    followers: number;
+    following: number;
+    friends: number;
+    favorites: number;
+    boards: number;
+  };
+  reviews: Page<ProfileReview>;
+  favorites: Favorites;
+  boards: ProfileBoard[];
+};
+
+/** Tu perfil: información, contadores y las carpetas Reseñas, Favoritos y Tableros. */
+export async function getMyProfile(
   token: string,
   fetchFn: typeof fetch = fetch,
-): Promise<{ ok: true; data: Favorites } | { ok: false; error: string; needsLogin: boolean }> {
+): Promise<{ ok: true; data: OwnProfile } | { ok: false; error: string; needsLogin: boolean }> {
   try {
-    const response = await fetchFn(`${API_URL}/me/favorites`, { headers: authHeaders(token) });
-    if (response.ok) return { ok: true, data: (await response.json()) as Favorites };
+    const response = await fetchFn(`${API_URL}/me/profile`, { headers: authHeaders(token) });
+    if (response.ok) return { ok: true, data: (await response.json()) as OwnProfile };
     return { ok: false, error: LOAD_ERROR, needsLogin: response.status === 401 };
   } catch {
     return { ok: false, error: CONNECTION_ERROR, needsLogin: false };
   }
+}
+
+/** «Ver más reseñas» en la carpeta Reseñas. */
+export function getMyReviews(
+  token: string,
+  offset: number,
+  fetchFn: typeof fetch = fetch,
+): Promise<PageResult<ProfileReview>> {
+  return getPage(`/me/reviews?offset=${offset}`, token, fetchFn);
 }
