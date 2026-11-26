@@ -109,6 +109,23 @@ function createCatalogService({ catalog, reviews }) {
     };
   }
 
+  /** HU-59 · Ficha de un artista: su información y sus álbumes (PA-59-01). */
+  async function getArtist(rawId) {
+    const id = parseId(rawId);
+    const artist = await catalog.findArtist(id);
+    if (!artist) throw new NotFoundError('El artista no existe');
+    const [albums, songsCount] = await Promise.all([
+      catalog.findArtistAlbums(id),
+      catalog.countArtistSongs(id),
+    ]);
+    return {
+      ...artist,
+      imageUrl: safeImageUrl(artist.imageUrl),
+      songsCount,
+      albums: albums.map((album) => ({ ...album, coverUrl: safeImageUrl(album.coverUrl) })),
+    };
+  }
+
   /** Siguiente página de reseñas ("Ver más reseñas"). */
   async function getReviews(kind, rawId, viewerId, rawOffset) {
     const id = parseId(rawId);
@@ -119,7 +136,7 @@ function createCatalogService({ catalog, reviews }) {
     return findReviewsPage(kind, id, viewerId, offset);
   }
 
-  return { getAlbum, getSong, getReviews };
+  return { getAlbum, getSong, getArtist, getReviews };
 }
 
 module.exports = { createCatalogService, safeImageUrl, REVIEWS_PAGE_SIZE };

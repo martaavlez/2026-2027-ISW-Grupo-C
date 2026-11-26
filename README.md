@@ -100,7 +100,7 @@ Todas las reglas se comprueban en la API, aunque la app también avise antes de 
 - **Contraseñas (RNF-03):** mínimo 8 caracteres con una letra y un número, y máximo 72 (el límite de bcrypt). Se guardan con bcrypt (coste 12) y nunca se devuelven.
 - **Sesión (RNF-11):** token JWT firmado con HS256 y caducidad de 24 horas. En producción, `JWT_SECRET` es obligatoria.
 - **Fuerza bruta:** las rutas de `/auth` admiten `AUTH_RATE_LIMIT` intentos por IP cada 15 minutos; después responden 429.
-- **Descarga masiva:** las fichas del catálogo (`/albums`, `/songs`) admiten `READ_RATE_LIMIT` peticiones por IP y minuto.
+- **Descarga masiva:** las fichas del catálogo (`/albums`, `/songs`, `/artists`) admiten `READ_RATE_LIMIT` peticiones por IP y minuto.
 - **Visibilidad (RN-08, RN-12):** quién ve cada reseña se decide en la consulta SQL con el usuario del token, nunca con datos que mande el cliente. Un token caducado, falso o de un usuario suspendido cuenta como visitante.
 - **Peticiones:** cuerpo JSON de 10 KB como máximo, cabeceras de seguridad con Helmet y consultas SQL siempre con parámetros.
 - **Errores:** solo se enseñan los mensajes pensados para el usuario; los fallos internos devuelven un 500 sin detalles.

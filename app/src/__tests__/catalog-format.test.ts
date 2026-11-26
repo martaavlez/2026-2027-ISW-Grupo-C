@@ -1,5 +1,7 @@
 import {
   albumTypeLabel,
+  albumTypePlural,
+  groupByType,
   formatCount,
   formatDuration,
   formatRating,
@@ -69,4 +71,19 @@ test.each([
 test('test_headline_skipsMissingParts', () => {
   expect(headline(['Álbum', 2026, 'Dream pop'])).toBe('ÁLBUM · 2026 · DREAM POP');
   expect(headline(['Canción', null, undefined, ''])).toBe('CANCIÓN');
+});
+
+test('test_groupByType_keepsOrderAndAllTypes', () => {
+  const items = [
+    { id: 'a', type: 'single' as const },
+    { id: 'b', type: 'album' as const },
+    { id: 'c', type: 'single' as const },
+  ];
+
+  expect(groupByType(items)).toEqual([
+    { type: 'album', items: [items[1]] },
+    { type: 'ep', items: [] },
+    { type: 'single', items: [items[0], items[2]] },
+  ]);
+  expect(albumTypePlural('ep')).toBe('EPs');
 });

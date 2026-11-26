@@ -42,6 +42,23 @@ export function albumTypeLabel(type: Album['type']): string {
   return TYPE_LABELS[type];
 }
 
+const TYPE_PLURALS: Record<Album['type'], string> = {
+  album: 'Álbumes',
+  ep: 'EPs',
+  single: 'Singles',
+};
+
+export function albumTypePlural(type: Album['type']): string {
+  return TYPE_PLURALS[type];
+}
+
+export const ALBUM_TYPES: Album['type'][] = ['album', 'ep', 'single'];
+
+/** Separa la discografía en álbumes, EPs y singles, sin cambiar el orden de cada grupo. */
+export function groupByType<T extends { type: Album['type'] }>(items: T[]) {
+  return ALBUM_TYPES.map((type) => ({ type, items: items.filter((item) => item.type === type) }));
+}
+
 /** Porcentaje de cada nota, redondeado. Sin valoraciones, todo 0. */
 export function ratingPercentages(distribution: RatingDistribution): Record<string, number> {
   const total = Object.values(distribution).reduce((sum, value) => sum + value, 0);

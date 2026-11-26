@@ -82,7 +82,7 @@ function createApp({
     createAuthRouter(services.authService),
   );
   app.use(
-    ['/albums', '/songs'],
+    ['/albums', '/songs', '/artists'],
     createLimiter(readRateLimit, 'Demasiadas peticiones. Espera un momento y vuelve a probar.'),
     optionalViewer(services.resolveViewer ?? visitorOnly),
   );

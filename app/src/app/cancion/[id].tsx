@@ -2,12 +2,13 @@
 import { Link, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text } from 'react-native';
 
+import { ArtistLinks } from '../../components/ArtistLinks';
 import { CdCase } from '../../components/CdCase';
 import { InfoList } from '../../components/InfoList';
 import { ItemPage, ItemStatus, titleSize, useIsDesktop } from '../../components/ItemPage';
 import { RatingSummary } from '../../components/RatingSummary';
 import { ReviewList } from '../../components/ReviewList';
-import { formatDuration, headline } from '../../features/catalog/format';
+import { albumTypeLabel, formatDuration, headline } from '../../features/catalog/format';
 import { useCatalogItem } from '../../features/catalog/useCatalogItem';
 import { getSong } from '../../services/api';
 import { fonts, useColors } from '../../theme';
@@ -43,12 +44,7 @@ export default function SongScreen() {
           >
             {song.title.toUpperCase()}
           </Text>
-          <Text style={[styles.mono, { color: colors.ink }]}>
-            {song.artists
-              .map((artist) => artist.name)
-              .join(', ')
-              .toUpperCase()}
-          </Text>
+          <ArtistLinks artists={song.artists} />
           <Link
             href={`/album/${song.album.id}`}
             style={[
@@ -57,7 +53,7 @@ export default function SongScreen() {
               { color: colors.ink, borderBottomColor: colors.ink },
             ]}
           >
-            DEL ÁLBUM {song.album.title.toUpperCase()} →
+            DEL {albumTypeLabel(song.album.type).toUpperCase()} {song.album.title.toUpperCase()} →
           </Link>
         </>
       }
@@ -71,7 +67,7 @@ export default function SongScreen() {
           />
           <InfoList
             items={[
-              ['Álbum', song.album.title],
+              [albumTypeLabel(song.album.type), song.album.title],
               ['Pista', song.trackNumber ? String(song.trackNumber) : null],
               ['Duración', formatDuration(song.durationSeconds)],
               ['Año', song.album.releaseYear ? String(song.album.releaseYear) : null],

@@ -106,13 +106,38 @@ export type Song = RatingSummary & {
 };
 
 export type ItemKind = 'album' | 'song';
+type CatalogKind = ItemKind | 'artist';
+
+export type ArtistAlbum = {
+  id: string;
+  title: string;
+  coverUrl: string | null;
+  type: Album['type'];
+  releaseYear: number | null;
+  averageRating: number | null;
+};
+
+export type Artist = {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  genre: string | null;
+  description: string | null;
+  songsCount: number;
+  albums: ArtistAlbum[];
+};
 
 export type LoadResult<T> = { ok: true; data: T } | { ok: false; notFound: boolean; error: string };
 
-const ITEM_PATHS: Record<ItemKind, string> = { album: 'albums', song: 'songs' };
-const NOT_FOUND: Record<ItemKind, string> = {
+const ITEM_PATHS: Record<CatalogKind, string> = {
+  album: 'albums',
+  song: 'songs',
+  artist: 'artists',
+};
+const NOT_FOUND: Record<CatalogKind, string> = {
   album: 'Este álbum no existe o ya no está en el catálogo.',
   song: 'Esta canción no existe o ya no está en el catálogo.',
+  artist: 'Este artista no existe o ya no está en el catálogo.',
 };
 const LOAD_ERROR = 'No se ha podido cargar. Inténtalo de nuevo en un momento.';
 
@@ -122,7 +147,7 @@ function authHeaders(token?: string): Record<string, string> {
 }
 
 async function getJson<T>(
-  kind: ItemKind,
+  kind: CatalogKind,
   path: string,
   token: string | undefined,
   fetchFn: typeof fetch,
@@ -138,7 +163,7 @@ async function getJson<T>(
 }
 
 /** El id va en la URL: se codifica para que nunca pueda cambiar la ruta que se pide. */
-function itemPath(kind: ItemKind, id: string): string {
+function itemPath(kind: CatalogKind, id: string): string {
   return `/${ITEM_PATHS[kind]}/${encodeURIComponent(id)}`;
 }
 
@@ -148,6 +173,11 @@ export function getAlbum(id: string, token?: string, fetchFn: typeof fetch = fet
 
 export function getSong(id: string, token?: string, fetchFn: typeof fetch = fetch) {
   return getJson<Song>('song', itemPath('song', id), token, fetchFn);
+}
+
+/** HU-59 · Ficha de un artista (no tiene reseñas, así que no hace falta el token). */
+export function getArtist(id: string, fetchFn: typeof fetch = fetch) {
+  return getJson<Artist>('artist', itemPath('artist', id), undefined, fetchFn);
 }
 
 /** «Ver más reseñas»: la siguiente página a partir de offset. */
