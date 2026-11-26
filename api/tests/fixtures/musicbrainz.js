@@ -68,6 +68,14 @@ function fakeMusicBrainz({ releaseGroups = [releaseGroup()], releases = {}, fail
         releaseGroups: releaseGroups.slice(offset, offset + limit),
       };
     }),
+    searchReleaseGroupsByArtist: jest.fn(async ({ limit, offset = 0 }) => {
+      if (failWith) throw failWith;
+      return {
+        total: releaseGroups.length,
+        releaseGroups: releaseGroups.slice(offset, offset + limit),
+      };
+    }),
+    searchArtists: jest.fn(async () => []),
     getRelease: jest.fn(async (id) => {
       if (failWith) throw failWith;
       return releasesById[id] ?? null;

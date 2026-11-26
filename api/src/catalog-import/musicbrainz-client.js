@@ -95,13 +95,42 @@ function createMusicBrainzClient({
     );
   }
 
+  /** Artistas cuyo nombre se parece al buscado (para elegir el bueno antes de importar). */
+  async function searchArtists(name, limit = 10) {
+    const cleanName = name.replaceAll('"', '').replaceAll('\\', '');
+    const body = await get('/artist', { query: `artist:"${cleanName}"`, limit });
+    return (body.artists ?? []).map((artist) => ({
+      id: artist.id,
+      name: artist.name,
+      disambiguation: artist.disambiguation ?? '',
+      country: artist.country ?? '',
+      score: artist.score ?? 0,
+    }));
+  }
+
+  /** Álbumes, EP y singles de un artista concreto (por su MBID). */
+  async function searchReleaseGroupsByArtist({ artistId, limit, offset = 0 }) {
+    const body = await get('/release-group', {
+      query: `arid:${artistId} AND primarytype:(album OR ep OR single)`,
+      limit: Math.min(limit, PAGE_SIZE_LIMIT),
+      offset,
+    });
+    return { total: body.count ?? 0, releaseGroups: body['release-groups'] ?? [] };
+  }
+
   /** Enlaces del artista a otras webs (entre ellos, Wikidata, de donde sale su foto). */
   async function getArtistUrlRelations(artistId) {
     const body = await get(`/artist/${artistId}`, { inc: 'url-rels' }, { allowNotFound: true });
     return body?.relations ?? [];
   }
 
-  return { searchReleaseGroups, getRelease, getArtistUrlRelations };
+  return {
+    searchReleaseGroups,
+    getRelease,
+    getArtistUrlRelations,
+    searchArtists,
+    searchReleaseGroupsByArtist,
+  };
 }
 
 module.exports = {

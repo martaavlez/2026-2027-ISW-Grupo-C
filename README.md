@@ -122,6 +122,11 @@ El catálogo se importa desde la API pública de [MusicBrainz](https://musicbrai
   npm run import:initial -- --limit 500 --offset 500
   ```
 - **Importación diaria:** trae lo publicado desde el día anterior a la última importación correcta. Con `IMPORT_ENABLED=true`, la API la lanza sola cada día a la hora `IMPORT_DAILY_HOUR`. Si al arrancar no ha habido ninguna importación correcta, hace primero la inicial. A mano: `npm run import:daily`.
+- **Un artista concreto:** para traer toda la discografía (álbumes, EP y singles) de un artista que no ha entrado por géneros. Primero se busca su identificador de MusicBrainz (MBID), porque puede haber varios artistas con el mismo nombre, y luego se importa; al terminar se busca también su foto. No cuenta como importación diaria.
+  ```bash
+  npm run import:artist -- --name "Robe"
+  npm run import:artist -- --id <MBID>
+  ```
 - **Fotos de los artistas:** MusicBrainz no tiene fotos, así que se buscan en [Wikimedia Commons](https://commons.wikimedia.org) siguiendo el enlace del artista a Wikidata. Se guarda la miniatura (`artists.image_url`) y el crédito con el autor y la licencia (`artists.image_credit`), que la ficha del artista muestra debajo de la foto. Solo se aceptan imágenes de `upload.wikimedia.org`, nunca se sustituye una foto que ya exista y a cada artista se le busca una sola vez (`artists.image_checked_at`). Después de cada importación diaria correcta se buscan las de hasta `IMPORT_ARTIST_IMAGES_PER_RUN` artistas. A mano:
   ```bash
   npm run import:artist-images -- --limit 100

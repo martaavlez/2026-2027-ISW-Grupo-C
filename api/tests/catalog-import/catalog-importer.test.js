@@ -225,3 +225,79 @@ describe('Fotos de artistas', () => {
     expect(repository.findArtistsPendingImage).toHaveBeenCalledWith(7);
   });
 });
+
+describe('Importar un artista concreto', () => {
+  const ROBE = '8e1c5e2b-3a4d-4f6a-9b7c-1d2e3f4a5b6c';
+
+  function artistRepository() {
+    return {
+      ...fakeRepository(),
+      findArtistIdByExternalId: jest.fn().mockResolvedValue('42'),
+      saveArtistImage: jest.fn().mockResolvedValue(),
+    };
+  }
+
+  test('test_importArtist_importsDiscographyWithGenreFromTagsAndFindsPhoto', async () => {
+    const repository = artistRepository();
+    const musicBrainz = fakeMusicBrainz({
+      releaseGroups: [
+        releaseGroup({ tags: [{ name: 'Spanish rock' }, { name: 'Rock' }] }),
+        releaseGroup({
+          id: 'test-mb-rg-2',
+          releases: [{ id: 'test-mb-release-1', status: 'Official' }],
+        }),
+      ],
+    });
+    const image = { imageUrl: 'https://upload.wikimedia.org/robe.jpg', credit: 'Autor · CC BY' };
+    const imageFinder = { findImage: jest.fn().mockResolvedValue(image) };
+    const { importer } = importerWith({ musicBrainz, repository, imageFinder });
+
+    const result = await importer.importArtist(ROBE);
+
+    expect(result).toMatchObject({ status: 'success', image: 'encontrada' });
+    expect(musicBrainz.searchReleaseGroupsByArtist).toHaveBeenCalledWith({
+      artistId: ROBE,
+      limit: 100,
+      offset: 0,
+    });
+    expect(repository.saved.map((data) => data.album.genre)).toEqual(['Rock', null]);
+    expect(repository.saveArtistImage).toHaveBeenCalledWith('42', image);
+    expect(repository.startRun).not.toHaveBeenCalled();
+  });
+
+  test('test_importArtist_withInvalidId_throwsWithoutAskingMusicBrainz', async () => {
+    const musicBrainz = fakeMusicBrainz();
+    const { importer } = importerWith({ musicBrainz });
+
+    await expect(importer.importArtist('Robe')).rejects.toThrow('MBID');
+    expect(musicBrainz.searchReleaseGroupsByArtist).not.toHaveBeenCalled();
+  });
+
+  test('test_importArtist_whenMusicBrainzIsDown_returnsFailedKeepingWhatWasSaved', async () => {
+    const musicBrainz = fakeMusicBrainz({ failWith: new MusicBrainzUnavailableError('503') });
+    const { importer } = importerWith({ musicBrainz, repository: artistRepository() });
+
+    await expect(importer.importArtist(ROBE)).resolves.toMatchObject({
+      status: 'failed',
+      error: '503',
+    });
+  });
+
+  test('test_importArtist_photoServiceDown_stillSucceeds', async () => {
+    const imageFinder = { findImage: jest.fn().mockRejectedValue(new Error('Wikimedia caído')) };
+    const { importer } = importerWith({ repository: artistRepository(), imageFinder });
+
+    await expect(importer.importArtist(ROBE)).resolves.toMatchObject({
+      status: 'success',
+      image: 'no se ha podido buscar',
+    });
+  });
+
+  test('test_findArtists_returnsCandidates', async () => {
+    const musicBrainz = fakeMusicBrainz();
+    musicBrainz.searchArtists.mockResolvedValue([{ id: ROBE, name: 'Robe' }]);
+    const { importer } = importerWith({ musicBrainz });
+
+    await expect(importer.findArtists('Robe')).resolves.toEqual([{ id: ROBE, name: 'Robe' }]);
+  });
+});

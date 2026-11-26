@@ -210,6 +210,13 @@ function createCatalogRepository(pool) {
     return rows;
   }
 
+  async function findArtistIdByExternalId(externalId) {
+    const { rows } = await pool.query('SELECT id FROM artists WHERE external_id = $1', [
+      externalId,
+    ]);
+    return rows[0]?.id ?? null;
+  }
+
   /**
    * Guarda la foto encontrada (o que no tiene) y apunta que ya se buscó.
    * Nunca sustituye una foto que ya tenga, por ejemplo una que haya puesto el administrador.
@@ -233,6 +240,7 @@ function createCatalogRepository(pool) {
     getImportStatus,
     findArtistsPendingImage,
     saveArtistImage,
+    findArtistIdByExternalId,
   };
 }
 
