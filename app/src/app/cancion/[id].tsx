@@ -1,0 +1,100 @@
+// HU-04 · Ficha de una canción (PA-04-01): como la del álbum, pero sin canciones ni ranking personal.
+import { Link, useLocalSearchParams } from 'expo-router';
+import { StyleSheet, Text } from 'react-native';
+
+import { CdCase } from '../../components/CdCase';
+import { InfoList } from '../../components/InfoList';
+import { ItemPage, ItemStatus, titleSize, useIsDesktop } from '../../components/ItemPage';
+import { RatingSummary } from '../../components/RatingSummary';
+import { ReviewList } from '../../components/ReviewList';
+import { formatDuration, headline } from '../../features/catalog/format';
+import { useCatalogItem } from '../../features/catalog/useCatalogItem';
+import { getSong } from '../../services/api';
+import { fonts, useColors } from '../../theme';
+
+export default function SongScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const colors = useColors();
+  const desktop = useIsDesktop();
+  const { state, retry, loadMore, loadingMore, loadMoreError } = useCatalogItem(
+    'song',
+    String(id),
+    getSong,
+  );
+
+  if (state.status === 'loading') return <ItemStatus loading />;
+  if (state.status === 'error') {
+    return <ItemStatus message={state.error} onRetry={state.notFound ? undefined : retry} />;
+  }
+
+  const song = state.item;
+  const size = titleSize(song.title, desktop);
+
+  return (
+    <ItemPage
+      header={
+        <>
+          <Text style={[styles.kicker, { color: colors.ink }]}>
+            {headline(['Canción', song.album.releaseYear, song.genre])}
+          </Text>
+          <Text
+            accessibilityRole="header"
+            style={[styles.title, { color: colors.ink, fontSize: size, lineHeight: size * 0.86 }]}
+          >
+            {song.title.toUpperCase()}
+          </Text>
+          <Text style={[styles.mono, { color: colors.ink }]}>
+            {song.artists
+              .map((artist) => artist.name)
+              .join(', ')
+              .toUpperCase()}
+          </Text>
+          <Link
+            href={`/album/${song.album.id}`}
+            style={[
+              styles.mono,
+              styles.albumLink,
+              { color: colors.ink, borderBottomColor: colors.ink },
+            ]}
+          >
+            DEL ÁLBUM {song.album.title.toUpperCase()} →
+          </Link>
+        </>
+      }
+      aside={
+        <>
+          <CdCase coverUrl={song.album.coverUrl} size={desktop ? 420 : 300} />
+          <RatingSummary
+            averageRating={song.averageRating}
+            ratingsCount={song.ratingsCount}
+            distribution={song.distribution}
+          />
+          <InfoList
+            items={[
+              ['Álbum', song.album.title],
+              ['Pista', song.trackNumber ? String(song.trackNumber) : null],
+              ['Duración', formatDuration(song.durationSeconds)],
+              ['Año', song.album.releaseYear ? String(song.album.releaseYear) : null],
+              ['Género', song.genre],
+            ]}
+          />
+        </>
+      }
+    >
+      <ReviewList
+        reviews={state.reviews}
+        total={state.total}
+        loadingMore={loadingMore}
+        loadMoreError={loadMoreError}
+        onLoadMore={loadMore}
+      />
+    </ItemPage>
+  );
+}
+
+const styles = StyleSheet.create({
+  kicker: { fontFamily: fonts.mono, fontSize: 13 },
+  title: { fontFamily: fonts.display },
+  mono: { fontFamily: fonts.mono, fontSize: 14 },
+  albumLink: { alignSelf: 'flex-start', borderBottomWidth: 1.5, marginBottom: 12 },
+});

@@ -100,6 +100,8 @@ Todas las reglas se comprueban en la API, aunque la app también avise antes de 
 - **Contraseñas (RNF-03):** mínimo 8 caracteres con una letra y un número, y máximo 72 (el límite de bcrypt). Se guardan con bcrypt (coste 12) y nunca se devuelven.
 - **Sesión (RNF-11):** token JWT firmado con HS256 y caducidad de 24 horas. En producción, `JWT_SECRET` es obligatoria.
 - **Fuerza bruta:** las rutas de `/auth` admiten `AUTH_RATE_LIMIT` intentos por IP cada 15 minutos; después responden 429.
+- **Descarga masiva:** las fichas del catálogo (`/albums`, `/songs`) admiten `READ_RATE_LIMIT` peticiones por IP y minuto.
+- **Visibilidad (RN-08, RN-12):** quién ve cada reseña se decide en la consulta SQL con el usuario del token, nunca con datos que mande el cliente. Un token caducado, falso o de un usuario suspendido cuenta como visitante.
 - **Peticiones:** cuerpo JSON de 10 KB como máximo, cabeceras de seguridad con Helmet y consultas SQL siempre con parámetros.
 - **Errores:** solo se enseñan los mensajes pensados para el usuario; los fallos internos devuelven un 500 sin detalles.
 - **Datos únicos (RN-01):** el correo y el nombre de usuario no se repiten ni cambiando mayúsculas, también en la base de datos.
@@ -133,6 +135,7 @@ Cada carpeta tiene un `.env.example` con las variables necesarias. Copia el arch
 | `CORS_ORIGIN` | `api/` | Dirección de la web que puede llamar a la API |
 | `JWT_SECRET` | `api/` | Clave con la que se firman los tokens de sesión. En producción es obligatoria y de al menos 32 caracteres |
 | `AUTH_RATE_LIMIT` | `api/` | Intentos permitidos por IP cada 15 minutos en las rutas de autenticación (por defecto 20) |
+| `READ_RATE_LIMIT` | `api/` | Peticiones por IP y minuto a las fichas del catálogo (por defecto 120) |
 | `IMPORT_ENABLED` | `api/` | `true` para que la API importe sola las novedades cada día |
 | `IMPORT_GENRES` | `api/` | Géneros que se importan (`etiqueta=Nombre`, separados por comas) |
 | `IMPORT_INITIAL_LIMIT_PER_GENRE` | `api/` | Álbumes por género en la primera importación (por defecto 500) |
