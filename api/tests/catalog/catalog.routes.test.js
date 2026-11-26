@@ -85,3 +85,22 @@ test('test_getAlbum_overReadRateLimit_returns429', async () => {
 
   expect(response.status).toBe(429);
 });
+
+test('test_getArtist_returns200', async () => {
+  const getArtist = jest.fn().mockResolvedValue({ id: '3', name: 'Artista' });
+
+  const response = await request(appWith({ getArtist })).get('/artists/3');
+
+  expect(response.status).toBe(200);
+  expect(getArtist).toHaveBeenCalledWith('3');
+});
+
+test('test_getArtist_overReadRateLimit_returns429', async () => {
+  const getArtist = jest.fn().mockResolvedValue({});
+  const app = appWith({ getArtist }, { readRateLimit: { windowMs: 60_000, limit: 1 } });
+
+  await request(app).get('/artists/3');
+  const response = await request(app).get('/artists/3');
+
+  expect(response.status).toBe(429);
+});

@@ -66,9 +66,11 @@ describeIfDatabase('HU-04 · Consultar una canción o un álbum (integración)',
     ]);
 
     const artist = await db.pool.query(
-      `INSERT INTO artists (name, external_id) VALUES ('Artista HU04', 'test-hu04-artist')
+      `INSERT INTO artists (name, genre, description, image_url, external_id)
+       VALUES ('Artista HU04', 'Pop', 'Grupo de pruebas', 'javascript:alert(1)', 'test-hu04-artist')
        RETURNING id`,
     );
+    ids.artist = String(artist.rows[0].id);
     const album = await db.pool.query(
       `INSERT INTO albums (title, genre, type, release_year, average_rating, cover_url, external_id)
        VALUES ('Disco HU04', 'Pop', 'album', 2024, 3.8, 'https://coverartarchive.org/x/front-250', 'test-hu04-album')
@@ -86,6 +88,18 @@ describeIfDatabase('HU-04 · Consultar una canción o un álbum (integración)',
       [ids.album],
     );
     ids.song = song.rows.find((row) => row.track_number === 1).id;
+    await db.pool.query(
+      `INSERT INTO song_artists (song_id, artist_id) SELECT id, $1 FROM songs WHERE album_id = $2`,
+      [ids.artist, ids.album],
+    );
+    const older = await db.pool.query(
+      `INSERT INTO albums (title, type, release_year, external_id)
+       VALUES ('EP antiguo HU04', 'ep', 2019, 'test-hu04-album-old') RETURNING id`,
+    );
+    await db.pool.query('INSERT INTO album_artists (album_id, artist_id) VALUES ($1, $2)', [
+      older.rows[0].id,
+      ids.artist,
+    ]);
 
     await insertReview(ids.author, 5, 'public', { body: 'Pública de la autora' });
     await insertReview(ids.friend, 4, 'friends', { body: 'Solo amigos de la amiga' });
@@ -224,6 +238,30 @@ describeIfDatabase('HU-04 · Consultar una canción o un álbum (integración)',
     expect(JSON.stringify(response.body)).not.toMatch(/password|hash|SELECT/i);
     const after = await db.pool.query('SELECT count(*)::int AS total FROM reviews');
     expect(after.rows[0].total).toBe(before.rows[0].total);
+  });
+
+  test('test_PA_59_01_getArtist_showsInfoAndAlbumsNewestFirst', async () => {
+    const response = await request(app).get(`/artists/${ids.artist}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      name: 'Artista HU04',
+      genre: 'Pop',
+      description: 'Grupo de pruebas',
+      imageUrl: null,
+      songsCount: 2,
+    });
+    expect(response.body.albums.map((album) => album.title)).toEqual([
+      'Disco HU04',
+      'EP antiguo HU04',
+    ]);
+  });
+
+  test('test_getArtist_unknownOrInvalid_returns404Or400', async () => {
+    expect((await request(app).get('/artists/999999999')).status).toBe(404);
+    expect((await request(app).get(`/artists/${encodeURIComponent("1' OR '1'='1")}`)).status).toBe(
+      400,
+    );
   });
 
   test('test_security_reviews_neverExposeEmailOrPasswordHash', async () => {

@@ -36,6 +36,15 @@ function serviceWith(overrides = {}) {
     findSong: jest.fn().mockResolvedValue(song),
     findSongArtists: jest.fn().mockResolvedValue([{ id: '3', name: 'Artista' }]),
     findRatingDistribution: jest.fn().mockResolvedValue({ 1: 0, 2: 0, 3: 1, 4: 1, 5: 1 }),
+    findArtist: jest.fn().mockResolvedValue({
+      id: '3',
+      name: 'Artista',
+      imageUrl: 'http://inseguro.test/foto.jpg',
+      genre: 'Pop',
+      description: 'Banda de pruebas',
+    }),
+    findArtistAlbums: jest.fn().mockResolvedValue([{ ...album, coverUrl: 'javascript:x' }]),
+    countArtistSongs: jest.fn().mockResolvedValue(12),
     ...overrides.catalog,
   };
   const reviews = {
@@ -155,4 +164,30 @@ test.each([
   [null, null],
 ])('test_safeImageUrl_%p', (url, expected) => {
   expect(safeImageUrl(url)).toBe(expected);
+});
+
+test('test_PA_59_01_getArtist_returnsInfoAlbumsAndSafeImages', async () => {
+  const { service } = serviceWith();
+
+  const result = await service.getArtist('3');
+
+  expect(result).toMatchObject({
+    name: 'Artista',
+    genre: 'Pop',
+    description: 'Banda de pruebas',
+    imageUrl: null,
+    songsCount: 12,
+    albums: [{ id: '1', title: 'Disco', coverUrl: null }],
+  });
+});
+
+test('test_getArtist_withUnknownId_throwsNotFound', async () => {
+  const { service } = serviceWith({ catalog: { findArtist: jest.fn().mockResolvedValue(null) } });
+  await expect(service.getArtist('999')).rejects.toBeInstanceOf(NotFoundError);
+});
+
+test('test_getArtist_withInvalidId_throwsValidationWithoutQuerying', async () => {
+  const { service, catalog } = serviceWith();
+  await expect(service.getArtist("3' OR '1'='1")).rejects.toBeInstanceOf(ValidationError);
+  expect(catalog.findArtist).not.toHaveBeenCalled();
 });

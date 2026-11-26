@@ -1,8 +1,18 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import AlbumScreen from '../app/album/[id]';
+import ArtistScreen from '../app/artista/[id]';
 import SongScreen from '../app/cancion/[id]';
-import { getAlbum, getReviews, getSong, type Album, type Review, type Song } from '../services/api';
+import {
+  getAlbum,
+  getArtist,
+  getReviews,
+  getSong,
+  type Album,
+  type Artist,
+  type Review,
+  type Song,
+} from '../services/api';
 import { clearSession, saveSession } from '../services/session';
 
 let mockParams: { id: string } = { id: '1' };
@@ -18,6 +28,7 @@ jest.mock('../services/api', () => ({
   getAlbum: jest.fn(),
   getSong: jest.fn(),
   getReviews: jest.fn(),
+  getArtist: jest.fn(),
 }));
 
 const review = (id: string, overrides: Partial<Review> = {}): Review => ({
@@ -84,7 +95,7 @@ describe('HU-04 · Ficha de álbum', () => {
 
     expect(await screen.findByText('SOFT STATIC')).toBeTruthy();
     expect(screen.getByText('ÁLBUM · 2026 · DREAM POP')).toBeTruthy();
-    expect(screen.getByText('MARA KEI')).toBeTruthy();
+    expect(screen.getByText('MARA KEI →').props.accessibilityHint).toBe('/artista/3');
     expect(screen.getByText('4,8')).toBeTruthy();
     expect(screen.getByText('MEDIA · 1.204 VALORACIONES')).toBeTruthy();
     expect(screen.getByLabelText('5 estrellas: 72 %')).toBeTruthy();
@@ -197,10 +208,108 @@ describe('HU-04 · Ficha de canción', () => {
     expect(await screen.findByText('STATIC BLOOM')).toBeTruthy();
     expect(screen.getByText('CANCIÓN · 2026 · DREAM POP')).toBeTruthy();
     expect(screen.getByText('DEL ÁLBUM SOFT STATIC →').props.accessibilityHint).toBe('/album/1');
+    expect(screen.getByText('MARA KEI →').props.accessibilityHint).toBe('/artista/3');
     expect(screen.getByText('–')).toBeTruthy();
     expect(screen.getByText('SIN VALORACIONES TODAVÍA')).toBeTruthy();
     expect(screen.getByText('3:42')).toBeTruthy();
     expect(screen.getByText('Todavía no hay reseñas que puedas ver.')).toBeTruthy();
     expect(getSong).toHaveBeenCalledWith('10', undefined);
   });
+});
+
+const artist: Artist = {
+  id: '3',
+  name: 'Mara Kei',
+  imageUrl: null,
+  genre: 'Dream pop',
+  description: 'Proyecto de <b>pop</b> nacido en Valencia.',
+  songsCount: 1234,
+  albums: [
+    {
+      id: '1',
+      title: 'Soft Static',
+      coverUrl: null,
+      type: 'album',
+      releaseYear: 2026,
+      averageRating: 4.8,
+    },
+    {
+      id: '2',
+      title: 'Primeras cintas',
+      coverUrl: null,
+      type: 'ep',
+      releaseYear: 2022,
+      averageRating: null,
+    },
+  ],
+};
+
+describe('HU-59 · Ficha de artista', () => {
+  test('test_PA_59_01_ArtistScreen_showsInfoAndAlbums', async () => {
+    mockParams = { id: '3' };
+    jest.mocked(getArtist).mockResolvedValue({ ok: true, data: artist });
+
+    await render(<ArtistScreen />);
+
+    expect(await screen.findByText('MARA KEI')).toBeTruthy();
+    expect(screen.getByText('ARTISTA · DREAM POP')).toBeTruthy();
+    expect(screen.getByText('Proyecto de <b>pop</b> nacido en Valencia.')).toBeTruthy();
+    expect(screen.getByText('1.234')).toBeTruthy();
+    expect(screen.getByText('ÁLBUMES · 1')).toBeTruthy();
+    expect(screen.getByText('EPS · 1')).toBeTruthy();
+    expect(screen.queryByText(/SINGLES/)).toBeNull();
+    expect(screen.getByText('Soft Static').props.accessibilityHint).toBe('/album/1');
+    expect(screen.getByText('2026 · ★ 4,8')).toBeTruthy();
+    expect(screen.getByText('2022')).toBeTruthy();
+    expect(getArtist).toHaveBeenCalledWith('3');
+  });
+
+  test('test_ArtistScreen_withoutAlbums_saysSo', async () => {
+    jest.mocked(getArtist).mockResolvedValue({
+      ok: true,
+      data: { ...artist, albums: [], description: null },
+    });
+
+    await render(<ArtistScreen />);
+
+    expect(
+      await screen.findByText('Todavía no hay discos de este artista en el catálogo.'),
+    ).toBeTruthy();
+  });
+
+  test('test_ArtistScreen_notFound_showsMessage', async () => {
+    jest
+      .mocked(getArtist)
+      .mockResolvedValue({ ok: false, notFound: true, error: 'Este artista no existe.' });
+
+    await render(<ArtistScreen />);
+
+    expect(await screen.findByText('Este artista no existe.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Reintentar' })).toBeNull();
+  });
+
+  test('test_ArtistScreen_connectionError_retries', async () => {
+    jest
+      .mocked(getArtist)
+      .mockResolvedValueOnce({ ok: false, notFound: false, error: 'Sin conexión.' })
+      .mockResolvedValueOnce({ ok: true, data: artist });
+
+    await render(<ArtistScreen />);
+    await fireEvent.press(await screen.findByRole('button', { name: 'Reintentar' }));
+
+    expect(await screen.findByText('MARA KEI')).toBeTruthy();
+  });
+});
+
+test('test_SongScreen_fromAnEp_namesItAsEp', async () => {
+  mockParams = { id: '10' };
+  jest.mocked(getSong).mockResolvedValue({
+    ok: true,
+    data: { ...song, album: { ...song.album, type: 'ep', title: 'Primeras cintas' } },
+  });
+
+  await render(<SongScreen />);
+
+  expect(await screen.findByText('DEL EP PRIMERAS CINTAS →')).toBeTruthy();
+  expect(screen.getByText('EP')).toBeTruthy();
 });
