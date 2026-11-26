@@ -8,7 +8,7 @@ export const MIN_SEARCH_LENGTH = 2;
 
 type State =
   | { status: 'idle' }
-  | { status: 'loading' }
+  | { status: 'loading'; previous?: SearchResults }
   | { status: 'error'; error: string }
   | { status: 'ready'; results: SearchResults };
 
@@ -19,7 +19,14 @@ export function useSearch(term: string) {
   const key = `${term}|${token ?? ''}`;
 
   let state: State = { status: 'idle' };
-  if (valid) state = stored?.key === key ? stored.state : { status: 'loading' };
+  if (valid && stored?.key === key) state = stored.state;
+  // Mientras llega la nueva búsqueda se siguen viendo los resultados anteriores (sin parpadeo).
+  else if (valid) {
+    state = {
+      status: 'loading',
+      previous: stored?.state.status === 'ready' ? stored.state.results : undefined,
+    };
+  }
 
   useEffect(() => {
     if (!valid) return;

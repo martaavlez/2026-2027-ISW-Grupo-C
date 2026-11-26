@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 
 import SearchScreen from '../app/buscar';
 import { search, type SearchResults } from '../services/api';
@@ -139,4 +139,57 @@ test('test_SearchScreen_whenSearchFails_showsError', async () => {
   await render(<SearchScreen />);
 
   expect(await screen.findByText('No se ha podido conectar.')).toBeTruthy();
+});
+
+describe('Búsqueda mientras se escribe', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  test('test_SearchScreen_typingThreeLetters_searchesAfterAPause', async () => {
+    await render(<SearchScreen />);
+
+    await fireEvent.changeText(screen.getByLabelText('Término de búsqueda'), 'luz');
+    expect(mockRouter.setParams).not.toHaveBeenCalled();
+    await act(() => jest.advanceTimersByTime(350));
+
+    expect(mockRouter.setParams).toHaveBeenCalledWith({ q: 'luz' });
+  });
+
+  test('test_SearchScreen_typingFast_searchesOnlyTheLastText', async () => {
+    await render(<SearchScreen />);
+    const input = screen.getByLabelText('Término de búsqueda');
+
+    await fireEvent.changeText(input, 'luz');
+    await act(() => jest.advanceTimersByTime(200));
+    await fireEvent.changeText(input, 'luz d');
+    await act(() => jest.advanceTimersByTime(200));
+    await fireEvent.changeText(input, 'luz de');
+    await act(() => jest.advanceTimersByTime(350));
+
+    expect(mockRouter.setParams).toHaveBeenCalledTimes(1);
+    expect(mockRouter.setParams).toHaveBeenCalledWith({ q: 'luz de' });
+  });
+
+  test('test_SearchScreen_typingTwoLetters_doesNotSearchYet', async () => {
+    await render(<SearchScreen />);
+
+    await fireEvent.changeText(screen.getByLabelText('Término de búsqueda'), 'lu');
+    await act(() => jest.advanceTimersByTime(1000));
+
+    expect(mockRouter.setParams).not.toHaveBeenCalled();
+  });
+});
+
+test('test_SearchScreen_newSearch_keepsPreviousResultsWhileLoading', async () => {
+  mockParams = { q: 'luz' };
+  jest.mocked(search).mockResolvedValueOnce({ ok: true, data: results });
+  const { rerender } = await render(<SearchScreen />);
+  await screen.findByText('CANCIONES · 1');
+
+  jest.mocked(search).mockReturnValueOnce(new Promise(() => {}));
+  mockParams = { q: 'luz de' };
+  await rerender(<SearchScreen />);
+
+  expect(screen.getByText('CANCIONES · 1')).toBeTruthy();
+  expect(screen.getByLabelText('Buscando')).toBeTruthy();
 });
