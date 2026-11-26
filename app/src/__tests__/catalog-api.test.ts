@@ -1,4 +1,4 @@
-import { getAlbum, getArtist, getReviews, getSong, search } from '../services/api';
+import { getAlbum, getArtist, getReviews, getSong, rateItem, search } from '../services/api';
 
 const response = (status: number, body: unknown) =>
   ({ ok: status < 300, status, json: async () => body }) as Response;
@@ -105,4 +105,34 @@ test('test_search_with500OrNoConnection_returnsError', async () => {
   expect((await search('luz', undefined, failing)).ok).toBe(false);
   const result = await search('luz', undefined, offline);
   expect(!result.ok && result.error).toMatch(/conectar con Hertz/);
+});
+
+test('test_rateItem_putsRatingWithToken', async () => {
+  const data = { myRating: 4, averageRating: 4, ratingsCount: 1, distribution: {} };
+  const fetchFn = jest.fn().mockResolvedValue(response(200, data));
+
+  await expect(rateItem('song', '3', 4, 'tok', fetchFn)).resolves.toEqual({ ok: true, data });
+  const [url, options] = fetchFn.mock.calls[0];
+  expect(url).toBe('http://localhost:3000/songs/3/rating');
+  expect(options.method).toBe('PUT');
+  expect(options.headers.Authorization).toBe('Bearer tok');
+  expect(JSON.parse(options.body)).toEqual({ rating: 4 });
+});
+
+test('test_rateItem_errors', async () => {
+  const invalid = jest.fn().mockResolvedValue(response(400, { errors: { rating: 'Del 1 al 5.' } }));
+  const visitor = jest.fn().mockResolvedValue(response(401, { error: 'Inicia sesión.' }));
+  const offline = jest.fn().mockRejectedValue(new TypeError('x'));
+
+  await expect(rateItem('album', '1', 9, 'tok', invalid)).resolves.toEqual({
+    ok: false,
+    error: 'Del 1 al 5.',
+    needsLogin: false,
+  });
+  await expect(rateItem('album', '1', 3, undefined, visitor)).resolves.toEqual({
+    ok: false,
+    error: 'Inicia sesión.',
+    needsLogin: true,
+  });
+  expect((await rateItem('album', '1', 3, 'tok', offline)).ok).toBe(false);
 });

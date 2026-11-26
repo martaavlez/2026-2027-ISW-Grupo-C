@@ -5,13 +5,20 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { ArtistLinks } from '../../components/ArtistLinks';
 import { CdCase } from '../../components/CdCase';
+import { RatingPicker } from '../../components/RatingPicker';
 import { InfoList } from '../../components/InfoList';
 import { ItemPage, ItemStatus, titleSize, useIsDesktop } from '../../components/ItemPage';
 import { RatingSummary } from '../../components/RatingSummary';
 import { ReviewList } from '../../components/ReviewList';
 import { TrackList } from '../../components/TrackList';
-import { albumTypeLabel, formatTotalDuration, headline } from '../../features/catalog/format';
+import {
+  albumTypeLabel,
+  thisAlbumLabel,
+  formatTotalDuration,
+  headline,
+} from '../../features/catalog/format';
 import { useCatalogItem } from '../../features/catalog/useCatalogItem';
+import { useRating } from '../../features/catalog/useRating';
 import { getAlbum } from '../../services/api';
 import { fonts, useColors } from '../../theme';
 
@@ -19,10 +26,14 @@ export default function AlbumScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const desktop = useIsDesktop();
-  const { state, retry, loadMore, loadingMore, loadMoreError } = useCatalogItem(
+  const { state, retry, loadMore, loadingMore, loadMoreError, updateItem, signedIn } =
+    useCatalogItem('album', String(id), getAlbum);
+
+  const rating = useRating(
     'album',
     String(id),
-    getAlbum,
+    state.status === 'ready' ? state.item.myRating : null,
+    updateItem,
   );
 
   if (state.status === 'loading') return <ItemStatus loading />;
@@ -52,6 +63,14 @@ export default function AlbumScreen() {
           <View style={styles.artists}>
             <ArtistLinks artists={album.artists} />
           </View>
+          <RatingPicker
+            value={rating.value}
+            itemLabel={thisAlbumLabel(album.type)}
+            signedIn={signedIn}
+            saving={rating.saving}
+            error={rating.error}
+            onRate={rating.rate}
+          />
         </>
       }
       aside={

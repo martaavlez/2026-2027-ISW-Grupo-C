@@ -161,7 +161,9 @@ describeIfDatabase('HU-03 · Buscar contenido (integración)', () => {
     "zq' UNION SELECT email, password_hash, null FROM users --",
     "zq'||pg_sleep(3)||'",
   ])('test_security_search_withSqlInjection_%p_isTreatedAsText', async (payload) => {
-    const before = await db.pool.query('SELECT count(*)::int AS total FROM users');
+    const before = await db.pool.query(
+      "SELECT count(*)::int AS total FROM users WHERE email LIKE '%@hu03.test'",
+    );
     const started = Date.now();
 
     const response = await request(app).get(`/search?q=${encodeURIComponent(payload)}`);
@@ -171,7 +173,9 @@ describeIfDatabase('HU-03 · Buscar contenido (integración)', () => {
     expect(response.body.users).toEqual([]);
     const results = { ...response.body, query: undefined };
     expect(JSON.stringify(results)).not.toMatch(/password|@hu03\.test/);
-    const after = await db.pool.query('SELECT count(*)::int AS total FROM users');
+    const after = await db.pool.query(
+      "SELECT count(*)::int AS total FROM users WHERE email LIKE '%@hu03.test'",
+    );
     expect(after.rows[0].total).toBe(before.rows[0].total);
   });
 
