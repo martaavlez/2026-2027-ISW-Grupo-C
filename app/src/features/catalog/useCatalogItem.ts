@@ -106,6 +106,36 @@ export function useCatalogItem<T extends WithReviews>(
     [key],
   );
 
+  /** HU-08 · Pone en la lista la versión nueva de una reseña editada. */
+  const replaceReview = useCallback(
+    (review: Review) =>
+      setStored((current) => {
+        if (current?.key !== key || current.state.status !== 'ready') return current;
+        const ready = current.state;
+        return {
+          key,
+          state: {
+            ...ready,
+            reviews: ready.reviews.map((item) => (item.id === review.id ? review : item)),
+          },
+        };
+      }),
+    [key],
+  );
+
+  /** HU-47 · Quita de la lista una reseña eliminada. */
+  const removeReview = useCallback(
+    (reviewId: string) =>
+      setStored((current) => {
+        if (current?.key !== key || current.state.status !== 'ready') return current;
+        const ready = current.state;
+        const reviews = ready.reviews.filter((item) => item.id !== reviewId);
+        const removed = ready.reviews.length - reviews.length;
+        return { key, state: { ...ready, total: Math.max(0, ready.total - removed), reviews } };
+      }),
+    [key],
+  );
+
   return {
     state,
     retry,
@@ -114,6 +144,8 @@ export function useCatalogItem<T extends WithReviews>(
     loadMoreError,
     updateItem,
     addReview,
+    replaceReview,
+    removeReview,
     signedIn: Boolean(token),
   };
 }

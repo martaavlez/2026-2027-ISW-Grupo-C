@@ -42,3 +42,46 @@ test('test_putReview_spam_isLimited', async () => {
   expect(response.status).toBe(429);
   expect(publish).toHaveBeenCalledTimes(2);
 });
+
+test('test_patchReview_editsWithViewerFromToken', async () => {
+  const edit = jest.fn().mockResolvedValue({ myRating: 3 });
+  const resolveViewer = jest.fn().mockResolvedValue('7');
+
+  const response = await request(appWith({ edit }, { resolveViewer }))
+    .patch('/songs/2/review')
+    .set('Authorization', 'Bearer t')
+    .send({ rating: 3, body: 'Mejor', authorId: '1' });
+
+  expect(response.status).toBe(200);
+  expect(edit).toHaveBeenCalledWith('song', '2', '7', {
+    rating: 3,
+    body: 'Mejor',
+    authorId: '1',
+  });
+});
+
+test('test_deleteReview_removesWithViewerFromToken', async () => {
+  const remove = jest.fn().mockResolvedValue({ myReview: null });
+  const resolveViewer = jest.fn().mockResolvedValue('7');
+
+  const response = await request(appWith({ remove }, { resolveViewer }))
+    .delete('/albums/5/review')
+    .set('Authorization', 'Bearer t');
+
+  expect(response.status).toBe(200);
+  expect(remove).toHaveBeenCalledWith('album', '5', '7');
+});
+
+test('test_editAndDelete_shareTheSpamLimit', async () => {
+  const service = {
+    edit: jest.fn().mockResolvedValue({}),
+    remove: jest.fn().mockResolvedValue({}),
+  };
+  const app = appWith(service, { reviewPublishLimit: { windowMs: 60_000, limit: 2 } });
+
+  await request(app).patch('/songs/2/review').send({});
+  await request(app).delete('/songs/2/review');
+  const response = await request(app).patch('/songs/2/review').send({});
+
+  expect(response.status).toBe(429);
+});

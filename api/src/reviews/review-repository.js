@@ -69,6 +69,38 @@ const ADD_ACTIVITY = {
   song: `INSERT INTO activities (user_id, type, song_id, privacy) VALUES ($1, 'review', $2, $3)`,
 };
 
+// HU-08 · Solo la reseña con texto de quien edita (RN-13: el autor sale del token). Si no elige
+// otra privacidad ($5 NULL), se queda la que tenía.
+const EDIT = {
+  album: `UPDATE reviews SET rating = $3, body = $4, privacy = COALESCE($5::privacy_level, privacy),
+                 updated_at = now()
+           WHERE author_id = $1 AND album_id = $2 AND body IS NOT NULL
+          RETURNING id::text AS id, privacy`,
+  song: `UPDATE reviews SET rating = $3, body = $4, privacy = COALESCE($5::privacy_level, privacy),
+                updated_at = now()
+          WHERE author_id = $1 AND song_id = $2 AND body IS NOT NULL
+         RETURNING id::text AS id, privacy`,
+};
+
+// La actividad de la reseña sigue a su privacidad (RN-08).
+const UPDATE_ACTIVITY = {
+  album: `UPDATE activities SET privacy = $3 WHERE user_id = $1 AND type = 'review' AND album_id = $2`,
+  song: `UPDATE activities SET privacy = $3 WHERE user_id = $1 AND type = 'review' AND song_id = $2`,
+};
+
+// HU-47 · Se borra la reseña entera, con su valoración, para que deje de contar en la media.
+const REMOVE = {
+  album: `DELETE FROM reviews WHERE author_id = $1 AND album_id = $2 AND body IS NOT NULL
+          RETURNING id::text AS id`,
+  song: `DELETE FROM reviews WHERE author_id = $1 AND song_id = $2 AND body IS NOT NULL
+         RETURNING id::text AS id`,
+};
+
+const REMOVE_ACTIVITY = {
+  album: `DELETE FROM activities WHERE user_id = $1 AND type = 'review' AND album_id = $2`,
+  song: `DELETE FROM activities WHERE user_id = $1 AND type = 'review' AND song_id = $2`,
+};
+
 const PUBLISHED_REVIEW = `
   SELECT r.id::text AS id, r.rating, r.body, r.privacy, r.created_at AS "createdAt",
          r.updated_at AS "updatedAt", u.username, u.name, u.photo_url AS "photoUrl"
@@ -94,7 +126,12 @@ function createReviewRepository(pool) {
    * Publica la reseña, recalcula la media (RN-07) y apunta la actividad, todo en una transacción.
    * Devuelve { review, averageRating }, { alreadyPublished: true } o null si el elemento no existe.
    */
-  async function publish({ kind, itemId, userId, rating, body, privacy }) {
+  /**
+   * Abre una transacción con el elemento bloqueado y ejecuta `work`. Si el elemento no existe
+   * devuelve null; si `work` no puede hacer el cambio (devuelve null), deshace lo hecho y
+   * devuelve `{ refused: true }`.
+   */
+  async function inItemTransaction(kind, itemId, work) {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -102,16 +139,9 @@ function createReviewRepository(pool) {
         await client.query('ROLLBACK');
         return null;
       }
-      const saved = await client.query(PUBLISH[kind], [userId, itemId, rating, body, privacy]);
-      if (saved.rowCount === 0) {
-        await client.query('ROLLBACK');
-        return { alreadyPublished: true };
-      }
-      const averageRating = await recalculateAverage(client, kind, itemId);
-      await client.query(ADD_ACTIVITY[kind], [userId, itemId, saved.rows[0].privacy]);
-      const review = (await client.query(PUBLISHED_REVIEW, [saved.rows[0].id])).rows[0];
-      await client.query('COMMIT');
-      return { review, averageRating };
+      const result = await work(client);
+      await client.query(result ? 'COMMIT' : 'ROLLBACK');
+      return result ?? { refused: true };
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
@@ -120,7 +150,46 @@ function createReviewRepository(pool) {
     }
   }
 
-  return { findVisible, publish };
+  /**
+   * Publica la reseña, recalcula la media (RN-07) y apunta la actividad, todo en una transacción.
+   * Devuelve { review, averageRating }, { refused: true } si ya la había publicado o null si el
+   * elemento no existe.
+   */
+  async function publish({ kind, itemId, userId, rating, body, privacy }) {
+    return inItemTransaction(kind, itemId, async (client) => {
+      const saved = await client.query(PUBLISH[kind], [userId, itemId, rating, body, privacy]);
+      if (saved.rowCount === 0) return null;
+      const averageRating = await recalculateAverage(client, kind, itemId);
+      await client.query(ADD_ACTIVITY[kind], [userId, itemId, saved.rows[0].privacy]);
+      const review = (await client.query(PUBLISHED_REVIEW, [saved.rows[0].id])).rows[0];
+      return { review, averageRating };
+    });
+  }
+
+  /** HU-08 · Cambia su reseña y recalcula la media. { refused: true } si no tiene reseña ahí. */
+  async function edit({ kind, itemId, userId, rating, body, privacy }) {
+    return inItemTransaction(kind, itemId, async (client) => {
+      const saved = await client.query(EDIT[kind], [userId, itemId, rating, body, privacy]);
+      if (saved.rowCount === 0) return null;
+      const averageRating = await recalculateAverage(client, kind, itemId);
+      await client.query(UPDATE_ACTIVITY[kind], [userId, itemId, saved.rows[0].privacy]);
+      const review = (await client.query(PUBLISHED_REVIEW, [saved.rows[0].id])).rows[0];
+      return { review, averageRating };
+    });
+  }
+
+  /** HU-47 · Borra su reseña y su actividad, y recalcula la media. */
+  async function remove({ kind, itemId, userId }) {
+    return inItemTransaction(kind, itemId, async (client) => {
+      const removed = await client.query(REMOVE[kind], [userId, itemId]);
+      if (removed.rowCount === 0) return null;
+      await client.query(REMOVE_ACTIVITY[kind], [userId, itemId]);
+      const averageRating = await recalculateAverage(client, kind, itemId);
+      return { removedId: removed.rows[0].id, averageRating };
+    });
+  }
+
+  return { findVisible, publish, edit, remove };
 }
 
 module.exports = { createReviewRepository };

@@ -306,17 +306,17 @@ export type PublishResult =
     }
   | { ok: false; errors: FieldErrors; needsLogin: boolean };
 
-/** Publica la reseña. El autor lo saca la API del token. */
-export async function publishReview(
+async function sendReview(
+  method: 'PUT' | 'PATCH',
   kind: ItemKind,
   id: string,
   form: ReviewForm,
-  token?: string,
-  fetchFn: typeof fetch = fetch,
+  token: string | undefined,
+  fetchFn: typeof fetch,
 ): Promise<PublishResult> {
   try {
     const response = await fetchFn(`${API_URL}${itemPath(kind, id)}/review`, {
-      method: 'PUT',
+      method,
       headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
       body: JSON.stringify(form),
     });
@@ -329,6 +329,64 @@ export async function publishReview(
     };
   } catch {
     return { ok: false, errors: { general: CONNECTION_ERROR }, needsLogin: false };
+  }
+}
+
+/** Publica la reseña. El autor lo saca la API del token. */
+export function publishReview(
+  kind: ItemKind,
+  id: string,
+  form: ReviewForm,
+  token?: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<PublishResult> {
+  return sendReview('PUT', kind, id, form, token, fetchFn);
+}
+
+// ---------- HU-08 y HU-47 · Editar y eliminar una reseña ----------
+
+/** Guarda los cambios de tu reseña (texto, nota y privacidad). Devuelve lo mismo que publicar. */
+export function editReview(
+  kind: ItemKind,
+  id: string,
+  form: ReviewForm,
+  token?: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<PublishResult> {
+  return sendReview('PATCH', kind, id, form, token, fetchFn);
+}
+
+export type RemoveReviewResult =
+  | {
+      ok: true;
+      data: {
+        myRating: null;
+        myReview: null;
+        averageRating: number | null;
+        ratingsCount: number;
+        distribution: RatingDistribution;
+        removedReviewId: string;
+      };
+    }
+  | { ok: false; error: string; needsLogin: boolean };
+
+/** Elimina tu reseña, con su valoración: deja de contar en la media. */
+export async function removeReview(
+  kind: ItemKind,
+  id: string,
+  token?: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<RemoveReviewResult> {
+  try {
+    const response = await fetchFn(`${API_URL}${itemPath(kind, id)}/review`, {
+      method: 'DELETE',
+      headers: authHeaders(token),
+    });
+    const body = await response.json();
+    if (response.ok) return { ok: true, data: body };
+    return { ok: false, error: body.error ?? LOAD_ERROR, needsLogin: response.status === 401 };
+  } catch {
+    return { ok: false, error: CONNECTION_ERROR, needsLogin: false };
   }
 }
 

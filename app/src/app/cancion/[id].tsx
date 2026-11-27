@@ -23,8 +23,8 @@ export default function SongScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const desktop = useIsDesktop();
-  const { state, retry, loadMore, loadingMore, loadMoreError, updateItem, addReview, signedIn } =
-    useCatalogItem('song', String(id), getSong);
+  const ficha = useCatalogItem('song', String(id), getSong);
+  const { state, retry, loadMore, loadingMore, loadMoreError, updateItem, signedIn } = ficha;
 
   const rating = useRating(
     'song',
@@ -33,7 +33,7 @@ export default function SongScreen() {
     updateItem,
   );
 
-  const review = useReview('song', String(id), rating.value, updateItem, addReview);
+  const review = useReview('song', String(id), rating.value, ficha);
 
   if (state.status === 'loading') return <ItemStatus loading />;
   if (state.status === 'error') {
@@ -76,7 +76,18 @@ export default function SongScreen() {
             onRate={rating.rate}
           >
             {signedIn && song.myReview ? (
-              <MyReview body={song.myReview.body} privacy={song.myReview.privacy} />
+              <MyReview
+                body={song.myReview.body}
+                privacy={song.myReview.privacy}
+                placeholder="¿Qué te ha parecido la canción?"
+                saving={review.publishing}
+                errors={review.errors}
+                removing={review.removing}
+                removeError={review.removeError}
+                onSave={review.save}
+                onRemove={review.remove}
+                onClearErrors={review.clearErrors}
+              />
             ) : null}
             {signedIn && !song.myReview ? (
               <ReviewComposer
