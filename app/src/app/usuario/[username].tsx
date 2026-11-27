@@ -1,9 +1,12 @@
 // HU-24 · Consultar el perfil de otro usuario (PA-24-01 a 03): su información y sus carpetas
 // con lo que puedes ver (RN-08). Si hay un bloqueo entre los dos, no se muestra (RN-12).
+// HU-41, HU-58 y HU-42 · Desde aquí se envía, cancela o responde la solicitud de amistad y se
+// elimina la amistad.
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { FriendButton } from '../../components/FriendButton';
 import { useIsDesktop } from '../../components/ItemPage';
 import { folderFrom, ProfileView } from '../../components/ProfileView';
 import { TopBar } from '../../components/TopBar';
@@ -28,12 +31,15 @@ export default function UserProfileScreen() {
   const desktop = useIsDesktop();
   const params = useLocalSearchParams<{ username: string; carpeta?: string }>();
   const username = String(params.username ?? '');
-  const folder = folderFrom(params.carpeta);
+  // La carpeta Amigos solo está en tu perfil.
+  const folder = folderFrom(params.carpeta === 'amigos' ? undefined : params.carpeta);
   const session = getSession();
   const token = session?.token;
   // Guardado con el usuario al que corresponde: al pasar a otro perfil, vuelve a «cargando».
   const [stored, setStored] = useState<{ key: string; state: State } | null>(null);
   const state: State = stored?.key === username ? stored.state : { status: 'loading' };
+  // Al cambiar la amistad cambia lo que puedes ver: se vuelve a pedir el perfil.
+  const [version, setVersion] = useState(0);
 
   const onExpired = useCallback(() => {
     clearSession();
@@ -63,7 +69,7 @@ export default function UserProfileScreen() {
     return () => {
       active = false;
     };
-  }, [username, token]);
+  }, [username, token, version]);
 
   // Tu propio nombre de usuario lleva a tu perfil, con todo lo tuyo.
   if (state.status === 'ready' && state.profile.relationship.isMe) {
@@ -92,8 +98,14 @@ export default function UserProfileScreen() {
             loadFavorites={loadFavorites}
             onExpired={onExpired}
             actions={
-              state.profile.relationship.isFriend ? (
-                <Text style={[styles.badge, { color: colors.accentText }]}>✓ SOIS AMIGOS</Text>
+              token ? (
+                <FriendButton
+                  username={state.profile.user.username}
+                  state={state.profile.relationship}
+                  token={token}
+                  onChange={() => setVersion((value) => value + 1)}
+                  onExpired={onExpired}
+                />
               ) : null
             }
           />
@@ -108,5 +120,4 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: 16 },
   contentDesktop: { paddingHorizontal: 48, paddingTop: 32 },
   message: { fontFamily: fonts.body, fontSize: 16 },
-  badge: { fontFamily: fonts.monoMedium, fontSize: 12 },
 });

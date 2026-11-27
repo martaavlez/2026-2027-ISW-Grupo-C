@@ -1,10 +1,12 @@
 // HU-06 · Consultar mi perfil (PA-06-01): tu información y las carpetas Reseñas,
 // Favoritos (canciones, álbumes y artistas) y Tableros con todo tu contenido (diseño HertzPerfil).
 // Las listas largas salen por partes, con «Ver más».
+// HU-58 y HU-42 · En la carpeta Amigos respondes las solicitudes y eliminas amistades.
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { FriendsFolder } from '../components/FriendsFolder';
 import { useIsDesktop } from '../components/ItemPage';
 import { folderFrom, ProfileView } from '../components/ProfileView';
 import { TopBar } from '../components/TopBar';
@@ -32,6 +34,9 @@ export default function ProfileScreen() {
   const session = getSession();
   const token = session?.token;
   const [state, setState] = useState<State>({ status: 'loading' });
+  // Al aceptar o eliminar una amistad cambia el número de amigos: se vuelve a pedir el perfil.
+  const [version, setVersion] = useState(0);
+  const refresh = useCallback(() => setVersion((value) => value + 1), []);
 
   // Sesión caducada (al cargar o con un «Ver más»): a iniciar sesión otra vez.
   const onExpired = useCallback(() => {
@@ -57,7 +62,7 @@ export default function ProfileScreen() {
     return () => {
       active = false;
     };
-  }, [token, onExpired]);
+  }, [token, onExpired, version]);
 
   if (!session || !token) return <Redirect href="/acceso" />;
 
@@ -82,6 +87,9 @@ export default function ProfileScreen() {
             loadReviews={loadReviews}
             loadFavorites={loadFavorites}
             onExpired={onExpired}
+            friendsFolder={
+              <FriendsFolder token={token} onExpired={onExpired} onChanged={refresh} />
+            }
           />
         ) : null}
       </ScrollView>

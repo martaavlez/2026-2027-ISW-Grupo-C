@@ -17,7 +17,7 @@ import { useIsDesktop } from './ItemPage';
 import { ProfileReviews } from './ProfileReviews';
 import { Worm } from './Worm';
 
-export const PROFILE_FOLDERS = ['resenas', 'favoritos', 'tableros'] as const;
+export const PROFILE_FOLDERS = ['resenas', 'favoritos', 'tableros', 'amigos'] as const;
 export type ProfileFolder = (typeof PROFILE_FOLDERS)[number];
 
 /** Lo que tienen en común tu perfil y el de otro: los favoritos pueden no ser visibles. */
@@ -40,6 +40,8 @@ type Props = {
   onExpired: () => void;
   /** Botones bajo los contadores (la amistad, en el perfil de otro usuario). */
   actions?: ReactNode;
+  /** Solo en tu perfil: la carpeta Amigos, con solicitudes y amigos (HU-58 y HU-42). */
+  friendsFolder?: ReactNode;
 };
 
 export function folderFrom(value: string | undefined): ProfileFolder {
@@ -79,6 +81,7 @@ export function ProfileView({
   loadFavorites,
   onExpired,
   actions,
+  friendsFolder,
 }: Props) {
   const colors = useColors();
   const desktop = useIsDesktop();
@@ -124,6 +127,15 @@ export function ProfileView({
             label: `TABLEROS · ${formatCount(counts.boards)}`,
             shortLabel: 'TABLEROS',
           },
+          ...(friendsFolder
+            ? [
+                {
+                  key: 'amigos',
+                  label: `AMIGOS · ${formatCount(counts.friends)}`,
+                  shortLabel: 'AMIGOS',
+                },
+              ]
+            : []),
         ]}
         active={folder}
         onChange={(key) => onFolderChange(key as ProfileFolder)}
@@ -147,6 +159,7 @@ export function ProfileView({
         {folder === 'favoritos' && !profile.favorites ? (
           <Text style={[styles.message, ink]}>Sus favoritos no son visibles para ti.</Text>
         ) : null}
+        {folder === 'amigos' ? friendsFolder : null}
         {folder === 'tableros' ? (
           <BoardsGrid
             boards={profile.boards}
