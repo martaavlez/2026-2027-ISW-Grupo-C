@@ -20,6 +20,7 @@ const { createAuthRouter, createSessionRouter } = require('./routes/auth');
 const { createBoardRouter } = require('./routes/boards');
 const { createCatalogRouter } = require('./routes/catalog');
 const { createFavoriteRouter } = require('./routes/favorites');
+const { createBlockRouter } = require('./routes/blocks');
 const { createFollowRouter } = require('./routes/follows');
 const { createFriendRouter } = require('./routes/friends');
 const { createProfileRouter } = require('./routes/profile');
@@ -31,6 +32,8 @@ const { createSearchService } = require('./search/search-service');
 const { createHealthRouter } = require('./routes/health');
 const { createFavoriteRepository } = require('./favorites/favorite-repository');
 const { createFavoriteService } = require('./favorites/favorite-service');
+const { createBlockRepository } = require('./blocks/block-repository');
+const { createBlockService } = require('./blocks/block-service');
 const { createFollowRepository } = require('./follows/follow-repository');
 const { createFollowService } = require('./follows/follow-service');
 const { createFriendRepository } = require('./friends/friend-repository');
@@ -70,6 +73,7 @@ function createDefaultServices(db) {
     profileService: createProfileService({ profiles, favorites, friends }),
     friendService: createFriendService({ friends, profiles }),
     followService: createFollowService({ follows: createFollowRepository(db.pool), profiles }),
+    blockService: createBlockService({ blocks: createBlockRepository(db.pool), profiles }),
     ratingService: createRatingService({ ratings, catalog }),
     reviewService: createReviewService({ reviews, catalog }),
     searchService: createSearchService({ searchRepository: createSearchRepository(db.pool) }),
@@ -117,6 +121,7 @@ function createApp({
   reviewPublishLimit,
   friendChangesLimit,
   followChangesLimit,
+  blockChangesLimit,
   profileChangesLimit,
   boardChangesLimit,
 }) {
@@ -150,6 +155,7 @@ function createApp({
   app.use(createReviewRouter(services.reviewService, reviewPublishLimit));
   app.use(createFriendRouter(services.friendService, friendChangesLimit));
   app.use(createFollowRouter(services.followService, followChangesLimit));
+  app.use(createBlockRouter(services.blockService, blockChangesLimit));
   app.use(createAccountRouter(services.accountService, profileChangesLimit));
   app.use(createBoardRouter(services.boardService, boardChangesLimit));
   app.use('/search', createSearchRouter(services.searchService));

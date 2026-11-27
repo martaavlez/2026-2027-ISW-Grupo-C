@@ -1,11 +1,12 @@
 // HU-24 · Consultar el perfil de otro usuario (PA-24-01 a 03): su información y sus carpetas
 // con lo que puedes ver (RN-08). Si hay un bloqueo entre los dos, no se muestra (RN-12).
 // HU-41, HU-58 y HU-42 · Desde aquí se envía, cancela o responde la solicitud de amistad y se
-// elimina la amistad. HU-10 y HU-48 · Y se sigue o se deja de seguir.
+// elimina la amistad. HU-10 y HU-48 · Y se sigue o se deja de seguir. HU-35 · Y se bloquea.
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { BlockButton } from '../../components/BlockButton';
 import { FollowButton } from '../../components/FollowButton';
 import { FriendButton } from '../../components/FriendButton';
 import { useIsDesktop } from '../../components/ItemPage';
@@ -113,6 +114,14 @@ export default function UserProfileScreen() {
                     state={state.profile.relationship}
                     token={token}
                     onChange={() => setVersion((value) => value + 1)}
+                    onExpired={onExpired}
+                  />
+                  <BlockButton
+                    username={state.profile.user.username}
+                    token={token}
+                    onBlocked={() =>
+                      router.replace({ pathname: '/perfil', params: { carpeta: 'amigos' } })
+                    }
                     onExpired={onExpired}
                   />
                 </View>

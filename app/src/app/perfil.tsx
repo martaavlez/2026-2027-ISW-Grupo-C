@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../components/Button';
+import { BlockedList } from '../components/BlockedList';
 import { FollowingList } from '../components/FollowingList';
 import { FriendsFolder } from '../components/FriendsFolder';
 import { useIsDesktop } from '../components/ItemPage';
@@ -127,6 +128,7 @@ export default function ProfileScreen() {
               <View style={styles.people}>
                 <FriendsFolder token={token} onExpired={onExpired} onChanged={refresh} />
                 <FollowingList token={token} onExpired={onExpired} onChanged={refresh} />
+                <BlockedList token={token} onExpired={onExpired} onChanged={refresh} />
               </View>
             }
           />
