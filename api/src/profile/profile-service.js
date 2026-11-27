@@ -19,7 +19,10 @@ const FAVORITES_HIDDEN = 'Sus favoritos no son visibles para ti.';
 const LEVELS_FOR_FRIEND = ['public', 'friends'];
 const LEVELS_FOR_OTHERS = ['public'];
 
-function createProfileService({ profiles, favorites }) {
+// Sin repositorio de amistades (en algunos tests) no hay solicitudes de por medio.
+const NO_FRIENDS = { findState: async () => ({ friendship: 'none', requestId: null }) };
+
+function createProfileService({ profiles, favorites, friends = NO_FRIENDS }) {
   /** Perfil con la primera página de reseñas y de favoritos (null si no se pueden ver). */
   async function buildProfile(content, favoritesVisible) {
     return {
@@ -81,13 +84,17 @@ function createProfileService({ profiles, favorites }) {
   /** HU-24 · El perfil de otro usuario con lo que quien mira puede ver (PA-24-01 y 02). */
   async function getUserProfile(viewerId, rawUsername) {
     const seen = await access(viewerId, rawUsername);
-    const [content, favoritesVisible] = await Promise.all([
+    const [content, favoritesVisible, friendship] = await Promise.all([
       profiles.findContent(seen.user, { reviewsLimit: REVIEWS_PAGE_SIZE, levels: seen.levels }),
       canSeeFavorites(seen),
+      // HU-41 · Para el botón de amistad: amigos, solicitud enviada, recibida o nada.
+      viewerId && !seen.isMe
+        ? friends.findState(viewerId, seen.user.id)
+        : { friendship: 'none', requestId: null },
     ]);
     return {
       ...(await buildProfile(content, favoritesVisible)),
-      relationship: { isMe: seen.isMe, isFriend: seen.isFriend },
+      relationship: { isMe: seen.isMe, isFriend: seen.isFriend, ...friendship },
     };
   }
 

@@ -104,7 +104,12 @@ describeIfDatabase('HU-24 · Consultar el perfil de otro usuario (integración)'
     // Sus favoritos son solo para amigos.
     expect(response.body.favorites).toBeNull();
     expect(response.body.counts).toMatchObject({ reviews: 1, boards: 1, favorites: null });
-    expect(response.body.relationship).toEqual({ isMe: false, isFriend: false });
+    expect(response.body.relationship).toEqual({
+      isMe: false,
+      isFriend: false,
+      friendship: 'none',
+      requestId: null,
+    });
   });
 
   test('test_PA_24_01_visitor_seesOnlyPublicContent', async () => {

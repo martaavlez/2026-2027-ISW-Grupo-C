@@ -7,7 +7,15 @@ import type { SearchResults } from '../services/api';
 import { fonts, useColors } from '../theme';
 
 /** Miniatura cuadrada (portada) o redonda (artista, usuario). Sin imagen, la inicial. */
-function Thumb({ url, label, round }: { url: string | null; label: string; round?: boolean }) {
+export function Thumb({
+  url,
+  label,
+  round,
+}: {
+  url: string | null;
+  label: string;
+  round?: boolean;
+}) {
   const colors = useColors();
   const [failed, setFailed] = useState(false);
   return (
@@ -38,16 +46,19 @@ function Thumb({ url, label, round }: { url: string | null; label: string; round
   );
 }
 
-function Row({
+/** Una fila de resultado; `actions` son botones a la derecha (aceptar una solicitud…). */
+export function Row({
   thumb,
   title,
   href,
   detail,
+  actions,
 }: {
   thumb: ReactNode;
   title: string;
   href?: string;
   detail: string;
+  actions?: ReactNode;
 }) {
   const colors = useColors();
   const titleStyle = [styles.title, { color: colors.ink }];
@@ -64,6 +75,7 @@ function Row({
         )}
         {detail ? <Text style={[styles.detail, { color: colors.ink }]}>{detail}</Text> : null}
       </View>
+      {actions ? <View style={styles.actions}>{actions}</View> : null}
     </View>
   );
 }
@@ -179,6 +191,7 @@ export function SearchResultList({ results }: { results: SearchResults }) {
 }
 
 const styles = StyleSheet.create({
+  actions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginLeft: 'auto' },
   sections: { gap: 36 },
   heading: { fontFamily: fonts.monoMedium, fontSize: 13, marginBottom: 10 },
   list: { borderBottomWidth: 1 },

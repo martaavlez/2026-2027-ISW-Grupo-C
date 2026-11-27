@@ -26,11 +26,16 @@ export function FolderTabs({ tabs, active, onChange, children }: Props) {
   const colors = useColors();
   const desktop = useIsDesktop();
   const border = { borderColor: colors.ink };
-  // En móvil las tres pestañas caben en una fila, sin solaparse.
-  const layout = desktop
-    ? { width: '22%', start: 27, step: 24, frontWidth: '24%' }
-    : { width: '30%', start: 38, step: 31, frontWidth: '36%' };
-  const compact = desktop ? null : styles.compact;
+  // En móvil todas las pestañas caben en una fila, sin solaparse: con cuatro (tu perfil, con
+  // Amigos) son más estrechas.
+  const mobile =
+    tabs.length > 3
+      ? { width: '23%', start: 29, step: 24, frontWidth: '28%' }
+      : { width: '30%', start: 38, step: 31, frontWidth: '36%' };
+  const layout = desktop ? { width: '22%', start: 27, step: 24, frontWidth: '24%' } : mobile;
+  const crowded = !desktop && tabs.length > 3;
+  const compact = desktop ? null : [styles.compact, crowded ? styles.crowded : null];
+  const tabText = [styles.tabText, crowded ? styles.crowdedText : null];
   const activeTab = tabs.find((tab) => tab.key === active) ?? tabs[0];
   const backTabs = tabs.filter((tab) => tab.key !== activeTab.key);
 
@@ -58,7 +63,7 @@ export function FolderTabs({ tabs, active, onChange, children }: Props) {
             },
           ]}
         >
-          <Text numberOfLines={1} style={[styles.tabText, { color: colors.ink }]}>
+          <Text numberOfLines={1} style={[tabText, { color: colors.ink }]}>
             {desktop ? tab.label : (tab.shortLabel ?? tab.label)}
           </Text>
         </Pressable>
@@ -93,7 +98,7 @@ export function FolderTabs({ tabs, active, onChange, children }: Props) {
         ]}
       >
         <View style={[styles.dot, border, { backgroundColor: colors.accent }]} />
-        <Text numberOfLines={1} style={[styles.tabText, styles.activeText, { color: colors.ink }]}>
+        <Text numberOfLines={1} style={[tabText, styles.activeText, { color: colors.ink }]}>
           {desktop ? activeTab.label : (activeTab.shortLabel ?? activeTab.label)}
         </Text>
       </View>
@@ -138,6 +143,8 @@ const styles = StyleSheet.create({
   backTab: { borderBottomWidth: 0 },
   frontTab: { top: -20, left: 0, zIndex: 2 },
   compact: { paddingHorizontal: 8, gap: 6 },
+  crowded: { paddingHorizontal: 5, gap: 4 },
+  crowdedText: { fontSize: 10 },
   dot: { width: 8, height: 8, borderRadius: 4, borderWidth: 1.5 },
   tabText: { fontFamily: fonts.mono, fontSize: 12, flexShrink: 1 },
   activeText: { fontFamily: fonts.monoMedium },

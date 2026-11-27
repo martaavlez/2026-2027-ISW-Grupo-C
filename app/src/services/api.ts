@@ -528,8 +528,14 @@ export function getMyReviews(
 
 // ---------- HU-24 · Consultar el perfil de otro usuario ----------
 
+// ---------- HU-41, HU-58 y HU-42 · Amistades ----------
+
+/** Amigos, solicitud enviada por ti, recibida por ti o nada. */
+export type Friendship = 'none' | 'friends' | 'sent' | 'received';
+export type FriendshipState = { friendship: Friendship; requestId: string | null };
+
 /** Tu relación con el usuario del perfil. */
-export type Relationship = { isMe: boolean; isFriend: boolean };
+export type Relationship = { isMe: boolean; isFriend: boolean } & FriendshipState;
 
 /**
  * El perfil de otro usuario con lo que puedes ver (RN-08). `favorites` es null si sus
@@ -584,4 +590,102 @@ export function getUserFavorites<K extends FavoriteType>(
   fetchFn: typeof fetch = fetch,
 ): Promise<PageResult<FavoriteItem[K]>> {
   return getPage(`${userPath(username)}/favorites?type=${type}&offset=${offset}`, token, fetchFn);
+}
+
+export type FriendResult =
+  { ok: true; data: FriendshipState } | { ok: false; error: string; needsLogin: boolean };
+
+async function changeFriendship(
+  method: 'PUT' | 'DELETE' | 'POST',
+  path: string,
+  token: string,
+  fetchFn: typeof fetch,
+): Promise<FriendResult> {
+  try {
+    const response = await fetchFn(`${API_URL}${path}`, { method, headers: authHeaders(token) });
+    const body = await response.json();
+    if (response.ok) return { ok: true, data: body as FriendshipState };
+    const error = body.errors?.friendship ?? body.error ?? LOAD_ERROR;
+    return { ok: false, error, needsLogin: response.status === 401 };
+  } catch {
+    return { ok: false, error: CONNECTION_ERROR, needsLogin: false };
+  }
+}
+
+/** HU-41 · Envía una solicitud de amistad (PA-41-01). */
+export function sendFriendRequest(username: string, token: string, fetchFn: typeof fetch = fetch) {
+  return changeFriendship('PUT', `${userPath(username)}/friend-request`, token, fetchFn);
+}
+
+/** HU-41 · Cancela la solicitud que enviaste y sigue pendiente (PA-41-02). */
+export function cancelFriendRequest(
+  username: string,
+  token: string,
+  fetchFn: typeof fetch = fetch,
+) {
+  return changeFriendship('DELETE', `${userPath(username)}/friend-request`, token, fetchFn);
+}
+
+/** HU-58 · Acepta (PA-58-01) o rechaza (PA-58-02) una solicitud que has recibido. */
+export function respondFriendRequest(
+  requestId: string,
+  accept: boolean,
+  token: string,
+  fetchFn: typeof fetch = fetch,
+) {
+  const action = accept ? 'accept' : 'reject';
+  return changeFriendship(
+    'POST',
+    `/me/friend-requests/${encodeURIComponent(requestId)}/${action}`,
+    token,
+    fetchFn,
+  );
+}
+
+/** HU-42 · Deja de ser amigo de alguien (PA-42-01). */
+export function removeFriend(username: string, token: string, fetchFn: typeof fetch = fetch) {
+  return changeFriendship('DELETE', `${userPath(username)}/friendship`, token, fetchFn);
+}
+
+export type Person = { username: string; name: string; photoUrl: string | null };
+export type FriendRequest = Person & { id: string; requestedAt: string };
+export type Friend = Person & { since: string };
+
+/** Las solicitudes que has recibido y siguen pendientes. */
+export async function getFriendRequests(
+  token: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<
+  { ok: true; data: FriendRequest[] } | { ok: false; error: string; needsLogin: boolean }
+> {
+  try {
+    const response = await fetchFn(`${API_URL}/me/friend-requests`, {
+      headers: authHeaders(token),
+    });
+    if (response.ok)
+      return { ok: true, data: ((await response.json()) as { items: FriendRequest[] }).items };
+    return { ok: false, error: LOAD_ERROR, needsLogin: response.status === 401 };
+  } catch {
+    return { ok: false, error: CONNECTION_ERROR, needsLogin: false };
+  }
+}
+
+/** Tus amigos, por partes. */
+export async function getFriends(
+  token: string,
+  offset: number,
+  fetchFn: typeof fetch = fetch,
+): Promise<
+  | { ok: true; data: Page<Friend> & { offset: number; pageSize: number } }
+  | { ok: false; error: string; needsLogin: boolean }
+> {
+  try {
+    const response = await fetchFn(`${API_URL}/me/friends?offset=${offset}`, {
+      headers: authHeaders(token),
+    });
+    if (response.ok) return { ok: true, data: await response.json() };
+    return { ok: false, error: LOAD_ERROR, needsLogin: response.status === 401 };
+  } catch {
+    return { ok: false, error: CONNECTION_ERROR, needsLogin: false };
+  }
 }

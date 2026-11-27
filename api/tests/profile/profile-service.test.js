@@ -132,7 +132,12 @@ test('test_PA_24_01_notFriend_asksOnlyForPublicContent', async () => {
   });
   expect(result.favorites).toBeNull();
   expect(result.counts.favorites).toBeNull();
-  expect(result.relationship).toEqual({ isMe: false, isFriend: false });
+  expect(result.relationship).toEqual({
+    isMe: false,
+    isFriend: false,
+    friendship: 'none',
+    requestId: null,
+  });
 });
 
 test('test_PA_24_02_friend_alsoSeesFriendsOnly', async () => {

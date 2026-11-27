@@ -14,6 +14,7 @@ const { ApiError } = require('./errors');
 const { createAuthRouter, createSessionRouter } = require('./routes/auth');
 const { createCatalogRouter } = require('./routes/catalog');
 const { createFavoriteRouter } = require('./routes/favorites');
+const { createFriendRouter } = require('./routes/friends');
 const { createProfileRouter } = require('./routes/profile');
 const { createRatingRouter } = require('./routes/ratings');
 const { createReviewRouter } = require('./routes/reviews');
@@ -23,6 +24,8 @@ const { createSearchService } = require('./search/search-service');
 const { createHealthRouter } = require('./routes/health');
 const { createFavoriteRepository } = require('./favorites/favorite-repository');
 const { createFavoriteService } = require('./favorites/favorite-service');
+const { createFriendRepository } = require('./friends/friend-repository');
+const { createFriendService } = require('./friends/friend-service');
 const { createProfileRepository } = require('./profile/profile-repository');
 const { createProfileService } = require('./profile/profile-service');
 const { createRatingRepository } = require('./ratings/rating-repository');
@@ -42,6 +45,8 @@ function createDefaultServices(db) {
   const reviews = createReviewRepository(db.pool);
   const ratings = createRatingRepository(db.pool);
   const favorites = createFavoriteRepository(db.pool);
+  const profiles = createProfileRepository(db.pool);
+  const friends = createFriendRepository(db.pool);
   return {
     authService: createAuthService({ users, tokenOptions }),
     loginService: createLoginService({
@@ -51,10 +56,8 @@ function createDefaultServices(db) {
     resolveViewer: createViewerResolver({ users, secret: config.jwtSecret }),
     catalogService: createCatalogService({ catalog, reviews, ratings, favorites }),
     favoriteService: createFavoriteService({ favorites }),
-    profileService: createProfileService({
-      profiles: createProfileRepository(db.pool),
-      favorites,
-    }),
+    profileService: createProfileService({ profiles, favorites, friends }),
+    friendService: createFriendService({ friends, profiles }),
     ratingService: createRatingService({ ratings, catalog }),
     reviewService: createReviewService({ reviews, catalog }),
     searchService: createSearchService({ searchRepository: createSearchRepository(db.pool) }),
@@ -100,6 +103,7 @@ function createApp({
   authRateLimit = config.authRateLimit,
   readRateLimit = config.readRateLimit,
   reviewPublishLimit,
+  friendChangesLimit,
 }) {
   const app = express();
 
@@ -129,6 +133,7 @@ function createApp({
   app.use(createFavoriteRouter(services.favoriteService));
   app.use(createProfileRouter(services.profileService));
   app.use(createReviewRouter(services.reviewService, reviewPublishLimit));
+  app.use(createFriendRouter(services.friendService, friendChangesLimit));
   app.use('/search', createSearchRouter(services.searchService));
 
   app.use((req, res) => {

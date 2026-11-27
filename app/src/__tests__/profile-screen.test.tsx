@@ -2,7 +2,16 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import FavoritesScreen from '../app/favoritos';
 import ProfileScreen from '../app/perfil';
-import { getMyFavorites, getMyProfile, getMyReviews, type OwnProfile } from '../services/api';
+import {
+  getFriendRequests,
+  getFriends,
+  getMyFavorites,
+  getMyProfile,
+  getMyReviews,
+  removeFriend,
+  respondFriendRequest,
+  type OwnProfile,
+} from '../services/api';
 import { clearSession, getSession, saveSession } from '../services/session';
 
 const mockRouter = { replace: jest.fn(), setParams: jest.fn() };
@@ -24,6 +33,10 @@ jest.mock('../services/api', () => ({
   getMyProfile: jest.fn(),
   getMyFavorites: jest.fn(),
   getMyReviews: jest.fn(),
+  getFriendRequests: jest.fn(),
+  getFriends: jest.fn(),
+  respondFriendRequest: jest.fn(),
+  removeFriend: jest.fn(),
 }));
 jest.mock('react-native-svg', () => ({ SvgXml: () => null }));
 
@@ -321,4 +334,93 @@ test('test_ProfileScreen_error_isShown', async () => {
 test('test_oldFavoritesAddress_goesToProfileFolder', async () => {
   await render(<FavoritesScreen />);
   expect(screen.getByText(/carpeta":"favoritos/)).toBeTruthy();
+});
+
+// ---------- HU-58 y HU-42 · Carpeta Amigos ----------
+
+describe('Carpeta Amigos', () => {
+  const nora = { username: 'nora.eco', name: 'Nora', photoUrl: null };
+
+  async function openFriends() {
+    saveSession(session);
+    mockParams = { carpeta: 'amigos' };
+    jest.mocked(getMyProfile).mockResolvedValue({ ok: true, data: profile });
+    await render(<ProfileScreen />);
+  }
+
+  test('test_PA_58_01_acceptARequest_refreshesTheFolder', async () => {
+    jest
+      .mocked(getFriendRequests)
+      .mockResolvedValueOnce({
+        ok: true,
+        data: [{ ...nora, id: '8', requestedAt: new Date().toISOString() }],
+      })
+      .mockResolvedValue({ ok: true, data: [] });
+    jest
+      .mocked(getFriends)
+      .mockResolvedValueOnce({ ok: true, data: { total: 0, items: [], offset: 0, pageSize: 24 } })
+      .mockResolvedValue({
+        ok: true,
+        data: { total: 1, items: [{ ...nora, since: '' }], offset: 0, pageSize: 24 },
+      });
+    jest
+      .mocked(respondFriendRequest)
+      .mockResolvedValue({ ok: true, data: { friendship: 'friends', requestId: null } });
+
+    await openFriends();
+    expect(await screen.findByText('SOLICITUDES RECIBIDAS · 1')).toBeTruthy();
+    expect(screen.getByText('@nora.eco').props.accessibilityHint).toBe('/usuario/nora.eco');
+    await fireEvent.press(screen.getByRole('button', { name: 'Aceptar' }));
+
+    expect(respondFriendRequest).toHaveBeenCalledWith('8', true, 'tok');
+    expect(await screen.findByText('AMIGOS · 1')).toBeTruthy();
+    expect(screen.queryByText('SOLICITUDES RECIBIDAS · 1')).toBeNull();
+  });
+
+  test('test_PA_58_02_rejectARequest', async () => {
+    jest.mocked(getFriendRequests).mockResolvedValue({
+      ok: true,
+      data: [{ ...nora, id: '8', requestedAt: new Date().toISOString() }],
+    });
+    jest
+      .mocked(getFriends)
+      .mockResolvedValue({ ok: true, data: { total: 0, items: [], offset: 0, pageSize: 24 } });
+    jest
+      .mocked(respondFriendRequest)
+      .mockResolvedValue({ ok: true, data: { friendship: 'none', requestId: null } });
+
+    await openFriends();
+    await fireEvent.press(await screen.findByRole('button', { name: 'Rechazar' }));
+
+    expect(respondFriendRequest).toHaveBeenCalledWith('8', false, 'tok');
+  });
+
+  test('test_PA_42_01_removeAFriend_asksFirst', async () => {
+    jest.mocked(getFriendRequests).mockResolvedValue({ ok: true, data: [] });
+    jest.mocked(getFriends).mockResolvedValue({
+      ok: true,
+      data: { total: 1, items: [{ ...nora, since: '' }], offset: 0, pageSize: 24 },
+    });
+    jest
+      .mocked(removeFriend)
+      .mockResolvedValue({ ok: true, data: { friendship: 'none', requestId: null } });
+
+    await openFriends();
+    await fireEvent.press(await screen.findByRole('button', { name: 'Eliminar' }));
+    expect(removeFriend).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByRole('button', { name: 'Sí, eliminar' }));
+
+    expect(removeFriend).toHaveBeenCalledWith('nora.eco', 'tok');
+  });
+
+  test('test_noFriends_explainsHowToAddThem', async () => {
+    jest.mocked(getFriendRequests).mockResolvedValue({ ok: true, data: [] });
+    jest
+      .mocked(getFriends)
+      .mockResolvedValue({ ok: true, data: { total: 0, items: [], offset: 0, pageSize: 24 } });
+
+    await openFriends();
+
+    expect(await screen.findByText(/Todavía no tienes amigos/)).toBeTruthy();
+  });
 });
