@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../components/Button';
+import { FollowingList } from '../components/FollowingList';
 import { FriendsFolder } from '../components/FriendsFolder';
 import { useIsDesktop } from '../components/ItemPage';
 import { ProfileEditor } from '../components/ProfileEditor';
@@ -123,7 +124,10 @@ export default function ProfileScreen() {
               )
             }
             friendsFolder={
-              <FriendsFolder token={token} onExpired={onExpired} onChanged={refresh} />
+              <View style={styles.people}>
+                <FriendsFolder token={token} onExpired={onExpired} onChanged={refresh} />
+                <FollowingList token={token} onExpired={onExpired} onChanged={refresh} />
+              </View>
             }
           />
         ) : null}
@@ -138,4 +142,5 @@ const styles = StyleSheet.create({
   contentDesktop: { paddingHorizontal: 48, paddingTop: 32 },
   message: { fontFamily: fonts.body, fontSize: 16 },
   actions: { flexDirection: 'row', gap: 10, flexWrap: 'wrap', marginTop: 6 },
+  people: { gap: 32 },
 });

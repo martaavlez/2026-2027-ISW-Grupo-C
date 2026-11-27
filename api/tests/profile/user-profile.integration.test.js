@@ -107,6 +107,7 @@ describeIfDatabase('HU-24 · Consultar el perfil de otro usuario (integración)'
     expect(response.body.relationship).toEqual({
       isMe: false,
       isFriend: false,
+      isFollowing: false,
       friendship: 'none',
       requestId: null,
     });

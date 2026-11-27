@@ -536,8 +536,12 @@ export function getMyReviews(
 export type Friendship = 'none' | 'friends' | 'sent' | 'received';
 export type FriendshipState = { friendship: Friendship; requestId: string | null };
 
-/** Tu relación con el usuario del perfil. */
-export type Relationship = { isMe: boolean; isFriend: boolean } & FriendshipState;
+/** Tu relación con el usuario del perfil. `isFollowing`: si le sigues (HU-10). */
+export type Relationship = {
+  isMe: boolean;
+  isFriend: boolean;
+  isFollowing?: boolean;
+} & FriendshipState;
 
 /**
  * El perfil de otro usuario con lo que puedes ver (RN-08). `favorites` es null si sus

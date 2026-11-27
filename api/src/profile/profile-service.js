@@ -67,14 +67,21 @@ function createProfileService({ profiles, favorites, friends = NO_FRIENDS }) {
     if (!user) throw new NotFoundError(PROFILE_UNAVAILABLE);
     const isMe = viewerId === user.id;
     const relation = isMe
-      ? { friends: false, blocked: false }
+      ? { friends: false, following: false, blocked: false }
       : await profiles.findRelationship(viewerId, user.id);
     if (relation.blocked) throw new NotFoundError(PROFILE_UNAVAILABLE);
 
     let levels = LEVELS_FOR_OTHERS;
     if (isMe) levels = ALL_LEVELS;
     else if (relation.friends) levels = LEVELS_FOR_FRIEND;
-    return { user, levels, isMe, isFriend: relation.friends };
+    // RN-10: seguir no da acceso a más contenido que el público (PA-10-02).
+    return {
+      user,
+      levels,
+      isMe,
+      isFriend: relation.friends,
+      isFollowing: Boolean(relation.following),
+    };
   }
 
   async function canSeeFavorites({ user, levels }) {
@@ -94,7 +101,12 @@ function createProfileService({ profiles, favorites, friends = NO_FRIENDS }) {
     ]);
     return {
       ...(await buildProfile(content, favoritesVisible)),
-      relationship: { isMe: seen.isMe, isFriend: seen.isFriend, ...friendship },
+      relationship: {
+        isMe: seen.isMe,
+        isFriend: seen.isFriend,
+        isFollowing: seen.isFollowing,
+        ...friendship,
+      },
     };
   }
 
