@@ -34,6 +34,15 @@ async function previewFavorites(favorites, userId) {
   };
 }
 
+/** Una página de una subcategoría de los favoritos de un usuario («Ver más»). */
+async function favoritesPage(favorites, userId, rawType, rawOffset) {
+  const kind = typeof rawType === 'string' ? TYPES.get(rawType) : undefined;
+  if (!kind) throw new ValidationError({ type: 'Elige canciones, álbumes o artistas.' });
+  const offset = parseOffset(rawOffset);
+  const page = await favorites.findPage(userId, kind, { limit: PAGE_SIZE, offset });
+  return { ...page, offset, pageSize: PAGE_SIZE, items: page.items.map(SAFE[kind]) };
+}
+
 const LOGIN_REQUIRED = 'Para guardar favoritos, inicia sesión o crea una cuenta.';
 const NOT_FOUND = {
   song: 'La canción no existe',
@@ -62,11 +71,7 @@ function createFavoriteService({ favorites }) {
    */
   async function listMine(viewerId, rawType, rawOffset) {
     requireViewer(viewerId);
-    const kind = typeof rawType === 'string' ? TYPES.get(rawType) : undefined;
-    if (!kind) throw new ValidationError({ type: 'Elige canciones, álbumes o artistas.' });
-    const offset = parseOffset(rawOffset);
-    const page = await favorites.findPage(viewerId, kind, { limit: PAGE_SIZE, offset });
-    return { ...page, offset, pageSize: PAGE_SIZE, items: page.items.map(SAFE[kind]) };
+    return favoritesPage(favorites, viewerId, rawType, rawOffset);
   }
 
   return { setFavorite, listMine };
@@ -75,6 +80,8 @@ function createFavoriteService({ favorites }) {
 module.exports = {
   createFavoriteService,
   previewFavorites,
+  favoritesPage,
+  parseOffset,
   LOGIN_REQUIRED,
   PAGE_SIZE,
   PREVIEW_SIZE,

@@ -1,10 +1,9 @@
 import { Link } from 'expo-router';
-import { useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { albumTypeLabel, relativeTime, stars } from '../features/catalog/format';
 import { useMore } from '../features/profile/useMore';
-import { getMyReviews, type Page, type ProfileReview } from '../services/api';
+import type { Page, PageResult, ProfileReview } from '../services/api';
 import { fonts, useColors } from '../theme';
 import { MoreButton } from './MoreButton';
 import { PRIVACY_LABELS } from './ReviewComposer';
@@ -15,25 +14,23 @@ import { PRIVACY_LABELS } from './ReviewComposer';
  */
 export function ProfileReviews({
   reviews: first,
-  token,
+  loadFrom,
   onExpired,
+  emptyText = 'Todavía no has valorado ni reseñado nada. Busca un disco con la lupa y dale tus estrellas.',
   now,
 }: {
   reviews: Page<ProfileReview>;
-  token: string;
+  /** «Ver más»: trae las siguientes desde esa posición (las tuyas o las de otro usuario). */
+  loadFrom: (offset: number) => Promise<PageResult<ProfileReview>>;
   onExpired: () => void;
+  emptyText?: string;
   now?: Date;
 }) {
   const colors = useColors();
   const ink = { color: colors.ink };
-  const loadFrom = useCallback((offset: number) => getMyReviews(token, offset), [token]);
   const { items: reviews, ...more } = useMore(first, loadFrom, onExpired);
   if (reviews.length === 0) {
-    return (
-      <Text style={[styles.empty, ink]}>
-        Todavía no has valorado ni reseñado nada. Busca un disco con la lupa y dale tus estrellas.
-      </Text>
-    );
+    return <Text style={[styles.empty, ink]}>{emptyText}</Text>;
   }
   return (
     <View>

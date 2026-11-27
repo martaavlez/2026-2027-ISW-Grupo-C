@@ -35,3 +35,14 @@ test('test_getMyReviews_usesViewerAndOffset', async () => {
   expect(response.status).toBe(200);
   expect(getOwnReviews).toHaveBeenCalledWith('7', '10');
 });
+
+test('test_getUserProfile_passesViewerAndUsername', async () => {
+  const getUserProfile = jest.fn().mockResolvedValue({ user: { id: '9' } });
+
+  const response = await request(appWith({ getUserProfile }))
+    .get('/users/lucia.vinilo/profile')
+    .set('Authorization', 'Bearer t');
+
+  expect(response.status).toBe(200);
+  expect(getUserProfile).toHaveBeenCalledWith('7', 'lucia.vinilo');
+});

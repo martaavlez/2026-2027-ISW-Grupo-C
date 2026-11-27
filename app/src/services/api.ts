@@ -359,7 +359,7 @@ export type PageResult<T> =
 
 async function getPage<T>(
   path: string,
-  token: string,
+  token: string | undefined,
   fetchFn: typeof fetch,
 ): Promise<PageResult<T>> {
   try {
@@ -394,7 +394,7 @@ export async function setFavorite(
   }
 }
 
-type FavoriteItem = { songs: FavoriteSong; albums: FavoriteAlbum; artists: FavoriteArtist };
+export type FavoriteItem = { songs: FavoriteSong; albums: FavoriteAlbum; artists: FavoriteArtist };
 
 /** «Ver más» de una subcategoría de tus favoritos, a partir de los que ya se ven. */
 export function getMyFavorites<K extends FavoriteType>(
@@ -466,4 +466,64 @@ export function getMyReviews(
   fetchFn: typeof fetch = fetch,
 ): Promise<PageResult<ProfileReview>> {
   return getPage(`/me/reviews?offset=${offset}`, token, fetchFn);
+}
+
+// ---------- HU-24 · Consultar el perfil de otro usuario ----------
+
+/** Tu relación con el usuario del perfil. */
+export type Relationship = { isMe: boolean; isFriend: boolean };
+
+/**
+ * El perfil de otro usuario con lo que puedes ver (RN-08). `favorites` es null si sus
+ * favoritos no son visibles para ti, y entonces tampoco se dice cuántos tiene.
+ */
+export type UserProfile = Omit<OwnProfile, 'counts' | 'favorites'> & {
+  counts: Omit<OwnProfile['counts'], 'favorites'> & { favorites: number | null };
+  favorites: Favorites | null;
+  relationship: Relationship;
+};
+
+export type UserProfileResult =
+  { ok: true; data: UserProfile } | { ok: false; error: string; notFound: boolean };
+
+const PROFILE_UNAVAILABLE = 'Este perfil no está disponible.';
+
+const userPath = (username: string) => `/users/${encodeURIComponent(username)}`;
+
+export async function getUserProfile(
+  username: string,
+  token?: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<UserProfileResult> {
+  try {
+    const response = await fetchFn(`${API_URL}${userPath(username)}/profile`, {
+      headers: authHeaders(token),
+    });
+    if (response.ok) return { ok: true, data: (await response.json()) as UserProfile };
+    const notFound = response.status === 404;
+    return { ok: false, error: notFound ? PROFILE_UNAVAILABLE : LOAD_ERROR, notFound };
+  } catch {
+    return { ok: false, error: CONNECTION_ERROR, notFound: false };
+  }
+}
+
+/** «Ver más reseñas» en el perfil de otro usuario. */
+export function getUserReviews(
+  username: string,
+  offset: number,
+  token?: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<PageResult<ProfileReview>> {
+  return getPage(`${userPath(username)}/reviews?offset=${offset}`, token, fetchFn);
+}
+
+/** «Ver más» de una subcategoría de los favoritos de otro usuario. */
+export function getUserFavorites<K extends FavoriteType>(
+  username: string,
+  type: K,
+  offset: number,
+  token?: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<PageResult<FavoriteItem[K]>> {
+  return getPage(`${userPath(username)}/favorites?type=${type}&offset=${offset}`, token, fetchFn);
 }

@@ -156,6 +156,7 @@ export function SearchResultList({ results }: { results: SearchResults }) {
             key={user.username}
             thumb={<Thumb url={user.photoUrl} label={user.username} round />}
             title={`@${user.username}`}
+            href={`/usuario/${encodeURIComponent(user.username)}`}
             detail={user.name}
           />
         ))}
