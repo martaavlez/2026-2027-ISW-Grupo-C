@@ -1,11 +1,12 @@
 // HU-24 · Consultar el perfil de otro usuario (PA-24-01 a 03): su información y sus carpetas
 // con lo que puedes ver (RN-08). Si hay un bloqueo entre los dos, no se muestra (RN-12).
 // HU-41, HU-58 y HU-42 · Desde aquí se envía, cancela o responde la solicitud de amistad y se
-// elimina la amistad.
+// elimina la amistad. HU-10 y HU-48 · Y se sigue o se deja de seguir.
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { FollowButton } from '../../components/FollowButton';
 import { FriendButton } from '../../components/FriendButton';
 import { useIsDesktop } from '../../components/ItemPage';
 import { folderFrom, ProfileView } from '../../components/ProfileView';
@@ -99,13 +100,22 @@ export default function UserProfileScreen() {
             onExpired={onExpired}
             actions={
               token ? (
-                <FriendButton
-                  username={state.profile.user.username}
-                  state={state.profile.relationship}
-                  token={token}
-                  onChange={() => setVersion((value) => value + 1)}
-                  onExpired={onExpired}
-                />
+                <View style={styles.actions}>
+                  <FollowButton
+                    username={state.profile.user.username}
+                    following={Boolean(state.profile.relationship.isFollowing)}
+                    token={token}
+                    onChange={() => setVersion((value) => value + 1)}
+                    onExpired={onExpired}
+                  />
+                  <FriendButton
+                    username={state.profile.user.username}
+                    state={state.profile.relationship}
+                    token={token}
+                    onChange={() => setVersion((value) => value + 1)}
+                    onExpired={onExpired}
+                  />
+                </View>
               ) : null
             }
           />
@@ -120,4 +130,5 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: 16 },
   contentDesktop: { paddingHorizontal: 48, paddingTop: 32 },
   message: { fontFamily: fonts.body, fontSize: 16 },
+  actions: { gap: 10 },
 });

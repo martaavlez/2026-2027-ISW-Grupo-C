@@ -14,9 +14,11 @@ const BY_USERNAME = `
   SELECT id::text AS id, name, username, bio, photo_url AS "photoUrl"
     FROM users WHERE lower(username) = lower($1) AND status = 'active' AND role = 'user'`;
 
-// Si son amigos y si alguno de los dos ha bloqueado al otro (RN-12). $1 = quien mira.
+// Si son amigos, si quien mira ($1) le sigue (HU-10) y si alguno de los dos ha bloqueado al
+// otro (RN-12).
 const RELATIONSHIP = `
   SELECT
+    EXISTS (SELECT 1 FROM follows WHERE follower_id = $1 AND followed_id = $2) AS following,
     EXISTS (SELECT 1 FROM friendships
              WHERE status = 'accepted'
                AND ((requester_id = $1 AND recipient_id = $2)
@@ -104,9 +106,9 @@ function createProfileRepository(pool) {
     return (await pool.query(BY_USERNAME, [username])).rows[0] ?? null;
   }
 
-  /** Si quien mira y el otro son amigos o hay un bloqueo entre ellos. Un visitante no es nada. */
+  /** Si son amigos, si le sigue y si hay un bloqueo entre ellos. Un visitante no es nada. */
   async function findRelationship(viewerId, userId) {
-    if (!viewerId) return { friends: false, blocked: false };
+    if (!viewerId) return { friends: false, following: false, blocked: false };
     return (await pool.query(RELATIONSHIP, [viewerId, userId])).rows[0];
   }
 

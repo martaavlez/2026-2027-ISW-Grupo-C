@@ -135,6 +135,7 @@ test('test_PA_24_01_notFriend_asksOnlyForPublicContent', async () => {
   expect(result.relationship).toEqual({
     isMe: false,
     isFriend: false,
+    isFollowing: false,
     friendship: 'none',
     requestId: null,
   });
