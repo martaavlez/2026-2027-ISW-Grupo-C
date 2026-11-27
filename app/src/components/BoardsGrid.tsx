@@ -1,4 +1,6 @@
-import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Link } from 'expo-router';
+import type { ReactNode } from 'react';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { formatCount } from '../features/catalog/format';
 import type { ProfileBoard } from '../services/api';
@@ -13,14 +15,16 @@ const BOARD_PRIVACY = { public: 'PÚBLICO', friends: 'SOLO AMIGOS', private: 'PR
  * Carpeta Tableros del perfil: cada tablero como una caja de CD con la portada de uno de sus
  * discos o canciones. El dueño elige cuál al editar el tablero; si no ha elegido, sale la del
  * primero que añadió, y un tablero vacío sale con el disco del color del tema.
- * Solo para verlos; crear, abrir y editar tableros llega con sus propias HU.
+ * Cada caja abre su tablero; en tu perfil, `newBoard` es el botón «+ Nuevo tablero» (HU-09).
  */
 export function BoardsGrid({
   boards,
   emptyText = 'Todavía no tienes tableros.',
+  newBoard,
 }: {
   boards: ProfileBoard[];
   emptyText?: string;
+  newBoard?: ReactNode;
 }) {
   const colors = useColors();
   const desktop = useIsDesktop();
@@ -33,19 +37,27 @@ export function BoardsGrid({
       <Text style={[styles.help, ink]}>
         Crea tableros personalizados para organizar y guardar tus canciones y álbumes favoritos.
       </Text>
+      {newBoard}
       {boards.length === 0 ? <Text style={[styles.help, ink]}>{emptyText}</Text> : null}
       <View style={styles.grid}>
         {boards.map((board) => (
-          <View key={board.id} style={{ width: size }}>
-            <CdCase coverUrl={board.coverUrl} size={size} />
-            <View style={styles.caption}>
-              <Text style={[styles.name, ink]}>{board.name}</Text>
-              <Text style={[styles.mono, ink]}>
-                {formatCount(board.itemsCount)} {board.itemsCount === 1 ? 'ELEMENTO' : 'ELEMENTOS'}{' '}
-                · {BOARD_PRIVACY[board.privacy]}
-              </Text>
-            </View>
-          </View>
+          <Link key={board.id} href={`/tablero/${board.id}`} asChild>
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel={`Tablero ${board.name}`}
+              style={{ width: size }}
+            >
+              <CdCase coverUrl={board.coverUrl} size={size} />
+              <View style={styles.caption}>
+                <Text style={[styles.name, ink]}>{board.name}</Text>
+                <Text style={[styles.mono, ink]}>
+                  {formatCount(board.itemsCount)}{' '}
+                  {board.itemsCount === 1 ? 'ELEMENTO' : 'ELEMENTOS'} ·{' '}
+                  {BOARD_PRIVACY[board.privacy]}
+                </Text>
+              </View>
+            </Pressable>
+          </Link>
         ))}
       </View>
     </View>

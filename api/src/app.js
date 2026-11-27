@@ -5,6 +5,8 @@ const helmet = require('helmet');
 
 const { createAccountRepository } = require('./account/account-repository');
 const { createAccountService } = require('./account/account-service');
+const { createBoardRepository } = require('./boards/board-repository');
+const { createBoardService } = require('./boards/board-service');
 const { createAuthService } = require('./auth/auth-service');
 const { createCredentialsRepository } = require('./auth/credentials-repository');
 const { createLoginService } = require('./auth/login-service');
@@ -15,6 +17,7 @@ const config = require('./config');
 const { ApiError } = require('./errors');
 const { createAccountRouter } = require('./routes/account');
 const { createAuthRouter, createSessionRouter } = require('./routes/auth');
+const { createBoardRouter } = require('./routes/boards');
 const { createCatalogRouter } = require('./routes/catalog');
 const { createFavoriteRouter } = require('./routes/favorites');
 const { createFriendRouter } = require('./routes/friends');
@@ -52,6 +55,7 @@ function createDefaultServices(db) {
   const friends = createFriendRepository(db.pool);
   return {
     accountService: createAccountService({ accounts: createAccountRepository(db.pool) }),
+    boardService: createBoardService({ boards: createBoardRepository(db.pool), profiles }),
     authService: createAuthService({ users, tokenOptions }),
     loginService: createLoginService({
       credentials: createCredentialsRepository(db.pool),
@@ -109,6 +113,7 @@ function createApp({
   reviewPublishLimit,
   friendChangesLimit,
   profileChangesLimit,
+  boardChangesLimit,
 }) {
   const app = express();
 
@@ -129,7 +134,7 @@ function createApp({
     createAuthRouter(services.authService, services.loginService),
   );
   app.use(
-    ['/albums', '/songs', '/artists', '/search', '/me', '/users'],
+    ['/albums', '/songs', '/artists', '/search', '/me', '/users', '/boards'],
     createLimiter(readRateLimit, 'Demasiadas peticiones. Espera un momento y vuelve a probar.'),
     optionalViewer(services.resolveViewer ?? visitorOnly),
   );
@@ -140,6 +145,7 @@ function createApp({
   app.use(createReviewRouter(services.reviewService, reviewPublishLimit));
   app.use(createFriendRouter(services.friendService, friendChangesLimit));
   app.use(createAccountRouter(services.accountService, profileChangesLimit));
+  app.use(createBoardRouter(services.boardService, boardChangesLimit));
   app.use('/search', createSearchRouter(services.searchService));
 
   app.use((req, res) => {

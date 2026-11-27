@@ -13,6 +13,7 @@ import { fonts, useColors } from '../theme';
 import { BoardsGrid } from './BoardsGrid';
 import { FavoritesFolder } from './FavoritesFolder';
 import { FolderTabs } from './FolderTabs';
+import { NewBoard } from './NewBoard';
 import { useIsDesktop } from './ItemPage';
 import { ProfileReviews } from './ProfileReviews';
 import { UserPhoto } from './UserPhoto';
@@ -168,6 +169,7 @@ export function ProfileView({
           <BoardsGrid
             boards={profile.boards}
             emptyText={own ? undefined : `${at} no tiene tableros que puedas ver.`}
+            newBoard={own ? <NewBoard onExpired={onExpired} /> : undefined}
           />
         ) : null}
       </FolderTabs>
