@@ -2,7 +2,10 @@ const {
   createProfileService,
   LOGIN_REQUIRED,
   REVIEWS_PAGE_SIZE,
+  PROFILE_UNAVAILABLE,
+  FAVORITES_HIDDEN,
 } = require('../../src/profile/profile-service');
+const { NotFoundError } = require('../../src/errors');
 const { ValidationError } = require('../../src/errors');
 const { UnauthorizedError } = require('../../src/auth/auth-errors');
 
@@ -98,4 +101,87 @@ test('test_security_getOwnReviews_rejectsVisitorAndBadOffset', async () => {
   await expect(service.getOwnReviews('7', '-5')).rejects.toBeInstanceOf(ValidationError);
   await expect(service.getOwnReviews('7', "0' OR '1'='1")).rejects.toBeInstanceOf(ValidationError);
   expect(profiles.findReviews).not.toHaveBeenCalled();
+});
+
+// ---------- HU-24 · Perfil de otro usuario ----------
+
+function otherProfileWith({
+  friends = false,
+  blocked = false,
+  favoritesVisibility = 'public',
+} = {}) {
+  const { service, profiles, favorites } = serviceWith();
+  profiles.findByUsername = jest.fn().mockResolvedValue({ ...profile.user, id: '9' });
+  profiles.findRelationship = jest.fn().mockResolvedValue({ friends, blocked });
+  profiles.findFavoritesVisibility = jest.fn().mockResolvedValue(favoritesVisibility);
+  profiles.findContent = jest
+    .fn()
+    .mockResolvedValue({ ...profile, user: { ...profile.user, id: '9' } });
+  favorites.findPage = jest.fn().mockResolvedValue({ total: 0, items: [] });
+  return { service, profiles, favorites };
+}
+
+test('test_PA_24_01_notFriend_asksOnlyForPublicContent', async () => {
+  const { service, profiles } = otherProfileWith({ favoritesVisibility: 'friends' });
+
+  const result = await service.getUserProfile('7', 'lucia.vinilo');
+
+  expect(profiles.findContent).toHaveBeenCalledWith(expect.objectContaining({ id: '9' }), {
+    reviewsLimit: REVIEWS_PAGE_SIZE,
+    levels: ['public'],
+  });
+  expect(result.favorites).toBeNull();
+  expect(result.counts.favorites).toBeNull();
+  expect(result.relationship).toEqual({ isMe: false, isFriend: false });
+});
+
+test('test_PA_24_02_friend_alsoSeesFriendsOnly', async () => {
+  const { service, profiles } = otherProfileWith({ friends: true, favoritesVisibility: 'friends' });
+
+  const result = await service.getUserProfile('7', 'lucia.vinilo');
+
+  expect(profiles.findContent).toHaveBeenCalledWith(expect.anything(), {
+    reviewsLimit: REVIEWS_PAGE_SIZE,
+    levels: ['public', 'friends'],
+  });
+  expect(result.favorites).not.toBeNull();
+  expect(result.relationship.isFriend).toBe(true);
+});
+
+test('test_PA_24_03_blocked_isNotShown', async () => {
+  const { service, profiles } = otherProfileWith({ blocked: true });
+
+  await expect(service.getUserProfile('7', 'lucia.vinilo')).rejects.toThrow(
+    new NotFoundError(PROFILE_UNAVAILABLE),
+  );
+  expect(profiles.findContent).not.toHaveBeenCalled();
+});
+
+test('test_ownUsername_isMe_withAllLevels', async () => {
+  const { service, profiles } = otherProfileWith();
+
+  const result = await service.getUserProfile('9', 'lucia.vinilo');
+
+  expect(profiles.findRelationship).not.toHaveBeenCalled();
+  expect(profiles.findContent).toHaveBeenCalledWith(expect.anything(), {
+    reviewsLimit: REVIEWS_PAGE_SIZE,
+    levels: ['public', 'friends', 'private'],
+  });
+  expect(result.relationship.isMe).toBe(true);
+});
+
+test('test_security_badUsername_isNotLookedUp', async () => {
+  const { service, profiles } = otherProfileWith();
+  for (const bad of ["a' OR 1=1", '..', 'x'.repeat(31), ['lucia']]) {
+    await expect(service.getUserProfile('7', bad)).rejects.toBeInstanceOf(NotFoundError);
+  }
+  expect(profiles.findByUsername).not.toHaveBeenCalled();
+});
+
+test('test_getUserFavorites_hidden_throws', async () => {
+  const { service, favorites } = otherProfileWith({ favoritesVisibility: 'private' });
+  await expect(service.getUserFavorites('7', 'lucia.vinilo', 'songs')).rejects.toThrow(
+    new NotFoundError(FAVORITES_HIDDEN),
+  );
+  expect(favorites.findPage).not.toHaveBeenCalled();
 });

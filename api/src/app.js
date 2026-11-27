@@ -120,7 +120,7 @@ function createApp({
     createAuthRouter(services.authService, services.loginService),
   );
   app.use(
-    ['/albums', '/songs', '/artists', '/search', '/me'],
+    ['/albums', '/songs', '/artists', '/search', '/me', '/users'],
     createLimiter(readRateLimit, 'Demasiadas peticiones. Espera un momento y vuelve a probar.'),
     optionalViewer(services.resolveViewer ?? visitorOnly),
   );

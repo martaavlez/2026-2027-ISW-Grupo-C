@@ -15,7 +15,13 @@ const BOARD_PRIVACY = { public: 'PÚBLICO', friends: 'SOLO AMIGOS', private: 'PR
  * primero que añadió, y un tablero vacío sale con el disco del color del tema.
  * Solo para verlos; crear, abrir y editar tableros llega con sus propias HU.
  */
-export function BoardsGrid({ boards }: { boards: ProfileBoard[] }) {
+export function BoardsGrid({
+  boards,
+  emptyText = 'Todavía no tienes tableros.',
+}: {
+  boards: ProfileBoard[];
+  emptyText?: string;
+}) {
   const colors = useColors();
   const desktop = useIsDesktop();
   const { width } = useWindowDimensions();
@@ -27,9 +33,7 @@ export function BoardsGrid({ boards }: { boards: ProfileBoard[] }) {
       <Text style={[styles.help, ink]}>
         Crea tableros personalizados para organizar y guardar tus canciones y álbumes favoritos.
       </Text>
-      {boards.length === 0 ? (
-        <Text style={[styles.help, ink]}>Todavía no tienes tableros.</Text>
-      ) : null}
+      {boards.length === 0 ? <Text style={[styles.help, ink]}>{emptyText}</Text> : null}
       <View style={styles.grid}>
         {boards.map((board) => (
           <View key={board.id} style={{ width: size }}>

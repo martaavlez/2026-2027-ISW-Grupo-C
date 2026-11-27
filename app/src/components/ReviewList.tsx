@@ -1,3 +1,4 @@
+import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { formatCount, relativeTime, stars } from '../features/catalog/format';
@@ -58,7 +59,13 @@ export function ReviewList({ reviews, total, loadingMore, loadMoreError, onLoadM
           </View>
           <View style={styles.content}>
             <View style={styles.meta}>
-              <Text style={[styles.username, ink]}>@{review.username}</Text>
+              {/* HU-24 · Desde una reseña se llega al perfil de quien la escribió. */}
+              <Link
+                href={`/usuario/${encodeURIComponent(review.username)}`}
+                style={StyleSheet.flatten([styles.username, ink])}
+              >
+                @{review.username}
+              </Link>
               <Text
                 style={[styles.stars, ink]}
                 accessibilityLabel={`${review.rating} de 5 estrellas`}
