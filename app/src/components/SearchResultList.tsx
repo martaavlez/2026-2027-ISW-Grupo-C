@@ -4,6 +4,7 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { albumTypeLabel, formatCount, headline } from '../features/catalog/format';
 import type { SearchResults } from '../services/api';
+import { imageUri } from '../services/api-url';
 import { fonts, useColors } from '../theme';
 
 /** Miniatura cuadrada (portada) o redonda (artista, usuario). Sin imagen, la inicial. */
@@ -32,7 +33,7 @@ export function Thumb({
     >
       {url && !failed ? (
         <Image
-          source={{ uri: url }}
+          source={{ uri: imageUri(url) ?? undefined }}
           style={StyleSheet.absoluteFill}
           resizeMode="cover"
           onError={() => setFailed(true)}

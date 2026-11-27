@@ -2,12 +2,15 @@
 // Favoritos (canciones, álbumes y artistas) y Tableros con todo tu contenido (diseño HertzPerfil).
 // Las listas largas salen por partes, con «Ver más».
 // HU-58 y HU-42 · En la carpeta Amigos respondes las solicitudes y eliminas amistades.
+// HU-45 · «Editar perfil» cambia la foto, el nombre y la biografía. HU-17 · «Cerrar sesión».
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { Button } from '../components/Button';
 import { FriendsFolder } from '../components/FriendsFolder';
 import { useIsDesktop } from '../components/ItemPage';
+import { ProfileEditor } from '../components/ProfileEditor';
 import { folderFrom, ProfileView } from '../components/ProfileView';
 import { TopBar } from '../components/TopBar';
 import {
@@ -17,7 +20,7 @@ import {
   type FavoriteType,
   type OwnProfile,
 } from '../services/api';
-import { clearSession, getSession } from '../services/session';
+import { clearSession, getSession, saveSession } from '../services/session';
 import { fonts, spacing, useColors } from '../theme';
 
 type State =
@@ -37,6 +40,13 @@ export default function ProfileScreen() {
   // Al aceptar o eliminar una amistad cambia el número de amigos: se vuelve a pedir el perfil.
   const [version, setVersion] = useState(0);
   const refresh = useCallback(() => setVersion((value) => value + 1), []);
+  const [editing, setEditing] = useState(false);
+
+  // HU-17 · PA-17-01: se borra la sesión del navegador y se vuelve como visitante.
+  const logOut = useCallback(() => {
+    clearSession();
+    router.replace({ pathname: '/acceso', params: { aviso: 'cerrada' } });
+  }, [router]);
 
   // Sesión caducada (al cargar o con un «Ver más»): a iniciar sesión otra vez.
   const onExpired = useCallback(() => {
@@ -87,6 +97,31 @@ export default function ProfileScreen() {
             loadReviews={loadReviews}
             loadFavorites={loadFavorites}
             onExpired={onExpired}
+            actions={
+              editing ? (
+                <ProfileEditor
+                  user={state.profile.user}
+                  token={token}
+                  onCancel={() => setEditing(false)}
+                  onExpired={onExpired}
+                  onSaved={(name) => {
+                    // La barra de arriba muestra la inicial del nombre guardado en la sesión.
+                    saveSession({ ...session, user: { ...session.user, name } });
+                    setEditing(false);
+                    refresh();
+                  }}
+                />
+              ) : (
+                <View style={styles.actions}>
+                  <Button
+                    label="✎ Editar perfil"
+                    variant="secondary"
+                    onPress={() => setEditing(true)}
+                  />
+                  <Button label="Cerrar sesión" variant="secondary" onPress={logOut} />
+                </View>
+              )
+            }
             friendsFolder={
               <FriendsFolder token={token} onExpired={onExpired} onChanged={refresh} />
             }
@@ -102,4 +137,5 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, gap: 16 },
   contentDesktop: { paddingHorizontal: 48, paddingTop: 32 },
   message: { fontFamily: fonts.body, fontSize: 16 },
+  actions: { flexDirection: 'row', gap: 10, flexWrap: 'wrap', marginTop: 6 },
 });

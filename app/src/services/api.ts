@@ -1,5 +1,7 @@
 // Llamadas a la API de Hertz.
-export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+import { API_URL } from './api-url';
+
+export { API_URL };
 
 export type User = { id: number; name: string; username: string; email: string; role: string };
 export type Session = { token: string; user: User };
@@ -688,4 +690,70 @@ export async function getFriends(
   } catch {
     return { ok: false, error: CONNECTION_ERROR, needsLogin: false };
   }
+}
+
+// ---------- HU-45 · Editar mi perfil ----------
+
+export type ProfileForm = { name: string; bio: string };
+
+export type EditResult<T> =
+  { ok: true; data: T } | { ok: false; errors: FieldErrors; needsLogin: boolean };
+
+async function sendEdit<T>(
+  path: string,
+  init: RequestInit,
+  token: string,
+  fetchFn: typeof fetch,
+): Promise<EditResult<T>> {
+  try {
+    const response = await fetchFn(`${API_URL}${path}`, {
+      ...init,
+      headers: { ...(init.headers as Record<string, string>), ...authHeaders(token) },
+    });
+    const body = await response.json();
+    if (response.ok) return { ok: true, data: body as T };
+    const errors: FieldErrors = body.errors ?? { form: body.error ?? LOAD_ERROR };
+    return { ok: false, errors, needsLogin: response.status === 401 };
+  } catch {
+    return { ok: false, errors: { form: CONNECTION_ERROR }, needsLogin: false };
+  }
+}
+
+/** Guarda tu nombre y tu biografía (PA-45-01). */
+export function updateMyProfile(
+  token: string,
+  form: ProfileForm,
+  fetchFn: typeof fetch = fetch,
+): Promise<EditResult<{ name: string; bio: string | null }>> {
+  return sendEdit(
+    '/me/profile',
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    },
+    token,
+    fetchFn,
+  );
+}
+
+/** Sube tu foto tal cual (JPEG, PNG o WebP de 1 MB como máximo). */
+export function uploadMyPhoto(
+  token: string,
+  photo: Blob,
+  fetchFn: typeof fetch = fetch,
+): Promise<EditResult<{ photoUrl: string }>> {
+  return sendEdit(
+    '/me/photo',
+    { method: 'PUT', headers: { 'Content-Type': photo.type }, body: photo },
+    token,
+    fetchFn,
+  );
+}
+
+export function removeMyPhoto(
+  token: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<EditResult<{ photoUrl: null }>> {
+  return sendEdit('/me/photo', { method: 'DELETE' }, token, fetchFn);
 }
