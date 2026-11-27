@@ -9,9 +9,13 @@ import {
   getMyProfile,
   getMyReviews,
   removeFriend,
+  removeMyPhoto,
   respondFriendRequest,
+  updateMyProfile,
+  uploadMyPhoto,
   type OwnProfile,
 } from '../services/api';
+import { pickPhoto } from '../features/profile/pickPhoto';
 import { clearSession, getSession, saveSession } from '../services/session';
 
 const mockRouter = { replace: jest.fn(), setParams: jest.fn() };
@@ -37,7 +41,11 @@ jest.mock('../services/api', () => ({
   getFriends: jest.fn(),
   respondFriendRequest: jest.fn(),
   removeFriend: jest.fn(),
+  updateMyProfile: jest.fn(),
+  uploadMyPhoto: jest.fn(),
+  removeMyPhoto: jest.fn(),
 }));
+jest.mock('../features/profile/pickPhoto', () => ({ pickPhoto: jest.fn() }));
 jest.mock('react-native-svg', () => ({ SvgXml: () => null }));
 
 const session = {
@@ -422,5 +430,128 @@ describe('Carpeta Amigos', () => {
     await openFriends();
 
     expect(await screen.findByText(/Todavía no tienes amigos/)).toBeTruthy();
+  });
+});
+
+// ---------- HU-17 · Cerrar sesión y HU-45 · Editar mi perfil ----------
+
+describe('Cerrar sesión y editar mi perfil', () => {
+  async function openProfile(data: OwnProfile = profile) {
+    saveSession(session);
+    jest.mocked(getMyProfile).mockResolvedValue({ ok: true, data });
+    await render(<ProfileScreen />);
+    await screen.findByText('Lucía Moreno');
+  }
+
+  test('test_PA_17_01_logOut_clearsTheSessionAndGoesBackAsVisitor', async () => {
+    await openProfile();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Cerrar sesión' }));
+
+    expect(getSession()).toBeNull();
+    expect(mockRouter.replace).toHaveBeenCalledWith({
+      pathname: '/acceso',
+      params: { aviso: 'cerrada' },
+    });
+  });
+
+  test('test_PA_45_01_editNameAndBio_savesAndRefreshesTheProfile', async () => {
+    jest
+      .mocked(updateMyProfile)
+      .mockResolvedValue({ ok: true, data: { name: 'Lucía M.', bio: 'Nueva bio' } });
+    await openProfile();
+
+    await fireEvent.press(screen.getByRole('button', { name: '✎ Editar perfil' }));
+    expect(screen.getByLabelText('Nombre').props.value).toBe('Lucía Moreno');
+    await fireEvent.changeText(screen.getByLabelText('Nombre'), 'Lucía M.');
+    await fireEvent.changeText(screen.getByLabelText('Biografía'), 'Nueva bio');
+    await fireEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    expect(updateMyProfile).toHaveBeenCalledWith('tok', { name: 'Lucía M.', bio: 'Nueva bio' });
+    expect(uploadMyPhoto).not.toHaveBeenCalled();
+    expect(getSession()?.user.name).toBe('Lucía M.');
+    expect(await screen.findByRole('button', { name: '✎ Editar perfil' })).toBeTruthy();
+    expect(getMyProfile).toHaveBeenCalledTimes(2);
+  });
+
+  test('test_PA_45_01_newPhoto_isUploadedBeforeSaving', async () => {
+    const blob = { type: 'image/png', size: 10 } as Blob;
+    jest.mocked(pickPhoto).mockResolvedValue({ ok: true, blob, preview: 'blob:foto' });
+    jest
+      .mocked(uploadMyPhoto)
+      .mockResolvedValue({ ok: true, data: { photoUrl: '/users/lucia/photo?v=1' } });
+    jest
+      .mocked(updateMyProfile)
+      .mockResolvedValue({ ok: true, data: { name: 'Lucía Moreno', bio: null } });
+    await openProfile();
+
+    await fireEvent.press(screen.getByRole('button', { name: '✎ Editar perfil' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Cambiar foto' }));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Quitar foto' }));
+    // Se arrepiente y elige otra.
+    await fireEvent.press(screen.getByRole('button', { name: 'Cambiar foto' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    expect(uploadMyPhoto).toHaveBeenCalledWith('tok', blob);
+    expect(removeMyPhoto).not.toHaveBeenCalled();
+    expect(
+      jest.mocked(uploadMyPhoto).mock.invocationCallOrder[0] <
+        jest.mocked(updateMyProfile).mock.invocationCallOrder[0],
+    ).toBe(true);
+  });
+
+  test('test_removePhoto', async () => {
+    jest.mocked(removeMyPhoto).mockResolvedValue({ ok: true, data: { photoUrl: null } });
+    jest
+      .mocked(updateMyProfile)
+      .mockResolvedValue({ ok: true, data: { name: 'Lucía Moreno', bio: null } });
+    await openProfile({
+      ...profile,
+      user: { ...profile.user, photoUrl: '/users/lucia/photo?v=1' },
+    });
+
+    await fireEvent.press(screen.getByRole('button', { name: '✎ Editar perfil' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Quitar foto' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    expect(removeMyPhoto).toHaveBeenCalledWith('tok');
+  });
+
+  test('test_editErrors_areShown_andNothingElseIsSaved', async () => {
+    jest.mocked(pickPhoto).mockResolvedValue({
+      ok: false,
+      error: 'La foto puede ocupar como máximo 1 MB.',
+    });
+    jest.mocked(updateMyProfile).mockResolvedValue({
+      ok: false,
+      needsLogin: false,
+      errors: { bio: 'La biografía tiene caracteres no válidos.' },
+    });
+    await openProfile();
+
+    await fireEvent.press(screen.getByRole('button', { name: '✎ Editar perfil' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Cambiar foto' }));
+    expect(await screen.findByText('La foto puede ocupar como máximo 1 MB.')).toBeTruthy();
+
+    await fireEvent.changeText(screen.getByLabelText('Nombre'), '   ');
+    await fireEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }));
+    expect(screen.getByText('Escribe tu nombre.')).toBeTruthy();
+    expect(updateMyProfile).not.toHaveBeenCalled();
+
+    await fireEvent.changeText(screen.getByLabelText('Nombre'), 'Lucía');
+    await fireEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }));
+    expect(await screen.findByText('La biografía tiene caracteres no válidos.')).toBeTruthy();
+    expect(getSession()?.user.name).toBe('Lucía Moreno');
+  });
+
+  test('test_edit_cancel_keepsEverything', async () => {
+    await openProfile();
+
+    await fireEvent.press(screen.getByRole('button', { name: '✎ Editar perfil' }));
+    await fireEvent.changeText(screen.getByLabelText('Nombre'), 'Otra');
+    await fireEvent.press(screen.getByRole('button', { name: 'Cancelar' }));
+
+    expect(updateMyProfile).not.toHaveBeenCalled();
+    expect(screen.getByText('Lucía Moreno')).toBeTruthy();
   });
 });

@@ -98,6 +98,15 @@ test('test_PA_02_04_LoginScreen_afterExpiredSession_explainsWhy', async () => {
   expect(screen.getByText('Tu sesión ha caducado. Inicia sesión de nuevo.')).toBeTruthy();
 });
 
+test('test_PA_17_01_LoginScreen_afterLogOut_saysSo', async () => {
+  mockParams = { aviso: 'cerrada' };
+  await render(<LoginScreen />);
+
+  expect(
+    screen.getByText('Has cerrado sesión. Puedes seguir como visitante o volver a entrar.'),
+  ).toBeTruthy();
+});
+
 test('test_LoginScreen_unknownNotice_isIgnored', async () => {
   mockParams = { aviso: '<script>alert(1)</script>' };
   await render(<LoginScreen />);

@@ -21,7 +21,11 @@ function parseOffset(value) {
 }
 
 /** Solo se devuelven imágenes https: así nadie puede colar un enlace javascript: o data:. */
+// HU-45 · La foto que sube un usuario la sirve la propia API: es una dirección relativa fija.
+const OWN_USER_PHOTO = /^\/users\/[A-Za-z0-9._]{3,30}\/photo\?v=[0-9]{1,15}$/;
+
 function safeImageUrl(url) {
+  if (typeof url === 'string' && OWN_USER_PHOTO.test(url)) return url;
   try {
     return url && new URL(url).protocol === 'https:' ? url : null;
   } catch {

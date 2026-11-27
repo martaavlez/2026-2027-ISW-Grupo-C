@@ -15,6 +15,7 @@ import { FavoritesFolder } from './FavoritesFolder';
 import { FolderTabs } from './FolderTabs';
 import { useIsDesktop } from './ItemPage';
 import { ProfileReviews } from './ProfileReviews';
+import { UserPhoto } from './UserPhoto';
 import { Worm } from './Worm';
 
 export const PROFILE_FOLDERS = ['resenas', 'favoritos', 'tableros', 'amigos'] as const;
@@ -100,7 +101,10 @@ export function ProfileView({
         </Text>
         <Worm pose="cascos" width={desktop ? 130 : 96} />
         <View style={styles.about}>
-          <Text style={[styles.name, ink]}>{user.name}</Text>
+          <View style={styles.nameRow}>
+            <UserPhoto url={user.photoUrl} name={user.name} size={desktop ? 64 : 52} />
+            <Text style={[styles.name, ink]}>{user.name}</Text>
+          </View>
           {user.bio ? <Text style={[styles.bio, ink]}>{user.bio}</Text> : null}
           <Text style={[styles.mono, ink]}>{countsLine(counts)}</Text>
           {actions}
@@ -176,7 +180,8 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 24, flexWrap: 'wrap' },
   username: { fontFamily: fonts.display },
   about: { gap: 6, flexShrink: 1, minWidth: 220 },
-  name: { fontFamily: fonts.bodyExtraBold, fontSize: 18 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  name: { fontFamily: fonts.bodyExtraBold, fontSize: 18, flexShrink: 1 },
   bio: { fontFamily: fonts.body, fontSize: 16 },
   mono: { fontFamily: fonts.mono, fontSize: 12 },
   message: { fontFamily: fonts.body, fontSize: 16 },

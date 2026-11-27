@@ -12,8 +12,12 @@ import { loginUser, type LoginForm } from '../services/auth-api';
 import { saveSession } from '../services/session';
 import { fonts, spacing, useColors } from '../theme';
 
-/** Avisos al llegar aquí porque la sesión guardada ya no vale (PA-02-04) o la cuenta se suspendió. */
+/**
+ * Avisos al llegar aquí porque la sesión guardada ya no vale (PA-02-04), la cuenta se suspendió
+ * o se ha cerrado la sesión (HU-17).
+ */
 const NOTICES: Record<string, string> = {
+  cerrada: 'Has cerrado sesión. Puedes seguir como visitante o volver a entrar.',
   caducada: 'Tu sesión ha caducado. Inicia sesión de nuevo.',
   suspendida: 'Tu cuenta está suspendida y se ha cerrado la sesión.',
 };

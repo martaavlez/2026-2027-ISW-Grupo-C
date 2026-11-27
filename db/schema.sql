@@ -44,14 +44,20 @@ CREATE TABLE users (
     email              CITEXT       NOT NULL UNIQUE                      -- RN-01: único sin distinguir mayúsculas
                        CHECK (length(email) <= 100 AND email ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$'),
     password_hash      TEXT         NOT NULL,                            -- RNF-03: nunca la contraseña en claro
-    photo_url          TEXT,
+    photo_url          TEXT,                                             -- dirección de la foto (la subida se sirve desde la API)
+    photo_data         BYTEA,                                            -- HU-45: foto subida (JPEG, PNG o WebP, 1 MB como máximo)
+    photo_type         VARCHAR(10),
     bio                VARCHAR(300),
     role               platform_role  NOT NULL DEFAULT 'user',
     status             account_status NOT NULL DEFAULT 'active',
     suspension_reason  VARCHAR(300),
     privacy_accepted_at TIMESTAMPTZ  NOT NULL,                           -- RNF-04: aceptación de la política
     created_at         TIMESTAMPTZ  NOT NULL DEFAULT now(),
-    CHECK (status <> 'suspended' OR suspension_reason IS NOT NULL)
+    CHECK (status <> 'suspended' OR suspension_reason IS NOT NULL),
+    CONSTRAINT users_photo_check CHECK (
+      (photo_data IS NULL AND photo_type IS NULL)
+      OR (photo_type IN ('image/jpeg', 'image/png', 'image/webp') AND octet_length(photo_data) <= 1048576)
+    )
 );
 -- RN-01: el nombre de usuario tampoco se repite cambiando mayúsculas (Lucia.M y lucia.m).
 CREATE UNIQUE INDEX users_username_lower_key ON users (lower(username));

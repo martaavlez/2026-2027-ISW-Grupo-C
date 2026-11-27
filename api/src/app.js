@@ -3,6 +3,8 @@ const express = require('express');
 const { rateLimit } = require('express-rate-limit');
 const helmet = require('helmet');
 
+const { createAccountRepository } = require('./account/account-repository');
+const { createAccountService } = require('./account/account-service');
 const { createAuthService } = require('./auth/auth-service');
 const { createCredentialsRepository } = require('./auth/credentials-repository');
 const { createLoginService } = require('./auth/login-service');
@@ -11,6 +13,7 @@ const { createCatalogRepository } = require('./catalog/catalog-repository');
 const { createCatalogService } = require('./catalog/catalog-service');
 const config = require('./config');
 const { ApiError } = require('./errors');
+const { createAccountRouter } = require('./routes/account');
 const { createAuthRouter, createSessionRouter } = require('./routes/auth');
 const { createCatalogRouter } = require('./routes/catalog');
 const { createFavoriteRouter } = require('./routes/favorites');
@@ -48,6 +51,7 @@ function createDefaultServices(db) {
   const profiles = createProfileRepository(db.pool);
   const friends = createFriendRepository(db.pool);
   return {
+    accountService: createAccountService({ accounts: createAccountRepository(db.pool) }),
     authService: createAuthService({ users, tokenOptions }),
     loginService: createLoginService({
       credentials: createCredentialsRepository(db.pool),
@@ -104,6 +108,7 @@ function createApp({
   readRateLimit = config.readRateLimit,
   reviewPublishLimit,
   friendChangesLimit,
+  profileChangesLimit,
 }) {
   const app = express();
 
@@ -134,6 +139,7 @@ function createApp({
   app.use(createProfileRouter(services.profileService));
   app.use(createReviewRouter(services.reviewService, reviewPublishLimit));
   app.use(createFriendRouter(services.friendService, friendChangesLimit));
+  app.use(createAccountRouter(services.accountService, profileChangesLimit));
   app.use('/search', createSearchRouter(services.searchService));
 
   app.use((req, res) => {
