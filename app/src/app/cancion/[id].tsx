@@ -2,6 +2,7 @@
 import { Link, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text } from 'react-native';
 
+import { AddToBoardButton } from '../../components/AddToBoardButton';
 import { ArtistLinks } from '../../components/ArtistLinks';
 import { CdCase } from '../../components/CdCase';
 import { FavoriteButton } from '../../components/FavoriteButton';
@@ -100,6 +101,7 @@ export default function SongScreen() {
             id={song.id}
             initial={Boolean(song.isFavorite)}
           />
+          <AddToBoardButton key={`tablero-${song.id}`} kind="song" id={song.id} />
           <RatingSummary
             averageRating={song.averageRating}
             ratingsCount={song.ratingsCount}

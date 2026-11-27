@@ -18,21 +18,32 @@ const DISC_LEFT = 46 / 420;
 const DISC_TOP = 34 / 420;
 const HOLE = 0.28;
 const CASE_INSET = 0.012;
+const DISC_OUT = 0.45;
 
 /**
  * La portada impresa en un CD dentro de su caja transparente (diseño de la ficha).
  * Si no hay portada o no carga, el disco sale del color del tema. Es decoración: la
  * información ya está en el título, así que se oculta a los lectores de pantalla.
  */
-export function CdCase({ coverUrl, size }: { coverUrl: string | null; size: number }) {
+export function CdCase({
+  coverUrl,
+  size,
+  discOut = false,
+}: {
+  coverUrl: string | null;
+  size: number;
+  /** Disco saliendo de la caja (tablero abierto): se desplaza a la derecha y la caja se queda. */
+  discOut?: boolean;
+}) {
   const colors = useColors();
   const mode = useColorScheme() === 'dark' ? 'dark' : 'light';
   const [failed, setFailed] = useState(false);
   const disc = size * DISC_SIZE;
   const hole = disc * HOLE;
+  const shift = discOut ? size * DISC_OUT : 0;
 
   return (
-    <View aria-hidden style={{ width: size, height: size }}>
+    <View aria-hidden style={{ width: size + shift, height: size }}>
       {/* Sombra sólida de la caja: una sombra de caja, porque un filtro oscurecería el plástico. */}
       <View
         style={[
@@ -51,7 +62,7 @@ export function CdCase({ coverUrl, size }: { coverUrl: string | null; size: numb
         style={[
           styles.disc,
           {
-            left: size * DISC_LEFT,
+            left: size * DISC_LEFT + shift,
             top: size * DISC_TOP,
             width: disc,
             height: disc,
@@ -77,7 +88,10 @@ export function CdCase({ coverUrl, size }: { coverUrl: string | null; size: numb
           }}
         />
       </View>
-      <Image source={DISC[mode]} style={[styles.layer, { width: size, height: size }]} />
+      <Image
+        source={DISC[mode]}
+        style={[styles.layer, { left: shift, width: size, height: size }]}
+      />
       <Image source={CASE[mode]} style={[styles.layer, { width: size, height: size }]} />
     </View>
   );

@@ -3,6 +3,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { AddToBoardButton } from '../../components/AddToBoardButton';
 import { ArtistLinks } from '../../components/ArtistLinks';
 import { CdCase } from '../../components/CdCase';
 import { FavoriteButton } from '../../components/FavoriteButton';
@@ -102,6 +103,7 @@ export default function AlbumScreen() {
             id={album.id}
             initial={Boolean(album.isFavorite)}
           />
+          <AddToBoardButton key={`tablero-${album.id}`} kind="album" id={album.id} />
           <RatingSummary
             averageRating={album.averageRating}
             ratingsCount={album.ratingsCount}

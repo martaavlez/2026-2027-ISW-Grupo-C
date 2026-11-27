@@ -8,6 +8,8 @@ type Props = {
   variant?: 'primary' | 'secondary' | 'dark';
   disabled?: boolean;
   loading?: boolean;
+  /** Para los lectores de pantalla, si la etiqueta sola no basta («Añadir» ¿qué?). */
+  accessibilityLabel?: string;
 };
 
 function variantStyle(colors: Colors, variant: NonNullable<Props['variant']>) {
@@ -26,6 +28,7 @@ export function Button({
   variant = 'primary',
   disabled = false,
   loading = false,
+  accessibilityLabel,
 }: Props) {
   const colors = useColors();
   const inactive = disabled || loading;
@@ -35,7 +38,7 @@ export function Button({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: inactive, busy: loading }}
       disabled={inactive}
       onPress={onPress}
