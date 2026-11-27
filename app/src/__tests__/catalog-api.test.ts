@@ -8,6 +8,8 @@ import {
   getReviews,
   getSong,
   publishReview,
+  editReview,
+  removeReview,
   rateItem,
   search,
 } from '../services/api';
@@ -253,4 +255,41 @@ test('test_getMyProfile', async () => {
   });
   await expect(getMyProfile('tok', expired)).resolves.toMatchObject({ needsLogin: true });
   await expect(getMyProfile('tok', offline)).resolves.toMatchObject({ needsLogin: false });
+});
+
+test('test_editReview_patchesFormWithToken', async () => {
+  const fetchFn = jest.fn().mockResolvedValue(response(200, { myRating: 3 }));
+
+  await expect(
+    editReview('song', '2', { rating: 3, body: 'Mejor', privacy: 'private' }, 'tok', fetchFn),
+  ).resolves.toEqual({ ok: true, data: { myRating: 3 } });
+  const [url, options] = fetchFn.mock.calls[0];
+  expect(url).toBe('http://localhost:3000/songs/2/review');
+  expect(options.method).toBe('PATCH');
+  expect(options.headers.Authorization).toBe('Bearer tok');
+});
+
+test('test_removeReview_deletesWithToken_andHandlesErrors', async () => {
+  const ok = jest.fn().mockResolvedValue(response(200, { removedReviewId: '9' }));
+  const missing = jest.fn().mockResolvedValue(response(404, { error: 'No tienes una reseña' }));
+  const expired = jest.fn().mockResolvedValue(response(401, { error: 'x' }));
+  const offline = jest.fn().mockRejectedValue(new TypeError('x'));
+
+  await expect(removeReview('album', '1', 'tok', ok)).resolves.toMatchObject({ ok: true });
+  expect(ok).toHaveBeenCalledWith('http://localhost:3000/albums/1/review', {
+    method: 'DELETE',
+    headers: { Authorization: 'Bearer tok' },
+  });
+  await expect(removeReview('album', '1', 'tok', missing)).resolves.toEqual({
+    ok: false,
+    error: 'No tienes una reseña',
+    needsLogin: false,
+  });
+  await expect(removeReview('album', '1', 'tok', expired)).resolves.toMatchObject({
+    needsLogin: true,
+  });
+  await expect(removeReview('album', '1', 'tok', offline)).resolves.toMatchObject({
+    ok: false,
+    needsLogin: false,
+  });
 });

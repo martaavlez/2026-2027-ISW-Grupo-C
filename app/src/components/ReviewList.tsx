@@ -65,7 +65,10 @@ export function ReviewList({ reviews, total, loadingMore, loadMoreError, onLoadM
               >
                 {stars(review.rating)}
               </Text>
-              <Text style={[styles.mono, ink]}>{relativeTime(review.createdAt, now)}</Text>
+              <Text style={[styles.mono, ink]}>
+                {relativeTime(review.createdAt, now)}
+                {review.updatedAt ? ' · EDITADA' : ''}
+              </Text>
             </View>
             {review.body ? (
               <Text style={[styles.body, ink]}>{review.body}</Text>

@@ -30,8 +30,8 @@ export default function AlbumScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const desktop = useIsDesktop();
-  const { state, retry, loadMore, loadingMore, loadMoreError, updateItem, addReview, signedIn } =
-    useCatalogItem('album', String(id), getAlbum);
+  const ficha = useCatalogItem('album', String(id), getAlbum);
+  const { state, retry, loadMore, loadingMore, loadMoreError, updateItem, signedIn } = ficha;
 
   const rating = useRating(
     'album',
@@ -40,7 +40,7 @@ export default function AlbumScreen() {
     updateItem,
   );
 
-  const review = useReview('album', String(id), rating.value, updateItem, addReview);
+  const review = useReview('album', String(id), rating.value, ficha);
 
   if (state.status === 'loading') return <ItemStatus loading />;
   if (state.status === 'error') {
@@ -78,7 +78,18 @@ export default function AlbumScreen() {
             onRate={rating.rate}
           >
             {signedIn && album.myReview ? (
-              <MyReview body={album.myReview.body} privacy={album.myReview.privacy} />
+              <MyReview
+                body={album.myReview.body}
+                privacy={album.myReview.privacy}
+                placeholder="¿Qué te ha parecido el disco?"
+                saving={review.publishing}
+                errors={review.errors}
+                removing={review.removing}
+                removeError={review.removeError}
+                onSave={review.save}
+                onRemove={review.remove}
+                onClearErrors={review.clearErrors}
+              />
             ) : null}
             {signedIn && !album.myReview ? (
               <ReviewComposer

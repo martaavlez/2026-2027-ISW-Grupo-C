@@ -4,9 +4,11 @@ import AlbumScreen from '../app/album/[id]';
 import ArtistScreen from '../app/artista/[id]';
 import SongScreen from '../app/cancion/[id]';
 import {
+  editReview,
   getAlbum,
   getArtist,
   publishReview,
+  removeReview,
   setFavorite,
   rateItem,
   getReviews,
@@ -36,6 +38,8 @@ jest.mock('../services/api', () => ({
   getArtist: jest.fn(),
   rateItem: jest.fn(),
   publishReview: jest.fn(),
+  editReview: jest.fn(),
+  removeReview: jest.fn(),
   setFavorite: jest.fn(),
 }));
 
@@ -581,6 +585,135 @@ describe('HU-23 · Escribir una reseña', () => {
     await screen.findByText('TU VALORACIÓN');
 
     expect(screen.queryByLabelText('Tu reseña')).toBeNull();
+  });
+});
+
+describe('HU-08 y HU-47 · Editar y eliminar mi reseña', () => {
+  const session = {
+    token: 'tok',
+    user: { id: 1, name: 'Lucía', username: 'lucia', email: 'l@c.es', role: 'user' },
+  };
+  const mine = review('50', { body: 'Me aburrió', username: 'lucia', rating: 2 });
+
+  async function openAlbumWithMyReview() {
+    saveSession(session);
+    jest.mocked(getAlbum).mockResolvedValue({
+      ok: true,
+      data: {
+        ...album,
+        myRating: 2,
+        myReview: { body: 'Me aburrió', privacy: 'public' },
+        reviews: { ...album.reviews, total: 4, items: [mine, ...album.reviews.items] },
+      },
+    });
+    await render(<AlbumScreen />);
+    await screen.findByText('TU RESEÑA · PÚBLICA');
+  }
+
+  test('test_PA_08_01_edit_savesTextAndPrivacy_andShowsTheNewVersion', async () => {
+    jest.mocked(editReview).mockResolvedValue({
+      ok: true,
+      data: {
+        myRating: 2,
+        myReview: { body: 'Ahora me gusta', privacy: 'friends' },
+        averageRating: 4.7,
+        ratingsCount: 1204,
+        distribution: album.distribution,
+        review: { ...mine, body: 'Ahora me gusta', updatedAt: new Date().toISOString() },
+      },
+    });
+    await openAlbumWithMyReview();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Editar' }));
+    expect(screen.getByLabelText('Tu reseña').props.value).toBe('Me aburrió');
+    await fireEvent.changeText(screen.getByLabelText('Tu reseña'), 'Ahora me gusta');
+    await fireEvent.press(screen.getByRole('radio', { name: 'SOLO AMIGOS' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    expect(editReview).toHaveBeenCalledWith(
+      'album',
+      '1',
+      { rating: 2, body: 'Ahora me gusta', privacy: 'friends' },
+      'tok',
+    );
+    expect(await screen.findByText('TU RESEÑA · SOLO AMIGOS')).toBeTruthy();
+    // En «Tu reseña» y en la lista, que marca que está editada.
+    expect(screen.getAllByText('Ahora me gusta')).toHaveLength(2);
+    expect(screen.queryByText('Me aburrió')).toBeNull();
+    expect(screen.getByText(/· EDITADA/)).toBeTruthy();
+    expect(screen.getByText('4,7')).toBeTruthy();
+  });
+
+  test('test_edit_cancel_keepsTheReviewAsItWas', async () => {
+    await openAlbumWithMyReview();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Editar' }));
+    await fireEvent.changeText(screen.getByLabelText('Tu reseña'), 'Otra cosa');
+    await fireEvent.press(screen.getByRole('button', { name: 'Cancelar' }));
+
+    expect(screen.getByText('TU RESEÑA · PÚBLICA')).toBeTruthy();
+    expect(screen.getAllByText('Me aburrió')).toHaveLength(2);
+    expect(editReview).not.toHaveBeenCalled();
+  });
+
+  test('test_edit_empty_asksForTextWithoutCallingApi', async () => {
+    await openAlbumWithMyReview();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Editar' }));
+    await fireEvent.changeText(screen.getByLabelText('Tu reseña'), '   ');
+    await fireEvent.press(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    expect(screen.getByText('Escribe tu reseña antes de publicarla.')).toBeTruthy();
+    expect(editReview).not.toHaveBeenCalled();
+  });
+
+  test('test_PA_47_01_remove_asksFirst_thenRemovesItAndShowsTheFormAgain', async () => {
+    jest.mocked(removeReview).mockResolvedValue({
+      ok: true,
+      data: {
+        myRating: null,
+        myReview: null,
+        averageRating: 4.9,
+        ratingsCount: 1203,
+        distribution: album.distribution,
+        removedReviewId: '50',
+      },
+    });
+    await openAlbumWithMyReview();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Eliminar' }));
+    expect(screen.getByText(/¿Eliminar tu reseña\?/)).toBeTruthy();
+    expect(removeReview).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByRole('button', { name: 'Sí, eliminar' }));
+
+    expect(removeReview).toHaveBeenCalledWith('album', '1', 'tok');
+    expect(await screen.findByLabelText('Tu reseña')).toBeTruthy();
+    expect(screen.queryByText('Me aburrió')).toBeNull();
+    expect(screen.getByText('LAS QUE PUEDES VER · 3')).toBeTruthy();
+    expect(screen.getByText('4,9')).toBeTruthy();
+  });
+
+  test('test_remove_error_isShownAndKeepsTheReview', async () => {
+    jest
+      .mocked(removeReview)
+      .mockResolvedValue({ ok: false, error: 'Sin conexión.', needsLogin: false });
+    await openAlbumWithMyReview();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Eliminar' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Sí, eliminar' }));
+
+    expect(await screen.findByText('Sin conexión.')).toBeTruthy();
+    expect(screen.getAllByText('Me aburrió')).toHaveLength(2);
+  });
+
+  test('test_PA_08_02_othersReviews_haveNoEditOrDeleteOption', async () => {
+    saveSession(session);
+    jest.mocked(getAlbum).mockResolvedValue({ ok: true, data: { ...album, myRating: 4 } });
+    await render(<AlbumScreen />);
+    await screen.findByText('Reseña 1');
+
+    expect(screen.queryByRole('button', { name: 'Editar' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Eliminar' })).toBeNull();
   });
 });
 

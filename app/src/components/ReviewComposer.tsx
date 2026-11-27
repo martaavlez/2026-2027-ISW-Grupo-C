@@ -27,9 +27,16 @@ type Props = {
   onPublish: (body: string, privacy: Privacy) => void;
   /** Se llama al escribir, para quitar los avisos del intento anterior. */
   onEdit?: () => void;
+  /** HU-08 · Para editar: el texto que ya tenía, el botón «Guardar cambios» y «Cancelar». */
+  initialBody?: string;
+  submitLabel?: string;
+  onCancel?: () => void;
 };
 
-/** HU-23 · Texto de la reseña, quién la ve y «Publicar reseña» (diseño de la ficha). */
+/**
+ * HU-23 · Texto de la reseña, quién la ve y «Publicar reseña» (diseño de la ficha).
+ * HU-08 · El mismo formulario, ya relleno, sirve para editarla.
+ */
 export function ReviewComposer({
   placeholder,
   defaultPrivacy,
@@ -37,16 +44,21 @@ export function ReviewComposer({
   errors,
   onPublish,
   onEdit,
+  initialBody = '',
+  submitLabel = 'Publicar reseña',
+  onCancel,
 }: Props) {
   const colors = useColors();
-  const [body, setBody] = useState('');
+  const [body, setBody] = useState(initialBody);
   // PA-23-02: si no se cambia, se queda el nivel por defecto del usuario.
   const [privacy, setPrivacy] = useState<Privacy>(defaultPrivacy);
   const ink = { color: colors.ink };
 
   return (
     <View style={styles.composer}>
-      <Text style={[styles.label, ink]}>ESCRIBE TU RESEÑA (OPCIONAL)</Text>
+      <Text style={[styles.label, ink]}>
+        {onCancel ? 'EDITA TU RESEÑA' : 'ESCRIBE TU RESEÑA (OPCIONAL)'}
+      </Text>
       <TextInput
         accessibilityLabel="Tu reseña"
         multiline
@@ -114,8 +126,11 @@ export function ReviewComposer({
           })}
         </View>
         <View style={styles.publish}>
+          {onCancel ? (
+            <Button label="Cancelar" variant="secondary" disabled={publishing} onPress={onCancel} />
+          ) : null}
           <Button
-            label="Publicar reseña"
+            label={submitLabel}
             loading={publishing}
             onPress={() => onPublish(body, privacy)}
           />
@@ -151,5 +166,5 @@ const styles = StyleSheet.create({
   segmented: { flexDirection: 'row', borderWidth: 2 },
   segment: { paddingVertical: 8, paddingHorizontal: 12 },
   segmentText: { fontFamily: fonts.mono, fontSize: 12 },
-  publish: { marginLeft: 'auto' },
+  publish: { marginLeft: 'auto', flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
 });
